@@ -408,3 +408,5 @@ share/jupyter/labextensions/
 share/jupyter/lab/schemas/@jupyter-notebook/application-extension/
 share/jupyter/lab/schemas/@jupyter-notebook/notebook-extension/
 share/
+lib
+lib64
