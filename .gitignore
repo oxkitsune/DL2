@@ -396,3 +396,15 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+
+
+etc/
+lib/
+lib64/
+include/
+lib/python3.10/site-packages/
+share/jupyter/labextensions/@jupyter-widgets/jupyterlab-manager/schemas/@jupyter-widgets/jupyterlab-manager/
+share/jupyter/labextensions/
+share/jupyter/lab/schemas/@jupyter-notebook/application-extension/
+share/jupyter/lab/schemas/@jupyter-notebook/notebook-extension/
+share/
