@@ -72,3 +72,9 @@ class DataBatch:
         ptv_channel = self.structure_masks[:, :, :, :, ptv_index, np.newaxis]
 
         return np.concatenate((ct_channel, oar_channel, ptv_channel), axis=-1)
+
+    def get_target(self) -> NDArray:
+        if self.dose is None:
+            raise Exception("Dose data not in DataBatch")
+
+        return self.dose

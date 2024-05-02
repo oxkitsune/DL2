@@ -15,7 +15,7 @@ from src.data.utils import get_paths, load_file
 class DataLoader:
     """Loads OpenKBP csv data in structured format for dose prediction models."""
 
-    def __init__(self, patient_paths: list[Path], batch_size: int = 2, seed: int = 42):
+    def __init__(self, patient_paths: list[Path], batch_size: int = 1, seed: int = 42):
         """
         :param patient_paths: list of the paths where data for each patient is stored
         :param batch_size: the number of data points to lead in a single batch
@@ -50,6 +50,9 @@ class DataLoader:
         )  # make a list of all rois
         self.num_rois = len(self.full_roi_list)
         self.data_shapes = DataShapes(self.num_rois)
+
+    def __len__(self):
+        return len(self.patient_id_list)
 
     @property
     def patient_id_list(self) -> list[str]:
