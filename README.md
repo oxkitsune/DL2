@@ -32,3 +32,8 @@ source ~/.venv/bin/activate
 
 The repository is cloned under `~/DL2`.
 
+Code can be run using the command
+```
+python -m src.main
+```
+
