@@ -37,7 +37,6 @@ class DataBatch:
         attribute_values = {}
         for data, dimensions in data_dimensions.items():
             batch_data_dimensions = (batch_size, *dimensions)
-            print(batch_size, dimensions)
             attribute_values[data] = np.zeros(batch_data_dimensions)
         return cls(**attribute_values)
 
@@ -71,6 +70,5 @@ class DataBatch:
         oar_channel = np.sum(labeled_oar_channels, axis=-1, keepdims=True)
 
         ptv_channel = self.structure_masks[:, :, :, :, ptv_index, np.newaxis]
-        print(np.unique(ptv_channel))
 
         return np.concatenate((ct_channel, oar_channel, ptv_channel), axis=-1)
