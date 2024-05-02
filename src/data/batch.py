@@ -37,6 +37,7 @@ class DataBatch:
         attribute_values = {}
         for data, dimensions in data_dimensions.items():
             batch_data_dimensions = (batch_size, *dimensions)
+            print(batch_size, dimensions)
             attribute_values[data] = np.zeros(batch_data_dimensions)
         return cls(**attribute_values)
 
@@ -48,3 +49,28 @@ class DataBatch:
             raise Exception("Structure_mask_names has not been initialized")
 
         return self.structure_mask_names.index(structure_name)
+
+    def get_features(self, ptv_index: int) -> NDArray:
+        """
+        Returns a CT channel containing the CT image, an OAR channel
+        containing the labeled OARs and a PTV channel containing the
+        selected PTV.
+        """
+        if self.structure_masks is None:
+            raise Exception("Structured masks data not in DataBatch")
+
+        if self.ct is None:
+            raise Exception("CT data not in DataBatch")
+
+        ct_channel = self.ct
+
+        # These are all encoded as ones and zeros originally
+        oar_channels = self.structure_masks[:, :, :, :, :7]
+        labels = np.arange(1, 8)
+        labeled_oar_channels = oar_channels * labels
+        oar_channel = np.sum(labeled_oar_channels, axis=-1, keepdims=True)
+
+        ptv_channel = self.structure_masks[:, :, :, :, ptv_index, np.newaxis]
+        print(np.unique(ptv_channel))
+
+        return np.concatenate((ct_channel, oar_channel, ptv_channel), axis=-1)
