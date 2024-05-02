@@ -1,0 +1,60 @@
+  0%|                                                                                 | 0/200 [00:00<?, ?it/s]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 38%|███████████████████████████                                             | 75/200 [01:21<02:15,  1.09s/it]
+Traceback (most recent call last):
+  File "/sw/arch/Centos8/EB_production/2021/software/Python/3.9.5-GCCcore-10.3.0/lib/python3.9/runpy.py", line 197, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File "/sw/arch/Centos8/EB_production/2021/software/Python/3.9.5-GCCcore-10.3.0/lib/python3.9/runpy.py", line 87, in _run_code
+    exec(code, run_globals)
+  File "/gpfs/home5/scur0394/DL2/src/main.py", line 46, in <module>
+    run()
+  File "/gpfs/home5/scur0394/DL2/src/main.py", line 42, in run
+    train(model, data_loader_train, logger=wandb, epochs=1)
+  File "/gpfs/home5/scur0394/DL2/src/training/train.py", line 34, in train
+    for batch in tqdm(data_loader.get_batches(), total=len(data_loader)):
+  File "/gpfs/home5/scur0394/.venv/lib/python3.9/site-packages/tqdm/std.py", line 1181, in __iter__
+    for obj in iterable:
+  File "/gpfs/home5/scur0394/DL2/src/data/data_loader.py", line 66, in get_batches
+    yield self.prepare_data(batch_paths)
+  File "/gpfs/home5/scur0394/DL2/src/data/data_loader.py", line 137, in prepare_data
+    batch_data.set_values(key, index, self.shape_data(key, raw_data))
+  File "/gpfs/home5/scur0394/DL2/src/data/batch.py", line 43, in set_values
+    getattr(self, data_name)[batch_index] = values
+KeyboardInterrupt

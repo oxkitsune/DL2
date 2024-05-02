@@ -28,10 +28,12 @@ class DataBatch:
         self.possible_dose_mask = possible_dose_mask
         self.voxel_dimensions = voxel_dimensions
         self.patient_list = patient_list
-        self.patient_path = patient_path_list
+        self.patient_path_list = patient_path_list
 
     @classmethod
-    def initialize_from_required_data(cls, data_dimensions: dict[str, NDArray], batch_size: int) -> DataBatch:
+    def initialize_from_required_data(
+        cls, data_dimensions: dict[str, NDArray], batch_size: int
+    ) -> DataBatch:
         attribute_values = {}
         for data, dimensions in data_dimensions.items():
             batch_data_dimensions = (batch_size, *dimensions)
@@ -42,4 +44,7 @@ class DataBatch:
         getattr(self, data_name)[batch_index] = values
 
     def get_index_structure_from_structure(self, structure_name: str):
+        if self.structure_mask_names is None:
+            raise Exception("Structure_mask_names has not been initialized")
+
         return self.structure_mask_names.index(structure_name)

@@ -32,4 +32,3 @@ source ~/.venv/bin/activate
 
 The repository is cloned under `~/DL2`.
 
- 

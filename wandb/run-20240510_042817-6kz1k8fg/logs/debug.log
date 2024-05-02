@@ -1,0 +1,28 @@
+2024-05-10 04:28:17,656 INFO    MainThread:2888051 [wandb_setup.py:_flush():68] Configure stats pid to 2888051
+2024-05-10 04:28:17,656 INFO    MainThread:2888051 [wandb_setup.py:_flush():68] Loading settings from /home/scur0394/.config/wandb/settings
+2024-05-10 04:28:17,656 INFO    MainThread:2888051 [wandb_setup.py:_flush():68] Loading settings from /gpfs/home5/scur0394/DL2/wandb/settings
+2024-05-10 04:28:17,657 INFO    MainThread:2888051 [wandb_setup.py:_flush():68] Loading settings from environment variables: {'_require_service': 'True'}
+2024-05-10 04:28:17,657 WARNING MainThread:2888051 [wandb_setup.py:_flush():68] Could not find program at -m src.main
+2024-05-10 04:28:17,657 INFO    MainThread:2888051 [wandb_setup.py:_flush():68] Inferring run settings from compute environment: {'program_relpath': None, 'program': '-m src.main'}
+2024-05-10 04:28:17,657 INFO    MainThread:2888051 [wandb_setup.py:_flush():68] Applying login settings: {'api_key': '***REDACTED***'}
+2024-05-10 04:28:17,657 INFO    MainThread:2888051 [wandb_init.py:_log_setup():476] Logging user logs to /gpfs/home5/scur0394/DL2/wandb/run-20240510_042817-6kz1k8fg/logs/debug.log
+2024-05-10 04:28:17,657 INFO    MainThread:2888051 [wandb_init.py:_log_setup():477] Logging internal logs to /gpfs/home5/scur0394/DL2/wandb/run-20240510_042817-6kz1k8fg/logs/debug-internal.log
+2024-05-10 04:28:17,657 INFO    MainThread:2888051 [wandb_init.py:init():516] calling init triggers
+2024-05-10 04:28:17,657 INFO    MainThread:2888051 [wandb_init.py:init():519] wandb.init called with sweep_config: {}
+config: {'learning_rate': 0.001, 'architecture': 'Unet', 'epochs': 1}
+2024-05-10 04:28:17,658 INFO    MainThread:2888051 [wandb_init.py:init():569] starting backend
+2024-05-10 04:28:17,658 INFO    MainThread:2888051 [wandb_init.py:init():573] setting up manager
+2024-05-10 04:28:17,667 INFO    MainThread:2888051 [backend.py:_multiprocessing_setup():102] multiprocessing start_methods=fork,spawn,forkserver, using: spawn
+2024-05-10 04:28:17,670 INFO    MainThread:2888051 [wandb_init.py:init():580] backend started and connected
+2024-05-10 04:28:17,673 INFO    MainThread:2888051 [wandb_init.py:init():658] updated telemetry
+2024-05-10 04:28:17,712 INFO    MainThread:2888051 [wandb_init.py:init():692] communicating run to backend with 30 second timeout
+2024-05-10 04:28:18,069 INFO    MainThread:2888051 [wandb_run.py:_on_init():1974] communicating current version
+2024-05-10 04:28:18,098 INFO    MainThread:2888051 [wandb_run.py:_on_init():1978] got version response upgrade_message: "wandb version 0.17.0 is available!  To upgrade, please run:\n $ pip install wandb --upgrade"
+
+2024-05-10 04:28:18,098 INFO    MainThread:2888051 [wandb_init.py:init():727] starting run threads in backend
+2024-05-10 04:28:18,292 INFO    MainThread:2888051 [wandb_run.py:_console_start():1954] atexit reg
+2024-05-10 04:28:18,292 INFO    MainThread:2888051 [wandb_run.py:_redirect():1812] redirect: SettingsConsole.WRAP_RAW
+2024-05-10 04:28:18,292 INFO    MainThread:2888051 [wandb_run.py:_redirect():1877] Wrapping output streams.
+2024-05-10 04:28:18,292 INFO    MainThread:2888051 [wandb_run.py:_redirect():1899] Redirects installed.
+2024-05-10 04:28:18,293 INFO    MainThread:2888051 [wandb_init.py:init():764] run started, returning control to user process
+2024-05-10 04:29:45,965 WARNING MsgRouterThr:2888051 [router.py:message_loop():77] message_loop has been closed
