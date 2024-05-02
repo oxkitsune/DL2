@@ -1,8 +1,0 @@
-# DL2
-
-Get the repo
-1. !git clone https://github.com/ababier/open-kbp.git 'open-kbp'
-
-2. Use python 3.10.10
-
-3. pip install -r open-kbp/requirements.txt
