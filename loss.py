@@ -116,7 +116,7 @@ if __name__ == "__main__":
     # setups with true/false and try to do backward
     for use_dvh in [True, False]:
         for use_lambert in [True, False]:
-            print(f"Use MAE: {True}, Use DVH: {use_dvh}, Use Lambert: {use_lambert}")
+            print(f"\nUse MAE: {True}, Use DVH: {use_dvh}, Use Lambert: {use_lambert}")
             
             
             model = ToyModel()
