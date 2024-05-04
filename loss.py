@@ -53,14 +53,12 @@ class LambertLoss(nn.Module):
         self.beta = beta  # regularization weight
         self.tau = tau  #  attenuation constant
 
-    def forward(self, predicted_transmission, distances):
-        # incremental doses derived from predicted doses
-        increments = predicted_doses[1:] - predicted_doses[:-1]
-        
+    def forward(self, predicted_doses, distances):
+        # expected transmission based on Lambert's law       
         expected_transmission = torch.exp(-self.tau * distances)
 
         # calculate the loss as the mean squared error between predicted and expected transmissions
-        loss = torch.mean((predicted_transmission - expected_transmission) ** 2)
+        loss = torch.mean((predicted_doses - expected_transmission) ** 2)
 
         # scale the loss by the regularization weight
         return self.beta * loss
@@ -101,6 +99,7 @@ class RadiotherapyLoss(nn.Module):
 # Dummy toy model
 ##############################################
 
+
 class ToyModel(nn.Module):
     def __init__(self):
         super(ToyModel, self).__init__()
@@ -119,5 +118,14 @@ if __name__ == "__main__":
     dvh_pred = torch.tensor([0.1, 0.2, 0.3, 0.4, 0.5])
     dvh_true = torch.tensor([0.2, 0.3, 0.4, 0.5, 0.6])
     
-    loss = loss_fn(output, target, dvh_pred, dvh_true)
-    print("Total Loss:", loss.item())
+    # setups with true/false and try to do backward
+    for use_mae in [True, False]:
+        for use_dvh in [True, False]:
+            for use_lambert in [True, False]:
+                loss_fn = RadiotherapyLoss(use_mae=use_mae, use_dvh=use_dvh, use_lambert=use_lambert)
+                loss = loss_fn(output, target, dvh_pred, dvh_true)
+                print(f"Loss: {loss}")
+                loss.backward()
+                
+                
+                
