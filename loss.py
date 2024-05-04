@@ -81,7 +81,7 @@ class RadiotherapyLoss(nn.Module):
         self.dvh_loss = DVHLoss()
         self.lambert_loss = LambertLoss(beta=beta, tau=tau)
         
-    def forward(self, output, target, dvh_pred, dvh_true):
+    def forward(self, output, target, dvh_pred, dvh_true, distances=None):
         loss = 0
         
         if self.use_mae:
@@ -91,7 +91,7 @@ class RadiotherapyLoss(nn.Module):
             loss += self.gamma * self.dvh_loss(dvh_pred, dvh_true)
         
         if self.use_lambert:
-            loss += self.beta * self.lambert_loss(output)
+            loss += self.beta * self.lambert_loss(output, distances)
             
         return loss
     
@@ -111,21 +111,50 @@ class ToyModel(nn.Module):
     
 if __name__ == "__main__":
     # Test the loss functions
-    loss_fn = RadiotherapyLoss()
     
-    output = torch.tensor([1.0, 2.0, 3.0, 4.0, 5.0])
-    target = torch.tensor([1.1, 2.1, 3.1, 4.1, 5.1])
-    dvh_pred = torch.tensor([0.1, 0.2, 0.3, 0.4, 0.5])
-    dvh_true = torch.tensor([0.2, 0.3, 0.4, 0.5, 0.6])
     
     # setups with true/false and try to do backward
-    for use_mae in [True, False]:
-        for use_dvh in [True, False]:
-            for use_lambert in [True, False]:
-                loss_fn = RadiotherapyLoss(use_mae=use_mae, use_dvh=use_dvh, use_lambert=use_lambert)
+    for use_dvh in [True, False]:
+        for use_lambert in [True, False]:
+            print(f"Use MAE: {True}, Use DVH: {use_dvh}, Use Lambert: {use_lambert}")
+            
+            
+            model = ToyModel()
+            optimizer = torch.optim.SGD(model.parameters(), lr=0.01)
+
+
+            # Example data with requires_grad=True
+            input_data = torch.tensor([[1.0], [2.0], [3.0], [4.0], [5.0]])
+
+            # Forward pass through the model
+            output = model(input_data)
+
+            # Test target data
+            target = torch.tensor([[1.1], [2.1], [3.1], [4.1], [5.1]])
+
+            # Example DVH predictions and truths
+            dvh_pred = torch.tensor([0.1, 0.2, 0.3, 0.4, 0.5])
+            dvh_true = torch.tensor([0.2, 0.3, 0.4, 0.5, 0.6])
+
+            # Example distances for Lambert Loss
+            distances = torch.tensor([1.0, 2.0, 3.0, 4.0, 5.0])
+                    
+            # Perform backward pass
+            optimizer.zero_grad()
+            
+            
+            # if lambert give distances
+            if use_lambert:
+                loss_fn = RadiotherapyLoss(use_mae=True, use_dvh=use_dvh, use_lambert=use_lambert)
+                loss = loss_fn(output, target, dvh_pred, dvh_true, distances)
+                
+            else:
+                loss_fn = RadiotherapyLoss(use_mae=True, use_dvh=use_dvh, use_lambert=use_lambert)
                 loss = loss_fn(output, target, dvh_pred, dvh_true)
-                print(f"Loss: {loss}")
-                loss.backward()
+                
+            print(loss)
+            loss.backward()
+            optimizer.step()
                 
                 
                 
