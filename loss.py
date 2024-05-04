@@ -95,22 +95,25 @@ class RadiotherapyLoss(nn.Module):
             
         return loss
     
-##############################################
-# Dummy toy model
-##############################################
 
-
-class ToyModel(nn.Module):
-    def __init__(self):
-        super(ToyModel, self).__init__()
-        self.fc = nn.Linear(1, 1)
-        
-    def forward(self, x):
-        return self.fc(x)
     
     
 if __name__ == "__main__":
+    
     # Test the loss functions
+    
+    ##############################################
+    # Toy model
+    ##############################################
+
+
+    class ToyModel(nn.Module):
+        def __init__(self):
+            super(ToyModel, self).__init__()
+            self.fc = nn.Linear(1, 1)
+            
+        def forward(self, x):
+            return self.fc(x)
     
     
     # setups with true/false and try to do backward
