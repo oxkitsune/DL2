@@ -1,6 +1,5 @@
 import torch
 import torch.nn as nn
-from scipy.special import lambertw
 
 
 ##############################################
@@ -49,18 +48,22 @@ class LambertLoss(nn.Module):
     We constrain the model to follow Lambert's law by penalizing the deviation from the desired exponential pattern.
     
     """
-    def __init__(self, beta=0.1):
+    def __init__(self, beta=0.1, tau=0.1, d=0.1):
         super(LambertLoss, self).__init__()
         self.beta = beta  # regularization weight
+        self.tau = tau  #  attenuation constant
 
-    def forward(self, predicted_doses):
+    def forward(self, predicted_transmission, distances):
         # incremental doses derived from predicted doses
         increments = predicted_doses[1:] - predicted_doses[:-1]
         
-        desired_pattern = torch.exp(increments)  # target exponential pattern
-        lambert_term = torch.from_numpy(lambertw(increments.detach().numpy()).real).to(predicted_doses.device)
-        regularization_loss = torch.mean((lambert_term - desired_pattern) ** 2)
-        return self.beta * regularization_loss
+        expected_transmission = torch.exp(-self.mu * distances)
+
+        # calculate the loss as the mean squared error between predicted and expected transmissions
+        loss = torch.mean((predicted_transmission - expected_transmission) ** 2)
+
+        # scale the loss by the regularization weight
+        return self.beta * loss
     
 ##############################################
 # Combined Loss
@@ -93,3 +96,28 @@ class RadiotherapyLoss(nn.Module):
             loss += self.beta * self.lambert_loss(output)
             
         return loss
+    
+##############################################
+# Dummy toy model
+##############################################
+
+class ToyModel(nn.Module):
+    def __init__(self):
+        super(ToyModel, self).__init__()
+        self.fc = nn.Linear(1, 1)
+        
+    def forward(self, x):
+        return self.fc(x)
+    
+    
+if __name__ == "__main__":
+    # Test the loss functions
+    loss_fn = RadiotherapyLoss()
+    
+    output = torch.tensor([1.0, 2.0, 3.0, 4.0, 5.0])
+    target = torch.tensor([1.1, 2.1, 3.1, 4.1, 5.1])
+    dvh_pred = torch.tensor([0.1, 0.2, 0.3, 0.4, 0.5])
+    dvh_true = torch.tensor([0.2, 0.3, 0.4, 0.5, 0.6])
+    
+    loss = loss_fn(output, target, dvh_pred, dvh_true)
+    print("Total Loss:", loss.item())
