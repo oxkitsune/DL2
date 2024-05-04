@@ -123,23 +123,23 @@ if __name__ == "__main__":
             optimizer = torch.optim.SGD(model.parameters(), lr=0.01)
 
 
-            # Example data with requires_grad=True
+            # example data with requires_grad=True
             input_data = torch.tensor([[1.0], [2.0], [3.0], [4.0], [5.0]])
 
-            # Forward pass through the model
+            # forward pass through the model
             output = model(input_data)
 
-            # Test target data
+            # test target data
             target = torch.tensor([[1.1], [2.1], [3.1], [4.1], [5.1]])
 
-            # Example DVH predictions and truths
+            # example DVH predictions and truths
             dvh_pred = torch.tensor([0.1, 0.2, 0.3, 0.4, 0.5])
             dvh_true = torch.tensor([0.2, 0.3, 0.4, 0.5, 0.6])
 
-            # Example distances for Lambert Loss
+            # example distances for Lambert Loss
             distances = torch.tensor([1.0, 2.0, 3.0, 4.0, 5.0])
                     
-            # Perform backward pass
+            # perform backward pass
             optimizer.zero_grad()
             
             
