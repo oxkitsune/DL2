@@ -48,7 +48,7 @@ class LambertLoss(nn.Module):
     We constrain the model to follow Lambert's law by penalizing the deviation from the desired exponential pattern.
     
     """
-    def __init__(self, beta=0.1, tau=0.1, d=0.1):
+    def __init__(self, beta=0.1, tau=0.1):
         super(LambertLoss, self).__init__()
         self.beta = beta  # regularization weight
         self.tau = tau  #  attenuation constant
@@ -68,7 +68,7 @@ class LambertLoss(nn.Module):
 ##############################################
 
 class RadiotherapyLoss(nn.Module):
-    def __init__(self, use_mae=True, use_dvh=True, use_lambert=True, alpha=0.5, beta=0.1, gamma=0.05):
+    def __init__(self, use_mae=True, use_dvh=True, use_lambert=True, alpha=0.5, beta=0.1, gamma=0.05, tau=0.1):
         super(RadiotherapyLoss, self).__init__()
         self.use_mae = use_mae
         self.use_dvh = use_dvh
@@ -79,7 +79,7 @@ class RadiotherapyLoss(nn.Module):
         
         self.mae_loss = MAELoss()
         self.dvh_loss = DVHLoss()
-        self.lambert_loss = LambertLoss(beta=beta)
+        self.lambert_loss = LambertLoss(beta=beta, tau=tau)
         
     def forward(self, output, target, dvh_pred, dvh_true):
         loss = 0
