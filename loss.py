@@ -57,7 +57,7 @@ class LambertLoss(nn.Module):
         # incremental doses derived from predicted doses
         increments = predicted_doses[1:] - predicted_doses[:-1]
         
-        expected_transmission = torch.exp(-self.mu * distances)
+        expected_transmission = torch.exp(-self.tau * distances)
 
         # calculate the loss as the mean squared error between predicted and expected transmissions
         loss = torch.mean((predicted_transmission - expected_transmission) ** 2)
