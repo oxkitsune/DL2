@@ -1,13 +1,12 @@
 import os
 from pathlib import Path
-from typing import Optional, Union
+from typing import Optional, Union, Any
 
 import numpy as np
 import pandas as pd
-from numpy.typing import NDArray
 
 
-def load_file(file_path: Path) -> Union[NDArray, dict[str, NDArray]]:
+def load_file(file_path: Path) -> Union[Any, dict[str, Any]]:
     """
     Load a file in one of the formats provided in the OpenKBP dataset
     """

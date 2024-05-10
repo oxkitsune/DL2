@@ -1,10 +1,9 @@
 import random
 from pathlib import Path
-from typing import Iterator, Optional, cast
+from typing import Iterator, Optional, cast, Any
 
 import numpy as np
 from more_itertools import windowed
-from numpy.typing import NDArray
 from tqdm import tqdm
 
 from src.data.batch import DataBatch
@@ -139,7 +138,7 @@ class DataLoader:
 
         return batch_data
 
-    def load_data(self, path_to_load: Path) -> dict[str, NDArray]:
+    def load_data(self, path_to_load: Path) -> dict[str, Any]:
         """Load data in its raw form."""
         if self.required_files is None:
             raise Exception("set_mode() needs to be called first")
@@ -157,7 +156,7 @@ class DataLoader:
 
         return data
 
-    def shape_data(self, key: str, data: dict) -> NDArray:
+    def shape_data(self, key: str, data: dict) -> Any:
         """Shapes into form that is amenable to tensorflow and other deep learning packages."""
         if self.required_files is None:
             raise Exception("set_mode() needs to be called first")
