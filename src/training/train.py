@@ -22,7 +22,7 @@ def train(
 ):
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
-    loss_func = nn.MSELoss()
+    loss_func = nn.L1Loss() # MAE
     optimizer = optim.Adam(model.parameters(), lr=1e-03)
 
     model.apply(weights_init)
