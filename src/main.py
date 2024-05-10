@@ -1,13 +1,23 @@
-import torch
 from pathlib import Path
 from typing import Optional, TypeVar
 
-import matplotlib.pyplot as plt
-from torch._C import _EnablePythonDispatcher
+import wandb
 
 from src.data import DataLoader, get_paths
 from src.models import ConvNet
 from src.training import train
+
+# start a new wandb run to track this script
+wandb.init(
+    # set the wandb project where this run will be logged
+    project="dl2",
+    # track hyperparameters and run metadata
+    config={
+        "learning_rate": 1e-03,
+        "architecture": "Unet",
+        "epochs": 1,
+    },
+)
 
 T = TypeVar("T")
 
@@ -27,10 +37,10 @@ def run():
     data_loader_train = DataLoader(training_plan_paths)
 
     data_loader_train.set_mode("training_model")
-    model = ConvNet()
+    model = ConvNet(num_input_channels=9)
 
-    train(model, data_loader_train, epochs=1)
-    
+    train(model, data_loader_train, logger=wandb, epochs=1)
+
 
 if __name__ == "__main__":
     run()

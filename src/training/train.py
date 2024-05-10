@@ -8,14 +8,20 @@ from src.data import DataLoader
 
 def weights_init(m):
     if isinstance(m, nn.Conv3d):
-        torch.nn.init.xavier_uniform_(m.weight.data, gain=nn.init.calculate_gain('relu'))
+        torch.nn.init.xavier_uniform_(
+            m.weight.data, gain=nn.init.calculate_gain("relu")
+        )
     if isinstance(m, nn.ConvTranspose3d):
-        torch.nn.init.xavier_uniform_(m.weight.data, gain=nn.init.calculate_gain('relu'))
+        torch.nn.init.xavier_uniform_(
+            m.weight.data, gain=nn.init.calculate_gain("relu")
+        )
 
 
-def train(model: nn.Module, data_loader: DataLoader, epochs: int, ptv_index: int = 7):
+def train(
+    model: nn.Module, data_loader: DataLoader, epochs: int, logger, ptv_index: int = 7
+):
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-    
+
     loss_func = nn.MSELoss()
     optimizer = optim.Adam(model.parameters(), lr=1e-03)
 
@@ -26,7 +32,7 @@ def train(model: nn.Module, data_loader: DataLoader, epochs: int, ptv_index: int
         model.train()
 
         for batch in tqdm(data_loader.get_batches(), total=len(data_loader)):
-            features = batch.get_features(ptv_index=ptv_index)
+            features = batch.get_all_features(ptv_index=ptv_index)
             input = torch.Tensor(features).transpose(1, 4).to(device)
 
             target = batch.get_target()
@@ -36,11 +42,10 @@ def train(model: nn.Module, data_loader: DataLoader, epochs: int, ptv_index: int
 
             output = model(input)
             loss = loss_func(output, target)
+            logger.log({"loss": loss})
 
             loss.backward()
             optimizer.step()
-
-            print(loss)
 
         model.eval()
         with torch.no_grad():

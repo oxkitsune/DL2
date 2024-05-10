@@ -49,7 +49,7 @@ class DataBatch:
 
         return self.structure_mask_names.index(structure_name)
 
-    def get_features(self, ptv_index: int) -> NDArray:
+    def get_flattend_oar_features(self, ptv_index: int) -> NDArray:
         """
         Returns a CT channel containing the CT image, an OAR channel
         containing the labeled OARs and a PTV channel containing the
@@ -69,9 +69,24 @@ class DataBatch:
         labeled_oar_channels = oar_channels * labels
         oar_channel = np.sum(labeled_oar_channels, axis=-1, keepdims=True)
 
+        # TODO: think what we want to do with this
         ptv_channel = self.structure_masks[:, :, :, :, ptv_index, np.newaxis]
 
         return np.concatenate((ct_channel, oar_channel, ptv_channel), axis=-1)
+
+    def get_all_features(self, ptv_index: int) -> NDArray:
+        if self.structure_masks is None:
+            raise Exception("Structured masks data not in DataBatch")
+
+        if self.ct is None:
+            raise Exception("CT data not in DataBatch")
+
+        ct_channel = self.ct
+        oar_channels = self.structure_masks[:, :, :, :, :7]
+        # TODO: think what we want to do with this
+        ptv_channel = self.structure_masks[:, :, :, :, ptv_index, np.newaxis]
+
+        return np.concatenate((ct_channel, oar_channels, ptv_channel), axis=-1)
 
     def get_target(self) -> NDArray:
         if self.dose is None:

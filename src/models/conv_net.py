@@ -4,9 +4,9 @@ from torch import Tensor
 
 
 class ConvNet(nn.Module):
-    def __init__(self):
+    def __init__(self, num_input_channels: int):
         super().__init__()
-        self.conv1_1 = nn.Conv3d(3, 8, 3, padding=1)
+        self.conv1_1 = nn.Conv3d(num_input_channels, 8, 3, padding=1)
         self.conv1_2 = nn.Conv3d(8, 8, 3, padding=1)
         self.conv2_1 = nn.Conv3d(8, 16, 3, padding=1)
         self.conv2_2 = nn.Conv3d(16, 16, 3, padding=1)
@@ -41,7 +41,6 @@ class ConvNet(nn.Module):
 
         self.pool = nn.MaxPool3d(2, 2)
         self.relu = nn.ReLU()
-
 
     def forward(self, x: Tensor) -> Tensor:
         x1 = self.GN1(self.relu(self.conv1_2(self.GN1(self.relu(self.conv1_1(x))))))
