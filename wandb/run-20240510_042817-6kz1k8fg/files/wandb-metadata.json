@@ -1,0 +1,23 @@
+{
+    "os": "Linux-4.18.0-372.80.1.el8_6.x86_64-x86_64-with-glibc2.28",
+    "python": "3.9.5",
+    "heartbeatAt": "2024-05-10T02:28:18.179948",
+    "startedAt": "2024-05-10T02:28:17.654189",
+    "docker": null,
+    "gpu": "NVIDIA A100-SXM4-40GB",
+    "gpu_count": 4,
+    "cpu_count": 72,
+    "cuda": null,
+    "args": [],
+    "state": "running",
+    "program": "-m src.main",
+    "git": {
+        "remote": "git@github.com:oxkitsune/DL2.git",
+        "commit": "cd0c0db8001fd4c6c3b92b3a4052e1955fb46fe9"
+    },
+    "email": "gcn@snellius.cluster",
+    "root": "/gpfs/home5/scur0394/DL2",
+    "host": "gcn1.local.snellius.surf.nl",
+    "username": "scur0394",
+    "executable": "/gpfs/home5/scur0394/.venv/bin/python"
+}

@@ -1,6 +1,4 @@
-from typing import Union
-
-from numpy.typing import NDArray
+from typing import Union, Any
 
 
 class DataShapes:
@@ -36,9 +34,11 @@ class DataShapes:
     @property
     def voxel_dimensions(self) -> tuple[float]:
         """Physical dimensions of patient voxels (in mm)"""
-        return tuple((3,))
+        return (3,)
 
-    def from_data_names(self, data_names: list[str]) -> dict[str, Union[NDArray, tuple[float]]]:
+    def from_data_names(
+        self, data_names: list[str]
+    ) -> dict[str, Union[Any, tuple[float]]]:
         data_shapes = {}
         for name in data_names:
             data_shapes[name] = getattr(self, name)
