@@ -84,7 +84,7 @@ class PatchExpanding(nn.Module):
 class WrappedEncoder(nn.Module):
     def __init__(self, dim: int, depth: int):
         super().__init__()
-        self.encoder = BasicLayer(dim=dim, depth=depth)
+        self.encoder = BasicLayer(dim=dim, depth=depth, num_heads=8, window_size=5, quant_size=4)
         self.downsampling = Downsampling(in_channels=dim, out_channels=2 * dim)
 
     def forward(self, x):
@@ -96,7 +96,7 @@ class WrappedEncoder(nn.Module):
 class WrappedDecoder(nn.Module):
     def __init__(self, dim: int, depth: int):
         super().__init__()
-        self.decoder = BasicLayer(dim=dim, depth=depth)
+        self.decoder = BasicLayer(dim=dim, depth=depth, num_heads=8, window_size=5, quant_size=4)
         self.transpose_conv = nn.ConvTranspose3d(
             in_channels=dim, out_channels=dim // 2, kernel_size=2
         )
@@ -122,6 +122,37 @@ class UNet(nn.Module):
         self.decoder3 = WrappedDecoder(dim=2 * 96, depth=2)
         self.decoder4 = WrappedDecoder(dim=96, depth=2)
 
+
+    def forward(self, x):
+        # TODO residual connections
+        x, residual1 = self.encoder1(x)
+        x, residual2 = self.encoder2(x)
+        x, residual3 = self.encoder3(x)
+        x, residual4 = self.encoder4(x)
+
+        x = self.decoder1(x, residual4)
+        x = self.decoder2(x, residual3)
+        x = self.decoder3(x, residual2)
+        x = self.decoder4(x, residual1)
+
+        return x
+
+        # x1 = self.encoder1(x)
+        # x1 = self.downsampling1(x1)
+        # x2 = self.encoder2(x1)
+        # x2 = self.downsampling2(x2)
+        # x3 = self.encoder3(x2)
+        # x3 = self.downsampling3(x3)
+        # x4 = self.encoder4(x3)
+
+        # y1 = self.decoder1(x4)
+        # y1 = self.transpose_conv(y1)
+        # y2 = self.decoder2(y1)
+        # y2 = self.transpose_conv(y2)
+        # y3 = self.decoder3(y2)
+        # y3 = self.transpose_conv(y3)
+        # y4 = self.decoder4(y3)
+        
         # self.encoder1 = BasicLayer(dim=96, depth=2)
         # self.downsampling1 = Downsampling(in_channels=96, out_channels=2 * 96)
         # self.encoder2 = BasicLayer(dim=2 * 96, depth=2)
@@ -143,33 +174,3 @@ class UNet(nn.Module):
         #     in_channels=2 * 96, out_channels=96, kernel_size=2
         # )
         # self.decoder4 = BasicLayer(dim=96, depth=2)
-
-    def forward(self, x):
-        # TODO residual connections
-        x, residual1 = self.encoder1(x)
-        x, residual2 = self.encoder2(x)
-        x, residual3 = self.encoder3(x)
-        x, residual4 = self.encoder4(x)
-
-        x = self.decoder1(x, residual4)
-        x = self.decoder2(x, residual3)
-        x = self.decoder3(x, residual2)
-        x = self.decoder4(x, residual1)
-
-        # x1 = self.encoder1(x)
-        # x1 = self.downsampling1(x1)
-        # x2 = self.encoder2(x1)
-        # x2 = self.downsampling2(x2)
-        # x3 = self.encoder3(x2)
-        # x3 = self.downsampling3(x3)
-        # x4 = self.encoder4(x3)
-
-        # y1 = self.decoder1(x4)
-        # y1 = self.transpose_conv(y1)
-        # y2 = self.decoder2(y1)
-        # y2 = self.transpose_conv(y2)
-        # y3 = self.decoder3(y2)
-        # y3 = self.transpose_conv(y3)
-        # y4 = self.decoder4(y3)
-        return x
-

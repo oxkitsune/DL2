@@ -2,22 +2,28 @@ from pathlib import Path
 from typing import Optional, TypeVar
 
 import wandb
+import sys
+import os
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+
 
 from src.data import DataLoader, get_paths
 from src.models import UNet
 from src.training import train
 
 # start a new wandb run to track this script
-wandb.init(
-    # set the wandb project where this run will be logged
-    project="dl2",
-    # track hyperparameters and run metadata
-    config={
-        "learning_rate": 1e-03,
-        "architecture": "Unet",
-        "epochs": 1,
-    },
-)
+# wandb.init(
+#     # set the wandb project where this run will be logged
+#     project="dl2",
+#     # track hyperparameters and run metadata
+#     config={
+#         "learning_rate": 1e-03,
+#         "architecture": "Unet",
+#         "epochs": 1,
+#     },
+# )
 
 T = TypeVar("T")
 
@@ -39,7 +45,7 @@ def run():
     data_loader_train.set_mode("training_model")
     model = UNet()
 
-    train(model, data_loader_train, logger=wandb, epochs=1)
+    train(model, data_loader_train, logger=None, epochs=1)
 
 
 if __name__ == "__main__":

@@ -1,4 +1,4 @@
 module load 2021
-module load PyTorch/1.11.0-foss-2021a-CUDA-11.3.1
-. ~/.venv/bin/activate
-
+module load CUDA/11.3.1
+module load OpenBLAS/0.3.15-GCC-10.3.0
+source ~/.venv/bin/activate
