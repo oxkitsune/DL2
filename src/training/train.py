@@ -5,6 +5,9 @@ from tqdm import tqdm
 
 from src.data import DataLoader
 
+import MinkowskiEngine as ME
+from MinkowskiEngine import SparseTensor
+
 
 def weights_init(m):
     if isinstance(m, nn.Conv3d):
@@ -38,9 +41,12 @@ def train(
             target = batch.get_target()
             target = torch.Tensor(target).transpose(1, 4).to(device)
 
+            coords_sp = batch.get_coords_sp()  # this should return a MinkowskiEngine SparseTensor
+            coords_sp = coords_sp.to(device)
+            
             optimizer.zero_grad()
 
-            output = model(input)
+            output = model(input, coords_sp)
             loss = loss_func(output, target)
             logger.log({"loss": loss})
 
