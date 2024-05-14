@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -22,7 +23,7 @@ def train(
 ):
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
-    loss_func = nn.L1Loss() # MAE
+    loss_func = nn.L1Loss()  # MAE
     optimizer = optim.Adam(model.parameters(), lr=1e-03)
 
     model.apply(weights_init)
@@ -32,8 +33,8 @@ def train(
         model.train()
 
         for batch in tqdm(data_loader.get_batches(), total=len(data_loader)):
-            features = batch.get_all_features(ptv_index=ptv_index)
-            input = torch.Tensor(features).transpose(1, 4).to(device)
+            augmented_features = batch.get_augmented_features(ptv_index=ptv_index)
+            input = torch.Tensor(augmented_features).transpose(1, 4).to(device)
 
             target = batch.get_target()
             target = torch.Tensor(target).transpose(1, 4).to(device)
@@ -46,6 +47,8 @@ def train(
 
             loss.backward()
             optimizer.step()
+
+            break
 
         model.eval()
         with torch.no_grad():

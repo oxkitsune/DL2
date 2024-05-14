@@ -2,9 +2,8 @@ from pathlib import Path
 from typing import Optional, TypeVar
 
 import wandb
-
 from src.data import DataLoader, get_paths
-from src.models import UNet
+from src.models import ConvNet
 from src.training import train
 
 # start a new wandb run to track this script
@@ -37,7 +36,7 @@ def run():
     data_loader_train = DataLoader(training_plan_paths)
 
     data_loader_train.set_mode("training_model")
-    model = UNet()
+    model = ConvNet(num_input_channels=9)
 
     train(model, data_loader_train, logger=wandb, epochs=1)
 

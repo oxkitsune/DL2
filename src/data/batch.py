@@ -1,9 +1,13 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Optional, Any
+from typing import Any, Optional
 
 import numpy as np
+import torch
+import torchvision.transforms as T
+
+from src.data.augmentation import Transform3D
 
 
 class DataBatch:
@@ -86,6 +90,11 @@ class DataBatch:
         ptv_channel = self.structure_masks[:, :, :, :, ptv_index, np.newaxis]
 
         return np.concatenate((ct_channel, oar_channels, ptv_channel), axis=-1)
+
+    def get_augmented_features(self, ptv_index: int) -> Any:
+        feat = self.get_all_features(ptv_index)
+        transform = Transform3D(seed=42)
+        return transform(feat)
 
     def get_target(self) -> Any:
         if self.dose is None:
