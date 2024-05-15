@@ -89,7 +89,7 @@ class DataBatch:
         return np.concatenate((ct_channel, oar_channels, ptv_channel), axis=-1)
 
     def get_augmented_features(self, ptv_index: int) -> Any:
-        feat = self.get_all_features(ptv_index)
+        feat = self.get_augmented_features(ptv_index)
         transform = Transform3D(seed=42)
         return transform(feat)
 
