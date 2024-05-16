@@ -23,8 +23,7 @@ wandb.init(
 PREDICTION_DIR = Path("results")
 # Original paper
 # EPOCHS = 200
-# EPOCHS = 25
-EPOCHS = 1
+EPOCHS = 25
 
 def run():
     primary_directory = Path().resolve()
