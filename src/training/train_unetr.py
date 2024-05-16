@@ -50,6 +50,8 @@ def save_model_checkpoint_for_epoch(model, epoch):
     # ensure checkpoints directory exists
     os.makedirs(".checkpoints", exist_ok=True)
 
+    chpt_path = f".checkpoints/model_checkpoint_epoch_{epoch}.pt"
+
     # save model checkpoint
-    torch.save(model.state_dict(), f"checkpoints/model_checkpoint_epoch_{epoch}.pt")
-    wandb.save(f".checkpoints/model_checkpoint_epoch_{epoch}.pt")
+    torch.save(model.state_dict(), chpt_path)
+    wandb.save(chpt_path)
