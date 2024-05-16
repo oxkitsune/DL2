@@ -90,7 +90,9 @@ def run():
     data_loader_validation.set_mode("training_model")
 
     model = UNETR(input_dim=3, output_dim=1)
-    train_unetr(data_loader_train, model, args.epochs)
+    train_unetr(
+        data_loader_train, model, args.epochs, data_loader_validation, PREDICTION_DIR
+    )
 
 
 if __name__ == "__main__":
