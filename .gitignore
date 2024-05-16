@@ -13,3 +13,5 @@ __pycache__/
 .history/
 wandb/
 .venv/
+
+.checkpoints/

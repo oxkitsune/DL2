@@ -38,11 +38,11 @@ def run():
 
     data_loader_train.set_mode("training_model")
     model = UNETR()
-    
+
     ptv_index = 7
     model = UNETR(input_dim=3, output_dim=1)
-    # epochs = 20_000 # original paper
-    epochs = 5
+    # epochs = 200 # original paper
+    epochs = 25
     train_unetr(data_loader_train, model, epochs, ptv_index)
 
 
