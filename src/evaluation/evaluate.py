@@ -18,32 +18,41 @@ def evaluate(model: nn.Module, data_loader: DataLoader, prediction_dir: Path):
     dvh_score, dose_score = dose_evaluator.get_scores()
     return dvh_score, dose_score
 
+
 def sparse_vector_function(x, indices=None) -> dict[str, NDArray]:
     """Convert a tensor into a dictionary of the non-zero values and their corresponding indices
     :param x: the tensor or, if indices is not None, the values that belong at each index
     :param indices: the raveled indices of the tensor
-    :return:  sparse vector in the form of a dictionary
+    :return:  a tuple of the non-zero values and their corresponding indices
     """
     if indices is None:
-        y = {"data": x[x > 0], "indices": np.nonzero(x.flatten())[-1]}
+        flat = x.flatten()
+        return flat[flat > 0], np.nonzero(flat > 0)[-1]
     else:
-        y = {"data": x[x > 0], "indices": indices[x > 0]}
-    return y
+        return x[x > 0], indices[x > 0]
+
 
 def store_prediction(pred, batch):
     t = pred * batch.possible_dose_mask
     dose_pred = np.squeeze(t)
-    dose_to_save = sparse_vector_function(dose_pred)
-    dose_df = pd.DataFrame(data=dose_to_save["data"].squeeze(), index=dose_to_save["indices"].squeeze(), columns=["data"])
+    data, indices = sparse_vector_function(dose_pred)
+    dose_df = pd.DataFrame(
+        data=data.squeeze(),
+        index=indices.squeeze(),
+        columns=["data"],
+    )
     (patient_id,) = batch.patient_list
     dose_df.to_csv(f"results/{patient_id}.csv")
+
 
 def predict(model: nn.Module, data_loader: DataLoader):
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
     model = model.to(device)
     model.eval()
 
-    for batch in tqdm(data_loader.get_batches(), total=len(data_loader)):
+    for batch in tqdm(
+        data_loader.get_batches(), total=len(data_loader), leave=False, desc="Eval"
+    ):
         features = batch.get_flattend_oar_features()
         input = torch.Tensor(features).transpose(1, 4).to(device)
 
@@ -53,10 +62,15 @@ def predict(model: nn.Module, data_loader: DataLoader):
         pred = model(input)
         store_prediction(pred.transpose(1, 4).detach().cpu().numpy(), batch)
 
+
 class DoseEvaluator:
     """Evaluate a full dose distribution against the reference dose on the OpenKBP competition metrics"""
 
-    def __init__(self, reference_data_loader: DataLoader, prediction_loader: Optional[DataLoader] = None):
+    def __init__(
+        self,
+        reference_data_loader: DataLoader,
+        prediction_loader: Optional[DataLoader] = None,
+    ):
         self.reference_data_loader = reference_data_loader
         self.prediction_loader = prediction_loader
 
@@ -65,37 +79,64 @@ class DoseEvaluator:
         self.prediction_batch: Optional[DataBatch] = None
 
         # Define evaluation metrics for each roi
-        oar_dvh_metrics = {oar: ["D_0.1_cc", "mean"] for oar in self.reference_data_loader.rois["oars"]}
-        target_dvh_metrics = {target: ["D_99", "D_95", "D_1"] for target in self.reference_data_loader.rois["targets"]}
+        oar_dvh_metrics = {
+            oar: ["D_0.1_cc", "mean"] for oar in self.reference_data_loader.rois["oars"]
+        }
+        target_dvh_metrics = {
+            target: ["D_99", "D_95", "D_1"]
+            for target in self.reference_data_loader.rois["targets"]
+        }
         self.all_dvh_metrics = oar_dvh_metrics | target_dvh_metrics
 
         # Make data frames to cache evaluation metrics
-        metric_columns = [(m, roi) for roi, metrics in self.all_dvh_metrics.items() for m in metrics]
-        self.dose_errors = pd.Series(index=self.reference_data_loader.patient_id_list, data=None, dtype=float)
-        self.dvh_metric_differences_df = pd.DataFrame(index=self.reference_data_loader.patient_id_list, columns=metric_columns)
+        metric_columns = [
+            (m, roi) for roi, metrics in self.all_dvh_metrics.items() for m in metrics
+        ]
+        self.dose_errors = pd.Series(
+            index=self.reference_data_loader.patient_id_list, data=None, dtype=float
+        )
+        self.dvh_metric_differences_df = pd.DataFrame(
+            index=self.reference_data_loader.patient_id_list, columns=metric_columns
+        )
         self.reference_dvh_metrics_df = self.dvh_metric_differences_df.copy()
         self.prediction_dvh_metrics_df = self.dvh_metric_differences_df.copy()
 
     def evaluate(self):
         """Calculate the  dose and DVH scores for the "new_dose" relative to the "reference_dose"""
         if not self.reference_data_loader.patient_paths:
-            raise ValueError("No reference patient data was provided, so no metrics can be calculated")
+            raise ValueError(
+                "No reference patient data was provided, so no metrics can be calculated"
+            )
         if self.prediction_loader:
-            Warning("No predicted dose loader was provided. Metrics were only calculated for the reference dose.")
+            Warning(
+                "No predicted dose loader was provided. Metrics were only calculated for the reference dose."
+            )
         self._set_data_loader_mode()
 
         for self.reference_batch in self.reference_data_loader.get_batches():
-            self.reference_dvh_metrics_df = self._calculate_dvh_metrics(self.reference_dvh_metrics_df, self.reference_dose)
+            self.reference_dvh_metrics_df = self._calculate_dvh_metrics(
+                self.reference_dvh_metrics_df, self.reference_dose
+            )
 
-            self.prediction_batch = self.prediction_loader.get_patients([self.patient_id]) if self.prediction_loader else None
+            self.prediction_batch = (
+                self.prediction_loader.get_patients([self.patient_id])
+                if self.prediction_loader
+                else None
+            )
             if self.predicted_dose is not None:
-                patient_dose_error = np.sum(np.abs(self.reference_dose - self.predicted_dose)) / np.sum(self.possible_dose_mask)
+                patient_dose_error = np.sum(
+                    np.abs(self.reference_dose - self.predicted_dose)
+                ) / np.sum(self.possible_dose_mask)
                 self.dose_errors[self.patient_id] = patient_dose_error
-                self.prediction_dvh_metrics_df = self._calculate_dvh_metrics(self.prediction_dvh_metrics_df, self.predicted_dose)
+                self.prediction_dvh_metrics_df = self._calculate_dvh_metrics(
+                    self.prediction_dvh_metrics_df, self.predicted_dose
+                )
 
     def get_scores(self) -> tuple[NDArray, NDArray]:
         dose_score = np.nanmean(self.dose_errors)
-        dvh_errors = np.abs(self.reference_dvh_metrics_df - self.prediction_dvh_metrics_df)
+        dvh_errors = np.abs(
+            self.reference_dvh_metrics_df - self.prediction_dvh_metrics_df
+        )
         dvh_score = np.nanmean(dvh_errors.values)
         return dose_score, dvh_score
 
@@ -104,7 +145,9 @@ class DoseEvaluator:
         if self.prediction_loader:
             self.prediction_loader.set_mode("predicted_dose")
 
-    def _calculate_dvh_metrics(self, metric_df: pd.DataFrame, dose: NDArray) -> pd.DataFrame:
+    def _calculate_dvh_metrics(
+        self, metric_df: pd.DataFrame, dose: NDArray
+    ) -> pd.DataFrame:
         """
         Calculate the DVH values that were used to evaluate submissions in the competition.
         :param metric_df: A DataFrame with columns indexed by the metric name and the structure name
@@ -120,8 +163,12 @@ class DoseEvaluator:
             for metric in self.all_dvh_metrics[roi]:
                 if metric == "D_0.1_cc":
                     roi_size = len(roi_dose)
-                    fractional_volume_to_evaluate = 100 - voxels_within_tenths_cc / roi_size * 100
-                    metric_value = np.percentile(roi_dose, fractional_volume_to_evaluate)
+                    fractional_volume_to_evaluate = (
+                        100 - voxels_within_tenths_cc / roi_size * 100
+                    )
+                    metric_value = np.percentile(
+                        roi_dose, fractional_volume_to_evaluate
+                    )
                 elif metric == "mean":
                     metric_value = roi_dose.mean()
                 elif metric == "D_99":
@@ -144,7 +191,11 @@ class DoseEvaluator:
 
     @property
     def patient_id(self) -> str:
-        patient_id, *_ = self.reference_batch.patient_list if self.reference_batch.patient_list else [None]
+        patient_id, *_ = (
+            self.reference_batch.patient_list
+            if self.reference_batch.patient_list
+            else [None]
+        )
         return patient_id
 
     @property
