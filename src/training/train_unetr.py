@@ -3,7 +3,7 @@ from tqdm import tqdm
 import wandb
 import os
 
-from evaluation import evaluate
+from src.evaluation import evaluate
 
 
 def train_unetr(data_loader, model, epochs, data_loader_validation, PREDICTION_DIR):
