@@ -38,5 +38,5 @@ def train_unetr(data_loader, model, epochs, ptv_index):
             total_loss += loss.item()
 
         trange.write(
-            f"Model loss at epoch {epoch} is {(total_loss.item() / len(data_loader)):.3f}"
+            f"Model loss at epoch {epoch} is {(total_loss / len(data_loader)):.3f}"
         )
