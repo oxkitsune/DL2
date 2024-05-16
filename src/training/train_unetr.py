@@ -37,12 +37,12 @@ def train_unetr(data_loader, model, epochs, ptv_index):
             loss = criterion(outputs, target)
             loss.backward()
             optimizer.step()
-            wandb.log({"loss": loss.item()})
+            wandb.log({"loss_per_batch": loss.item()})
             total_loss += loss.item()
 
-        trange.write(
-            f"Model loss at epoch {epoch} is {(total_loss / len(data_loader)):.3f}"
-        )
+        loss_for_epoch = total_loss / len(data_loader)
+        trange.write(f"Model loss at epoch {epoch} is {loss_for_epoch:.3f}")
+        wandb.log({"mean_loss_per_epoch": loss_for_epoch})
         save_model_checkpoint_for_epoch(model, epoch)
 
 
