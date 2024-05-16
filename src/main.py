@@ -4,8 +4,8 @@ from typing import Optional, TypeVar
 import wandb
 
 from src.data import DataLoader, get_paths
-from src.models import UNet
-from src.training import train
+from src.models import UNETR
+from src.training import train_unetr
 
 # start a new wandb run to track this script
 wandb.init(
@@ -13,8 +13,8 @@ wandb.init(
     project="dl2",
     # track hyperparameters and run metadata
     config={
-        "learning_rate": 1e-03,
-        "architecture": "Unet",
+        "learning_rate": 1e-04,
+        "architecture": "Unetr",
         "epochs": 1,
     },
 )
@@ -37,9 +37,13 @@ def run():
     data_loader_train = DataLoader(training_plan_paths)
 
     data_loader_train.set_mode("training_model")
-    model = UNet()
+    model = UNETR()
 
-    train(model, data_loader_train, logger=wandb, epochs=1)
+    ptv_index = 7
+    model = UNETR(input_dim=3, output_dim=1)
+    # epochs = 200 # original paper
+    epochs = 25
+    train_unetr(data_loader_train, model, epochs, ptv_index)
 
 
 if __name__ == "__main__":

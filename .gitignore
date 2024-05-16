@@ -12,3 +12,6 @@ __pycache__/
 *.code-workspace
 .history/
 wandb/
+.venv/
+
+.checkpoints/

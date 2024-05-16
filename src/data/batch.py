@@ -69,8 +69,9 @@ class DataBatch:
         labeled_oar_channels = oar_channels * labels
         oar_channel = np.sum(labeled_oar_channels, axis=-1, keepdims=True)
 
-        # TODO: think what we want to do with this
-        ptv_channel = self.structure_masks[:, :, :, :, ptv_index, np.newaxis]
+        ptv_channels = self.structure_masks[:, :, :, :, 7:]
+        # According to the original paper, the PTV channel is normalized by 70
+        ptv_channel = np.max(ptv_channels, axis=-1, keepdims=True) / 70
 
         return np.concatenate((ct_channel, oar_channel, ptv_channel), axis=-1)
 
@@ -89,7 +90,7 @@ class DataBatch:
         return np.concatenate((ct_channel, oar_channels, ptv_channel), axis=-1)
 
     def get_augmented_features(self, ptv_index: int) -> Any:
-        feat = self.get_augmented_features(ptv_index)
+        feat = self.get_flattend_oar_features(ptv_index)
         transform = Transform3D(seed=42)
         return transform(feat)
 
