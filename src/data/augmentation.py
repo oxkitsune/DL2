@@ -23,7 +23,9 @@ class Transform3D(torch.nn.Module):
         # Apply random rotation.
         rotations = [0, 40, 80, 120, 160, 200, 240, 280, 320]
         rot = rotations[self.rng.integers(0, len(rotations))]
-        imgs = scipy.ndimage.rotate(imgs, rot, axes=(1, 3), mode="nearest", order=0)
+        imgs = scipy.ndimage.rotate(
+            imgs, rot, axes=(1, 3), mode="nearest", order=0, reshape=False
+        )
         imgs = np.divide(imgs, np.max(imgs), out=np.zeros_like(imgs), where=imgs != 0)
 
         return imgs
