@@ -1,5 +1,7 @@
 import torch
 from tqdm import tqdm
+import wandb
+import os
 
 
 def train_unetr(data_loader, model, epochs, ptv_index):
@@ -35,8 +37,19 @@ def train_unetr(data_loader, model, epochs, ptv_index):
             loss = criterion(outputs, target)
             loss.backward()
             optimizer.step()
+            wandb.log({"loss": loss.item()})
             total_loss += loss.item()
 
         trange.write(
             f"Model loss at epoch {epoch} is {(total_loss / len(data_loader)):.3f}"
         )
+        save_model_checkpoint_for_epoch(model, epoch)
+
+
+def save_model_checkpoint_for_epoch(model, epoch):
+    # ensure checkpoints directory exists
+    os.makedirs(".checkpoints", exist_ok=True)
+
+    # save model checkpoint
+    torch.save(model.state_dict(), f"checkpoints/model_checkpoint_epoch_{epoch}.pt")
+    wandb.save(f".checkpoints/model_checkpoint_epoch_{epoch}.pt")
