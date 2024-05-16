@@ -18,7 +18,7 @@ def weights_init(m):
 
 
 def train(
-    model: nn.Module, data_loader: DataLoader, epochs: int, logger, ptv_index: int = 7
+    model: nn.Module, data_loader: DataLoader, epochs: int, logger
 ):
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
@@ -32,7 +32,7 @@ def train(
         model.train()
 
         for batch in tqdm(data_loader.get_batches(), total=len(data_loader)):
-            features = batch.get_all_features(ptv_index=ptv_index)
+            features = batch.get_augmented_features()
             input = torch.Tensor(features).transpose(1, 4).to(device)
 
             target = batch.get_target()

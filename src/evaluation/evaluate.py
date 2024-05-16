@@ -1,36 +1,57 @@
 from typing import Optional
-
 import numpy as np
 import pandas as pd
 import torch
 import torch.nn as nn
-from src.data import DataLoader
+from src.data import DataLoader, DataBatch, get_paths
 from numpy.typing import NDArray
+from tqdm import tqdm
+from pathlib import Path
 
-def predict(
-    model: nn.Module, data_loader: DataLoader, epochs: int, logger, ptv_index: int = 7
-):
+
+def evaluate(model: nn.Module, data_loader: DataLoader, prediction_dir: Path):
+    predict(model, data_loader)
+    prediction_paths = get_paths(prediction_dir, extension="csv")
+    prediction_loader = DataLoader(prediction_paths)
+    dose_evaluator = DoseEvaluator(data_loader, prediction_loader)
+    dose_evaluator.evaluate()
+    dvh_score, dose_score = dose_evaluator.get_scores()
+    return dvh_score, dose_score
+
+def sparse_vector_function(x, indices=None) -> dict[str, NDArray]:
+    """Convert a tensor into a dictionary of the non-zero values and their corresponding indices
+    :param x: the tensor or, if indices is not None, the values that belong at each index
+    :param indices: the raveled indices of the tensor
+    :return:  sparse vector in the form of a dictionary
+    """
+    if indices is None:
+        y = {"data": x[x > 0], "indices": np.nonzero(x.flatten())[-1]}
+    else:
+        y = {"data": x[x > 0], "indices": indices[x > 0]}
+    return y
+
+def store_prediction(pred, batch):
+    t = pred * batch.possible_dose_mask
+    dose_pred = np.squeeze(t)
+    dose_to_save = sparse_vector_function(dose_pred)
+    dose_df = pd.DataFrame(data=dose_to_save["data"].squeeze(), index=dose_to_save["indices"].squeeze(), columns=["data"])
+    (patient_id,) = batch.patient_list
+    dose_df.to_csv(f"results/{patient_id}.csv")
+
+def predict(model: nn.Module, data_loader: DataLoader):
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
     model = model.to(device)
+    model.eval()
 
-    for _ in range(epochs):
-        model.eval()
+    for batch in tqdm(data_loader.get_batches(), total=len(data_loader)):
+        features = batch.get_flattend_oar_features()
+        input = torch.Tensor(features).transpose(1, 4).to(device)
 
-        for batch in tqdm(data_loader.get_batches(), total=len(data_loader)):
-            features = batch.get_all_features(ptv_index=ptv_index)
-            input = torch.Tensor(features).transpose(1, 4).to(device)
+        target = batch.get_target()
+        target = torch.Tensor(target).transpose(1, 4).to(device)
 
-            target = batch.get_target()
-            target = torch.Tensor(target).transpose(1, 4).to(device)
-
-            output = model(input)
-            # logger.log({"loss": loss})
-
-
-        model.eval()
-        with torch.no_grad():
-            pass
-            # Do evaluation
+        pred = model(input)
+        store_prediction(pred.transpose(1, 4).detach().cpu().numpy(), batch)
 
 class DoseEvaluator:
     """Evaluate a full dose distribution against the reference dose on the OpenKBP competition metrics"""
