@@ -27,7 +27,7 @@ def train_unetr(data_loader, model, epochs, ptv_index):
         total_loss = 0
 
         for batch in subtrange:
-            features = batch.get_augmented_features(ptv_index=ptv_index)
+            features = batch.get_flattend_oar_features(ptv_index=ptv_index)
             input = torch.Tensor(features).transpose(1, 4).to(device)
             target = batch.dose
             target = torch.Tensor(target).transpose(1, 4).to(device)
