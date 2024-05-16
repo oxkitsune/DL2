@@ -18,7 +18,11 @@ def train_unetr(data_loader, model, epochs, ptv_index):
     for epoch in trange:
         data_loader.shuffle_data()
 
-        subtrange = tqdm(data_loader.get_batches(), desc="Train", leave=False)
+        subtrange = tqdm(
+            data_loader.get_batches(), desc="Train", leave=False, total=len(data_loader)
+        )
+
+        total_loss = 0
 
         for batch in subtrange:
             features = batch.get_flattend_oar_features(ptv_index=ptv_index)
@@ -31,5 +35,6 @@ def train_unetr(data_loader, model, epochs, ptv_index):
             loss = criterion(outputs, target)
             loss.backward()
             optimizer.step()
+            total_loss += loss.item()
 
-            trange.write(f"Model loss at epoch {epoch} is {loss.item():.3f}")
+        trange.write(f"Model loss at epoch {epoch} is {loss.item():.3f}")

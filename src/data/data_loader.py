@@ -61,7 +61,7 @@ class DataLoader:
         batches = windowed(self.patient_paths, n=self.batch_size, step=self.batch_size)
         complete_batches = (list(batch) for batch in batches if None not in batch)
 
-        for batch_paths in tqdm(complete_batches):
+        for batch_paths in complete_batches:
             batch_paths = cast(list[Path], batch_paths)
             yield self.prepare_data(batch_paths)
 
