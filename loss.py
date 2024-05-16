@@ -36,32 +36,32 @@ class RMSELoss(nn.Module):
 
 class SigmoidDVHLoss(nn.Module):
     """ DVH Loss """
-    def __init__(self, thresholds, ptv_values, beta=0.1):
+    def __init__(self, beta=0.1):
         super(SigmoidDVHLoss, self).__init__()
         self.sigmoid = nn.Sigmoid()
         self.beta = beta # histogram bin width
-        self.thresholds = thresholds
-        self.ptv_values = ptv_values
+        # self.thresholds = thresholds
+        # self.ptv_values = ptv_values
     
-    def structure_dvh(self, dose_batch, OAR_mask_batch, PTV_mask_batch):
+    def structure_dvh(self, dose_batch, PTV_mask_batch, ptv_values):
         batch_size = dose_batch.size(0)
         dvh_list = []
 
         for batch_index in range(batch_size):
             dose = dose_batch[batch_index]
-            OAR_mask = OAR_mask_batch[batch_index]
+            # OAR_mask = OAR_mask_batch[batch_index]
             PTV_mask = PTV_mask_batch[batch_index]
             dvh = torch.Tensor()
 
-            for structure in OAR_mask[OAR_mask != 0].unique():
-                threshold = self.thresholds[int(structure.item() - 1)]
-                structure_mask = OAR_mask == structure
-                dvh_pred_thresholded = dose - threshold
-                structure_loss = (self.sigmoid(dvh_pred_thresholded / self.beta) * structure_mask) / structure_mask.sum()
-                dvh = torch.cat((dvh, structure_loss), dim=0)
+            # for structure in OAR_mask[OAR_mask != 0].unique():
+            #     threshold = self.thresholds[int(structure.item() - 1)]
+            #     structure_mask = OAR_mask == structure
+            #     dvh_pred_thresholded = dose - threshold
+            #     structure_loss = (self.sigmoid(dvh_pred_thresholded / self.beta) * structure_mask) / structure_mask.sum()
+            #     dvh = torch.cat((dvh, structure_loss), dim=0)
 
             for PTV in PTV_mask[PTV_mask != 0].unique():
-                threshold = self.ptv_values[int(PTV.item() - 1)]
+                threshold = ptv_values[int(PTV.item() - 1)]
                 structure_mask = PTV_mask == PTV
                 dvh_pred_thresholded = dose - threshold
                 structure_loss = (self.sigmoid(dvh_pred_thresholded / self.beta) * structure_mask) / structure_mask.sum()
@@ -71,9 +71,9 @@ class SigmoidDVHLoss(nn.Module):
 
         return torch.stack(dvh_list)
     
-    def forward(self, dvh_pred, dvh_true, OAR_mask, PTV_mask):
-        dvh_pred = self.structure_dvh(dvh_pred, OAR_mask, PTV_mask)
-        dvh_true = self.structure_dvh(dvh_true, OAR_mask, PTV_mask)
+    def forward(self, dvh_pred, dvh_true, PTV_mask, ptv_values):
+        dvh_pred = self.structure_dvh(dvh_pred, PTV_mask, ptv_values)
+        dvh_true = self.structure_dvh(dvh_true, PTV_mask, ptv_values)
         
         loss = 0
         for pred, true in zip(dvh_pred, dvh_true):
@@ -81,13 +81,6 @@ class SigmoidDVHLoss(nn.Module):
 
         # TODO divide by 1/n(t)?     
         return loss/len(dvh_pred)
-    
-class MomentDVHLoss(nn.Module):
-    """ DVH Loss """
-    def __init__(self, thresholds, beta=0.1):
-        super(MomentDVHLoss, self).__init__()
-        self.beta = beta # histogram bin width
-        self.thresholds = thresholds
         
     
 class LambertLoss(nn.Module):
