@@ -26,9 +26,7 @@ def train_unetr(dataset, args):
 
     pbar = tqdm(range(args.epochs), desc="Training model")
     for epoch in pbar:
-        train_loss = train_single_epoch(
-            model, train_dataloader, optimizer, criterion, device
-        )
+        train_loss = train_single_epoch(model, train_dataloader, optimizer, criterion)
         dev_loss = 0
 
         pbar.write(
@@ -52,7 +50,7 @@ def train_unetr(dataset, args):
 #     return total_loss / len(data_loader)
 
 
-def train_single_epoch(model, data_loader, optimizer, criterion, device):
+def train_single_epoch(model, data_loader, optimizer, criterion):
     model.train()
     total_loss = 0
     pbar = tqdm(data_loader, desc="Train", leave=False)
@@ -61,8 +59,8 @@ def train_single_epoch(model, data_loader, optimizer, criterion, device):
 
         # ensure features/dose are in the correct shape
         # (batch_size, channels, height, width, depth)
-        features = torch.float(batch["features"], device=device).transpose(1, -1)
-        target = torch.float(batch["dose"], device=device).unsqueeze(1)
+        features = batch["features"].transpose(1, -1)
+        target = batch["dose"].unsqueeze(1)
 
         outputs = model(features)
 
