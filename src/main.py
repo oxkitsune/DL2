@@ -97,7 +97,7 @@ def run():
     args = get_args()
     setup_wandb(args)
 
-    dataset = load_dataset("oxkitsune/open-kbp", num_proc=8)
+    dataset = load_dataset("oxkitsune/open-kbp", num_proc=8, keep_in_memory=True)
 
     # apply transformations in numpy format, on cpu
     dataset = dataset.with_format("numpy").map(

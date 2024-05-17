@@ -61,8 +61,8 @@ def train_single_epoch(model, data_loader, optimizer, criterion, device):
 
         # ensure features/dose are in the correct shape
         # (batch_size, channels, height, width, depth)
-        features = torch.tensor(batch["features"], device=device).transpose(1, -1)
-        target = torch.tensor(batch["dose"], device=device).unsqueeze(1)
+        features = torch.float(batch["features"], device=device).transpose(1, -1)
+        target = torch.float(batch["dose"], device=device).unsqueeze(1)
 
         outputs = model(features)
 
