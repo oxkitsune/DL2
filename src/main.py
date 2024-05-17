@@ -69,6 +69,10 @@ def get_args():
 
 
 def setup_wandb(args):
+    resume_id = None
+    if args.resume_run:
+        resume_id = args.resume_run.split("/")[-1]
+
     # start a new wandb run to track this script
     wandb.init(
         # set the wandb project where this run will be logged
@@ -81,9 +85,9 @@ def setup_wandb(args):
         },
         # this repo contains the entire dataset and code, so let's not upload it
         save_code=False,
+        id=resume_id,
         # if this is a dry run, don't actually log anything
         mode="disabled" if args.dry_run else "online",
-        id=args.resume_run,
         resume=args.resume_run is not None,
     )
 
