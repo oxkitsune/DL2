@@ -115,7 +115,7 @@ def run():
     if args.resume_run:
         run = wandb.Api().run(args.resume_run)
         print(f"Loading model checkpoint {args.restore_checkpoint}")
-        run.file(args.restore_checkpoint).download(exist_ok=True)
+        run.file(args.restore_checkpoint).download(replace=True)
         checkpoint = torch.load(
             args.restore_checkpoint, weights_only=True, map_location=device
         )

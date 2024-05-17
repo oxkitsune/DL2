@@ -23,7 +23,10 @@ def train_unetr(data_loader, model, epochs, data_loader_validation, PREDICTION_D
         data_loader.shuffle_data()
 
         subtrange = tqdm(
-            data_loader.get_batches(), desc="Train", leave=False, total=len(data_loader)
+            data_loader.get_batches(),
+            desc="Train",
+            leave=False,
+            total=len(data_loader) // data_loader.batch_size,
         )
 
         total_loss = 0
@@ -56,6 +59,9 @@ def train_unetr(data_loader, model, epochs, data_loader_validation, PREDICTION_D
             }
         )
         trange.write(f"Train loss at epoch {epoch} is {loss_for_epoch:.3f}")
+        trange.write(f"Validation DVH score: {dvh_score:.3f}")
+        trange.write(f"Validation dose score: {dose_score:.3f}")
+        trange.write("=====================================")
 
 
 def save_model_checkpoint_for_epoch(model, epoch):
