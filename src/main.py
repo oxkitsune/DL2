@@ -97,7 +97,7 @@ def run():
     args = get_args()
     setup_wandb(args)
 
-    dataset = load_dataset("oxkitsune/open-kbp")
+    dataset = load_dataset("oxkitsune/open-kbp", num_proc=8)
 
     # apply transformations in numpy format, on cpu
     dataset = dataset.with_format("numpy").map(
@@ -105,7 +105,7 @@ def run():
         input_columns=["ct", "structure_masks"],
         # we remove these columns as they are combined into the 'features' column or irrelevant
         remove_columns=["ct", "structure_masks", "possible_dose_mask"],
-        writer_batch_size=100,
+        writer_batch_size=25,
     )
 
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
