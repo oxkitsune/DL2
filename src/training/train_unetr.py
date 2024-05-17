@@ -17,12 +17,8 @@ def train_unetr(dataset, args):
     criterion = torch.nn.L1Loss()
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
 
-    train_dataloader = DataLoader(
-        dataset["train"], batch_size=args.batch_size, shuffle=True
-    )
-    dev_data_loader = DataLoader(
-        dataset["validation"], batch_size=args.batch_size, shuffle=False
-    )
+    train_dataloader = DataLoader(dataset["train"], batch_size=args.batch_size)
+    dev_data_loader = DataLoader(dataset["validation"], batch_size=args.batch_size)
 
     pbar = tqdm(range(args.epochs), desc="Training model")
     for epoch in pbar:
