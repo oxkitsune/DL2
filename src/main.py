@@ -99,7 +99,9 @@ def run():
     args = get_args()
     setup_wandb(args)
 
-    dataset = load_dataset("oxkitsune/open-kbp", num_proc=8)
+    num_proc = torch.multiprocessing.cpu_count()
+
+    dataset = load_dataset("oxkitsune/open-kbp", num_proc=num_proc)
 
     # apply transformations in numpy format, on cpu
     dataset = (
@@ -110,7 +112,7 @@ def run():
             # we remove these columns as they are combined into the 'features' column or irrelevant
             remove_columns=["ct", "structure_masks", "possible_dose_mask"],
             writer_batch_size=25,
-            num_proc=8,
+            num_proc=num_proc,
         )
         # cast the features column to a 4D array, to make converting to torch 100x faster
         .cast_column("features", Array4D((128, 128, 128, 3), dtype="float32"))
