@@ -70,9 +70,10 @@ class DataBatch:
         labeled_oar_channels = oar_channels * labels
         oar_channel = np.sum(labeled_oar_channels, axis=-1, keepdims=True)
 
-        ptv_channels = self.structure_masks[:, :, :, :, 7:]
         # According to the original paper, the PTV channel is normalized by 70
-        ptv_channel = np.max(ptv_channels, axis=-1, keepdims=True) / 70
+        ptv_channels = self.structure_masks[:, :, :, :, 7:]
+        labels = np.array([56, 63, 70])
+        ptv_channel = np.max(ptv_channels*labels, axis=-1, keepdims=True) / 70
 
         return np.concatenate((ct_channel, oar_channel, ptv_channel), axis=-1)
 
@@ -85,9 +86,12 @@ class DataBatch:
 
         ct_channel = self.ct
         oar_channels = self.structure_masks[:, :, :, :, :7]
+
         ptv_channels = self.structure_masks[:, :, :, :, 7:]
+
         # According to the original paper, the PTV channel is normalized by 70
-        ptv_channel = np.max(ptv_channels, axis=-1, keepdims=True) / 70
+        labels = np.array([56, 63, 70])
+        ptv_channel = np.max(ptv_channels * labels, axis=-1, keepdims=True) / 70
 
         return np.concatenate((ct_channel, oar_channels, ptv_channel), axis=-1)
 
