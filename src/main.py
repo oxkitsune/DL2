@@ -5,10 +5,10 @@ from typing import Optional, TypeVar
 
 import wandb
 
-from src.data import DataLoader, get_paths
 from src.models import UNETR
 from src.training import train_unetr
 from src.evaluation import evaluate
+from datasets import load_dataset
 
 import torch
 
@@ -94,20 +94,9 @@ def setup_wandb(args):
 
 def run():
     args = get_args()
-
     setup_wandb(args)
 
-    primary_directory = Path().resolve()
-    provided_data_dir = primary_directory / "data"
-    training_data_dir = provided_data_dir / "train-pats"
-    validation_data_dir = provided_data_dir / "validation-pats"
-    training_plan_paths = get_paths(training_data_dir)
-    validation_plan_paths = get_paths(validation_data_dir)
-    data_loader_train = DataLoader(training_plan_paths)
-    data_loader_validation = DataLoader(validation_plan_paths)
-
-    data_loader_train.set_mode("training_model")
-    data_loader_validation.set_mode("training_model")
+    dataset = load_dataset("oxkitsune/open-kbp")
 
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
@@ -121,9 +110,9 @@ def run():
         )
         model.load_state_dict(checkpoint)
 
-    train_unetr(
-        data_loader_train, model, args.epochs, data_loader_validation, PREDICTION_DIR
-    )
+    # train_unetr(
+    #     data_loader_train, model, args.epochs, data_loader_validation, PREDICTION_DIR
+    # )
 
 
 if __name__ == "__main__":

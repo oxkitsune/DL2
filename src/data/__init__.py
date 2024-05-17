@@ -1,3 +1,1 @@
-from src.data.batch import DataBatch
-from src.data.data_loader import DataLoader
-from src.data.utils import get_paths
+from data.loader.batch import DataBatch
