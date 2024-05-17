@@ -7,7 +7,7 @@ from src.data import transform_data
 from src.models import UNETR
 
 from src.training import train_unetr
-from datasets import load_dataset
+from datasets import load_dataset, Array4D
 
 import torch
 
@@ -100,13 +100,18 @@ def run():
     dataset = load_dataset("oxkitsune/open-kbp", num_proc=8)
 
     # apply transformations in numpy format, on cpu
-    dataset = dataset.with_format("numpy").map(
-        transform_data,
-        input_columns=["ct", "structure_masks"],
-        # we remove these columns as they are combined into the 'features' column or irrelevant
-        remove_columns=["ct", "structure_masks", "possible_dose_mask"],
-        writer_batch_size=25,
-        num_proc=8,
+    dataset = (
+        dataset.with_format("numpy")
+        .map(
+            transform_data,
+            input_columns=["ct", "structure_masks"],
+            # we remove these columns as they are combined into the 'features' column or irrelevant
+            remove_columns=["ct", "structure_masks", "possible_dose_mask"],
+            writer_batch_size=25,
+            num_proc=8,
+        )
+        # cast the features column to a 4D array, to make converting to torch 100x faster
+        .cast_column("features", Array4D((128, 128, 128, 3), dtype="float32"))
     )
 
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
