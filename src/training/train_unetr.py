@@ -63,7 +63,7 @@ def save_model_checkpoint_for_epoch(model, epoch):
     # ensure checkpoints directory exists
     os.makedirs(".checkpoints", exist_ok=True)
 
-    chpt_path = f".checkpoints/model_checkpoint_epoch_{epoch}.pt"
+    chpt_path = f".checkpoints/model_checkpoint_epoch.pt"
 
     # save model checkpoint
     torch.save(model.state_dict(), chpt_path)
