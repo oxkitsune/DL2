@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Optional, Any
+from typing import Any, Optional
+
+import numpy as np
 
 from src.data.augmentation import Transform3D
-import numpy as np
 
 
 class DataBatch:
@@ -49,7 +50,7 @@ class DataBatch:
 
         return self.structure_mask_names.index(structure_name)
 
-    def get_flattend_oar_features(self, ptv_index: int) -> Any:
+    def get_flattend_oar_features(self) -> Any:
         """
         Returns a CT channel containing the CT image, an OAR channel
         containing the labeled OARs and a PTV channel containing the
@@ -75,7 +76,7 @@ class DataBatch:
 
         return np.concatenate((ct_channel, oar_channel, ptv_channel), axis=-1)
 
-    def get_all_features(self, ptv_index: int) -> Any:
+    def get_all_features(self) -> Any:
         if self.structure_masks is None:
             raise Exception("Structured masks data not in DataBatch")
 
@@ -84,13 +85,14 @@ class DataBatch:
 
         ct_channel = self.ct
         oar_channels = self.structure_masks[:, :, :, :, :7]
-        # TODO: think what we want to do with this
-        ptv_channel = self.structure_masks[:, :, :, :, ptv_index, np.newaxis]
+        ptv_channels = self.structure_masks[:, :, :, :, 7:]
+        # According to the original paper, the PTV channel is normalized by 70
+        ptv_channel = np.max(ptv_channels, axis=-1, keepdims=True) / 70
 
         return np.concatenate((ct_channel, oar_channels, ptv_channel), axis=-1)
 
-    def get_augmented_features(self, ptv_index: int) -> Any:
-        feat = self.get_flattend_oar_features(ptv_index)
+    def get_augmented_features(self) -> Any:
+        feat = self.get_flattend_oar_features()
         transform = Transform3D(seed=42)
         return transform(feat)
 
