@@ -235,7 +235,7 @@ class UNETR(nn.Module):
         output_dim=3,
         embed_dim=768,
         patch_size=16,
-        num_heads=3,
+        num_heads=12,
         dropout=0.1,
     ):
         super().__init__()
