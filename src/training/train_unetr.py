@@ -16,8 +16,6 @@ def train_unetr(data_loader, model, epochs, data_loader_validation, PREDICTION_D
 
     model.to(device)
     model.train()
-    dvh_score, dose_score = evaluate(model, data_loader_validation, PREDICTION_DIR)
-
     trange = tqdm(range(epochs), desc="Training model")
 
     for epoch in trange:
