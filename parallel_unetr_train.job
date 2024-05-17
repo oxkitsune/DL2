@@ -4,9 +4,10 @@
 #SBATCH -t 1:00:00
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
-#SBATCH --gpus=2
+#SBATCH --gpus=1
 #SBATCH --cpus-per-task=18
 #SBATCH --output=slurm_output_%A.out
+#SBATCH --error=slurm_error_%A.err
 
 
 module purge
@@ -25,4 +26,4 @@ python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 
-srun python -m src.main --parallel --epochs 200 --batch-size 4
+srun python -u -m src.main --epochs 200 --batch-size 4
