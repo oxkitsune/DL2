@@ -111,7 +111,7 @@ class DoseEvaluator:
             Warning(
                 "No predicted dose loader was provided. Metrics were only calculated for the reference dose."
             )
-        self._set_data_loader_mode()
+        # self._set_data_loader_mode()
 
         for self.reference_batch in self.reference_data_loader.get_batches():
             self.reference_dvh_metrics_df = self._calculate_dvh_metrics(
