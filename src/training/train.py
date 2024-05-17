@@ -3,8 +3,6 @@ import torch.nn as nn
 import torch.optim as optim
 from tqdm import tqdm
 
-from src.data import DataLoader
-
 
 def weights_init(m):
     if isinstance(m, nn.Conv3d):
@@ -17,9 +15,7 @@ def weights_init(m):
         )
 
 
-def train(
-    model: nn.Module, data_loader: DataLoader, epochs: int, logger
-):
+def train(model: nn.Module, data_loader: DataLoader, epochs: int, logger):
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
     loss_func = nn.L1Loss()  # MAE
