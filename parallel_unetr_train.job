@@ -18,11 +18,11 @@ module load Python/3.10.4-GCCcore-11.3.0
 mkdir -p "$TMPDIR/work"
 
 # copy dataset over
-rsync "$HOME/DL2" "$TMPDIR/work" --exclude .venv --exclude .git --exclude .checkpoints --exclude wandb
+rsync -vr "$HOME/DL2" "$TMPDIR/work" --exclude .venv --exclude .git --exclude .checkpoints --exclude wandb
 
 export HF_DATASETS_CACHE="$TMPDIR/data_cache"
 
-cd "$TMPDIR/work"
+cd "$TMPDIR/work/DL2"
 
 python -m venv .venv
 source .venv/bin/activate
