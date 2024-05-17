@@ -1,4 +1,5 @@
 #!/bin/bash
+#SBATCH --partition=gpu
 #SBATCH -J parallel_unetr_training
 #SBATCH -t 1:00:00
 #SBATCH --nodes=1
