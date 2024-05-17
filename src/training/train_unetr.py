@@ -8,10 +8,16 @@ from torch.utils.data import DataLoader
 
 
 def train_unetr(dataset, args):
-    device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+    device = (
+        torch.device("cuda:0") if torch.cuda.is_available() else torch.device("cpu")
+    )
     print(f"Using device {device}")
 
     model = UNETR(input_dim=3, output_dim=1).to(device)
+
+    if args.parallel:
+        model = torch.nn.DataParallel(model, output_device=device)
+
     criterion = torch.nn.L1Loss()
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
 

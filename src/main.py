@@ -65,6 +65,8 @@ def get_args():
         help="The path to a model checkpoint to restore",
     )
 
+    parser.add_argument("--parallel", action="store_true", help="Use multiple GPUs")
+
     return parser.parse_args()
 
 
