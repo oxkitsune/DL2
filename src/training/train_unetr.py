@@ -26,31 +26,33 @@ def train_unetr(dataset, args):
 
     pbar = tqdm(range(args.epochs), desc="Training model")
     for epoch in pbar:
-        train_loss = train_single_epoch(model, train_dataloader, optimizer, criterion)
-        dev_loss = evaluate(model, dev_data_loader, criterion)
+        train_loss = train_single_epoch(
+            model, train_dataloader, optimizer, criterion, device
+        )
+        dev_loss = 0
 
         pbar.write(
             f"[{epoch}/{args.epochs}] Train loss: {train_loss:.3f} Dev loss: {dev_loss:.3f}"
         )
 
 
-def evaluate(model, data_loader, criterion):
-    model.eval()
-    total_loss = 0
-    pbar = tqdm(data_loader, desc="Eval", leave=False)
-    for batch in pbar:
-        features = batch["features"].transpose(1, -1)
-        target = batch["dose"].unsqueeze(1)
+# def evaluate(model, data_loader, criterion, device):
+#     model.eval()
+#     total_loss = 0
+#     pbar = tqdm(data_loader, desc="Eval", leave=False)
+#     for batch in pbar:
+#         features = torch.tensor(batch["features"], device=device).transpose(1, -1)
+#         target = torch.tensor(batch["dose"], device=device).unsqueeze(1)
 
-        outputs = model(features)
+#         outputs = model(features)
 
-        loss = criterion(outputs, target)
-        total_loss += loss.item()
+#         loss = criterion(outputs, target)
+#         total_loss += loss.item()
 
-    return total_loss / len(data_loader)
+#     return total_loss / len(data_loader)
 
 
-def train_single_epoch(model, data_loader, optimizer, criterion):
+def train_single_epoch(model, data_loader, optimizer, criterion, device):
     model.train()
     total_loss = 0
     pbar = tqdm(data_loader, desc="Train", leave=False)
@@ -59,8 +61,8 @@ def train_single_epoch(model, data_loader, optimizer, criterion):
 
         # ensure features/dose are in the correct shape
         # (batch_size, channels, height, width, depth)
-        features = batch["features"].transpose(1, -1)
-        target = batch["dose"].unsqueeze(1)
+        features = torch.tensor(batch["features"], device=device).transpose(1, -1)
+        target = torch.tensor(batch["dose"], device=device).unsqueeze(1)
 
         outputs = model(features)
 

@@ -109,7 +109,7 @@ def run():
     )
 
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-    dataset = dataset.with_format("torch", columns=["features", "dose"], device=device)
+    dataset = dataset.with_format(columns=["features", "dose"])
 
     model = UNETR(input_dim=3, output_dim=1)
     if args.resume_run:
