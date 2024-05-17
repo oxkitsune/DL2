@@ -27,9 +27,7 @@ def train_unetr(dataset, args):
         e["dose"].shape,
     )
 
-    train_dataloader = DataLoader(
-        dataset["train"], batch_size=args.batch_size, num_workers=4
-    )
+    train_dataloader = DataLoader(dataset["train"], batch_size=args.batch_size)
     dev_data_loader = DataLoader(dataset["validation"], batch_size=args.batch_size)
 
     pbar = tqdm(range(args.epochs), desc="Training model")
