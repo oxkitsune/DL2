@@ -117,9 +117,6 @@ def run():
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
     dataset = dataset.with_format("torch", columns=["features", "dose"], device=device)
 
-    print(dataset)
-    print("features:", dataset["train"].features)
-
     model = UNETR(input_dim=3, output_dim=1)
     if args.resume_run:
         run = wandb.Api().run(args.resume_run)
