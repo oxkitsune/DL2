@@ -77,6 +77,7 @@ def setup_wandb(args):
 
     # start a new wandb run to track this script
     wandb.init(
+        entity="jkbkaiser1",
         # set the wandb project where this run will be logged
         project=args.project,
         # track hyperparameters and run metadata
@@ -99,7 +100,7 @@ def run():
     args = get_args()
     setup_wandb(args)
 
-    num_proc = torch.multiprocessing.cpu_count() // 2
+    num_proc = torch.multiprocessing.cpu_count() - 2
 
     dataset = load_dataset("oxkitsune/open-kbp", num_proc=num_proc)
 
