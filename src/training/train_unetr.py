@@ -16,7 +16,6 @@ def train_unetr(data_loader, model, epochs, data_loader_validation, PREDICTION_D
 
     model.to(device)
     model.train()
-
     trange = tqdm(range(epochs), desc="Training model")
 
     for epoch in trange:
@@ -24,7 +23,10 @@ def train_unetr(data_loader, model, epochs, data_loader_validation, PREDICTION_D
         data_loader.shuffle_data()
 
         subtrange = tqdm(
-            data_loader.get_batches(), desc="Train", leave=False, total=len(data_loader)
+            data_loader.get_batches(),
+            desc="Train",
+            leave=False,
+            total=len(data_loader) // data_loader.batch_size,
         )
 
         total_loss = 0
@@ -57,13 +59,16 @@ def train_unetr(data_loader, model, epochs, data_loader_validation, PREDICTION_D
             }
         )
         trange.write(f"Train loss at epoch {epoch} is {loss_for_epoch:.3f}")
+        trange.write(f"Validation DVH score: {dvh_score:.3f}")
+        trange.write(f"Validation dose score: {dose_score:.3f}")
+        trange.write("=====================================")
 
 
 def save_model_checkpoint_for_epoch(model, epoch):
     # ensure checkpoints directory exists
     os.makedirs(".checkpoints", exist_ok=True)
 
-    chpt_path = f".checkpoints/model_checkpoint_epoch_{epoch}.pt"
+    chpt_path = f".checkpoints/model_checkpoint_epoch.pt"
 
     # save model checkpoint
     torch.save(model.state_dict(), chpt_path)

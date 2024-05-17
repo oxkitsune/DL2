@@ -13,6 +13,7 @@ def evaluate(model: nn.Module, data_loader: DataLoader, prediction_dir: Path):
     predict(model, data_loader)
     prediction_paths = get_paths(prediction_dir, extension="csv")
     prediction_loader = DataLoader(prediction_paths)
+    prediction_loader.set_mode("predicted_dose")
     dose_evaluator = DoseEvaluator(data_loader, prediction_loader)
     dose_evaluator.evaluate()
     dvh_score, dose_score = dose_evaluator.get_scores()
@@ -111,7 +112,7 @@ class DoseEvaluator:
             Warning(
                 "No predicted dose loader was provided. Metrics were only calculated for the reference dose."
             )
-        self._set_data_loader_mode()
+        # self._set_data_loader_mode()
 
         for self.reference_batch in self.reference_data_loader.get_batches():
             self.reference_dvh_metrics_df = self._calculate_dvh_metrics(

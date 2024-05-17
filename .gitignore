@@ -3,6 +3,8 @@ pyrightconfig.json
 __pycache__/
 *.pyc
 
+.DS_Store
+
 # VS Code files for those working on multiple tools
 .vscode/*
 !.vscode/settings.json
