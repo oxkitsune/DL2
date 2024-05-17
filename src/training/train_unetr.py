@@ -17,7 +17,19 @@ def train_unetr(dataset, args):
     criterion = torch.nn.L1Loss()
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
 
-    train_dataloader = DataLoader(dataset["train"], batch_size=args.batch_size)
+    print("Moving data to device...")
+    e = dataset["train"][0]
+    print(
+        "types",
+        e["features"].dtype,
+        e["features"].shape,
+        e["dose"].dtype,
+        e["dose"].shape,
+    )
+
+    train_dataloader = DataLoader(
+        dataset["train"], batch_size=args.batch_size, num_workers=4
+    )
     dev_data_loader = DataLoader(dataset["validation"], batch_size=args.batch_size)
 
     pbar = tqdm(range(args.epochs), desc="Training model")
