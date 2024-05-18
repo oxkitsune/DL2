@@ -152,30 +152,32 @@ class LambertLoss(nn.Module):
 ##############################################
 
 class RadiotherapyLoss(nn.Module):
-    def __init__(self, thresholds, ptv_values, use_mae=True, use_dvh=True, use_lambert=True, alpha=0.5, beta=0.1, gamma=0.05, tau=0.1):
+    def __init__(self, thresholds, use_mae=True, use_dvh=True, use_moment=True, alpha=0.5, beta=0.1, gamma=0.05, tau=0.1):
         super(RadiotherapyLoss, self).__init__()
         self.use_mae = use_mae
         self.use_dvh = use_dvh
-        self.use_lambert = use_lambert
+        self.use_moment = use_moment
         self.alpha = alpha
         self.beta = beta
         self.gamma = gamma
         
         self.mae_loss = MAELoss()
-        self.dvh_loss = SigmoidDVHLoss(thresholds=thresholds, ptv_values=ptv_values, beta=beta)
-        self.lambert_loss = LambertLoss(beta=beta, tau=tau)
+        self.dvh_loss = SigmoidDVHLoss(thresholds=thresholds, beta=beta)
+        self.moment_loss = MomentDVHLoss()
         
-    def forward(self, output, target, dvh_pred, dvh_true, OAR_mask, PTV_mask, distances=None):
+    def forward(self, output, target, dvh_pred, dvh_true, OAR_mask, PTV_mask, ptv_values):
         loss = 0
+
+        structure_masks = torch.cat([OAR_mask, PTV_mask], dim=0)
         
         if self.use_mae:
             loss += self.alpha * self.mae_loss(output, target)
         
         if self.use_dvh:
-            loss += self.gamma * self.dvh_loss(dvh_pred, dvh_true, OAR_mask, PTV_mask)
+            loss += self.gamma * self.dvh_loss(dvh_pred, dvh_true, PTV_mask, ptv_values)
         
-        if self.use_lambert:
-            loss += self.beta * self.lambert_loss(output, distances)
+        if self.use_moment:
+            loss += self.beta * self.moment_loss(dvh_pred, dvh_true, structure_masks)
             
         return loss
     
