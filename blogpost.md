@@ -183,6 +183,7 @@ $$
 $$
 
 A frequently used approach is to adjust the loss function of a model by adding physics-dependent regularization terms. This means that the MAE loss is used as a basis, and on top of that, a weighted physics-based loss is added.
+
 $$
     Loss = L_{MAE}(D_{pred}, D_{true}) + w_{phy} Loss_{phy}(D_{pred}).
 $$
