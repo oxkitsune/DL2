@@ -83,7 +83,7 @@ The patch embedding block comprises three submodules, each with a 3×3×3 convol
 
 Symmetrically, a patch expanding block with a 2×4×4 transpose convolution and 3×3×3 convolutions is used to recover the resolution of feature maps after decoding. A point-wise convolution is then employed to generate the final dose prediction (Figure 4b).
 
-<div style="display: flex; justify-content: center; align-items: center; gap: 20px;">
+<div style="display: flex; justify-content: center; align-items: left; gap: 20px;">
     <div style="text-align: center;">
         <img src="figs/patch-embedding.png" alt="patch-embedding" width="300"/>
         <p>Figure 4a: Patch embedding block <a href="#4">[4]</a></p>
@@ -108,31 +108,31 @@ The windows are cyclically shifted between consecutive transformer blocks to est
 3. This output is then normalized again and passed through the MLP module.
 4. The output of the MLP module is added to the input via another residual connection.
 
-\begin{equation}
+$$
 Z_i' = \text{3D W-MSA}(\text{LN}(Z_{i-1})) + Z_{i-1} 
-\end{equation}
+$$
 
-\begin{equation}
+$$
 Z_i = \text{MLP}(\text{LN}(Z_i')) + Z_i' 
-\end{equation}
+$$
 
 For the next block, the same steps are repeated with a shifted window-based self-attention:
 
-\begin{equation}
+$$
 Z_{i+1}' = \text{3D SW-MSA}(\text{LN}(Z_i)) + Z_i 
-\end{equation}
+$$
 
-\begin{equation}
+$$
 Z_{i+1} = \text{MLP}(\text{LN}(Z_{i+1}')) + Z_{i+1}' 
-\end{equation}
+$$
 
 Here, $Z_i'$ and $Z_i$ denote the output of the 3D(S)W-MSA and MLP module for the $i$-th block, respectively.
 
 The attention in each 3D local window is computed as:
 
-\begin{equation}
+$$
 \text{Attention}(Q, K, V) = \text{SoftMax}\left(\frac{QK^T}{\sqrt{d_k}} + B\right) 
-\end{equation}
+$$
 
 where $Q$, $K$, $V$ represent the query, key, and value matrices; $N_T$ represents the number of tokens in a 3D window; $d_k$ is the dimension of the query and key, and $B$ is the bias matrix.
 
@@ -178,14 +178,14 @@ There are various approaches to incorporating physics into neural networks [[18]
 
 The loss generally used for dose prediction are the mean absolute error loss (MAE) or mean squared error loss (MSE). Specifically, TrDosePred utilizes MAE. Here, $D_{pred}$ is the predicted dose and $D_{true}$ is the ground truth.
 
-\begin{equation}
+$$
     L_{MAE}(D_{pred}, D_{true}) = \frac{1}{N}\sum_{i}|D^i_{pred} - D^i_{true}|
-\end{equation}
+$$
 
 A frequently used approach is to adjust the loss function of a model by adding physics-dependent regularization terms. This means that the MAE loss is used as a basis, and on top of that, a weighted physics-based loss is added.
-\begin{equation}
+$$
     Loss = L_{MAE}(D_{pred}, D_{true}) + w_{phy} Loss_{phy}(D_{pred}).
-\end{equation}
+$$
 
 In dose prediction, dose-volume histograms (DVHs) are commonly used to evaluate treatment plans [[6]](#6). DVHs are used to quantify the dose distribution around a target. They display the absorbed dose of an organ, over the relative volume of the organ that reached this dose. An example is shown in Figure 6.
 
@@ -194,56 +194,56 @@ Figure 6: An example of a dose-volume histogram. Here, the x-axis displays the a
 
 In treatment planning, DVHs are essential to ensure that the prescribed dose of radiation effectively targets the tumor while minimizing exposure to healthy tissues and critical organs. Therefore, it is useful to train the model on the DVH information. From this, a DVH loss was proposed [[5]](#5). This is a differential approximation of DVH. Given a binary segmentation mask, $M_s$ for the $s$-th structure, and the predicted and ground truth doses, we can then define a mean squared loss of the DVH as:
 
-\begin{equation}
+$$
     L_{DVH}(D_{true}, D_{pred}, M_{s}) = \frac{1}{n_s}\frac{1}{n_t}\sum_s \lVert DVH(D_{true}, M_s) - DVH(D_{pred}, M_s) \rVert_2^2.
-\end{equation}
+$$
 
 which can be incorporated in the total loss function like this:
-\begin{equation}
+$$
     Loss = L_{MAE} + w_{DVH}\cdot L_{DVH}
-\end{equation}
+$$
 
 Here, the DVH of a dose and a structure mask for the $s$-th structure can be represented as:
 
-\begin{equation}
+$$
     DVH(D, B_s) = (v_{s, d_1}, v_{s, d_2}, ..., v_{s, d_n})
-\end{equation}
+$$
 
 where $v_{s, d_t}$ represents the volume-at-dose with respect to the dose dt. This can be defined as the fraction of the volume of a given region-of-interest, which can be either an OAR or a PTV, which receives a dose of at least $d_t$. This can be approximated as 
 
-\begin{equation}
+$$
     v_{s, t}(D, B_s) = \frac{\sum_i\sigma(\frac{D(i) - d_t}{\beta})B_s(i)}{\sum_iB_s(i)}
-\end{equation}
+$$
 
 where $\sigma$ is the sigmoid function $\sigma(x) = \frac{1}{1+e^{-x}}$, $\beta$ represents the histogram bin width and $i$ is equal to the voxel indices of the dose distribution.
 
 ### Moment loss
 Moment loss is a variant of the DVH loss described above. The moment loss is based on the idea that a DVH can be approximated using several moments of a structure [[5]](#5). The moment loss follows the equation
 
-\begin{equation}
+$$
 DVH \sim (M_1, M_2, ..., M_p)
-\end{equation}
+$$
 
 where $M_p$ is the moment of order p, which can be defined as
 
-\begin{equation}
+$$
 M_p = \left(\frac{1}{|V_s|}\sum_{j\in V_s}d^p_j\right) ^\frac{1}{p}
-\end{equation}
+$$
 
 where $V_s$ are the voxels that belong to the $s$th structure and $d$ is equal to the dose.
 
 The different moments of a structure represent different features of the structure. For example, $M_1$ is equal to the mean dose, and $M_\inf$ is equal to the maximum dose. In practice, the 10th moment can be used to approximate the maximum dose. In our experiments, the moments 1, 2 and 10 are used to compute the loss, following the work of [[5]](#5).
 
 Based on the DVH approximation, the final moment loss can be computed as: 
-\begin{equation}
+$$
 L_{moment} = \sum_{p\in P}||M_p - \tilde{M}_p ||_2^2
-\end{equation}
+$$
 
 Integrating the moment loss function in the model training works the same as with the DVH loss and looks like the following:
 
-\begin{equation}
+$$
     Loss = L_{MAE} + w_{Moment}\cdot L_{Moment}
-\end{equation}
+$$
 
 <!-- Explanation of Autoregression -->
 ### Autoregression
@@ -252,23 +252,23 @@ Integrating the moment loss function in the model training works the same as wit
 Autoregressive methods are used to predict sequences by conditioning on previous predictions. In the context of dose prediction, autoregression helps model dependencies between different patches or slices of the predicted dose. These slices could be axial slices (across X, Y or Z), but could also be across beam eye view (BEV) axes, which are the axes of the different radiation beams. There are multiple ways to incorporate autoregression.
 #### 1. Autoregressive input masking
 In the first method, we add an extra channel to the input of the model which will be a masked 3D dose. Therefore, the input is a concatentation of CT, PTV, OAR and the Masked 3D dose: 
-\begin{equation}
+$$
 x = [CT, PTV, OAR, Mask],
-\end{equation}
+$$
 where $Mask$ is the masked 3D dose. Based on this input, the model predicts a small patch or slice of the dose at each step. The prediction can be represented as:
-\begin{equation}
+$$
 D_{\text{pred, patch}} = f(x),
-\end{equation}
+$$
 where $f$ represents the model. After predicting a patch or slice, it is incorporated back into the masked 3D dose input for the next prediction. This process ensures that the model uses its previous predictions to inform future ones. The process continues until the entire dose volume is predicted.
 We have two setups of how to compute the loss. The first one is a loss based on the final predicted dose, calculated as:
-\begin{equation}
+$$
 L_{MAE}(D_{pred}, D_{true}) = \frac{1}{N}\sum_{i}|D^i_{pred} - D^i_{true}|
-\end{equation}
+$$
 where $D^i_{\text{true}}$ is the ground truth dose and $N$ is the number of voxels.
 The second loss is based on the incrementally predicted patches:
-\begin{equation}
+$$
 L_{\text{patch}}(D_{\text{patch}}, D_{\text{true,patch}} ) = \frac{1}{K} \sum_{j} \left| D^j_{\text{pred, patch}} - D^j_{\text{true,patch}} \right|
-\end{equation}
+$$
 where  $K$ is the number of elements in the patch, $D_{\text{pred, patch}}$ is the predicted dose for the patch, and $D_{\text{true,patch}}$ is the ground truth dose for the patch.
 
 ##### Teacher forcing extension
@@ -288,53 +288,53 @@ This may be specifically useful when conditioning along BEV axes, as we could in
 Another technique which can be used to incorporate autoregressiveness into the model, is by changing the model's architecture. In the default setup, the model uses a decoder that predicts the entire $D_{\text{pred}}$ at once. We aim to replace this decoder by an RNN-based decoder to introduce autoregression, allowing the model to predict dose patches/slices sequentially.
 
 The model architecture is modified to use an RNN (e.g. LSTM or GRU) as the output decoder. The RNN process starts from the latent dimension produced by the SWIN3D encoder. Let $z$ denote the latent representation obtained from the SWIN3D encoder, which includes features from CT, PTV, and OAR:
-\begin{equation}
+$$
 z = \text{SWIN3D_Encoder}\left([CT, PTV, OAR]\right)
-\end{equation}
+$$
 The RNN processes the latent features and maintains hidden states $H_t$ that capture information about previous predictions. The initial hidden state $h_0$ is typically initialized as zeros or learned parameters. Instead of feeding the masked input back into the model (like in autoregression 1), the RNN uses its hidden states to remember the previous predictions. This allows the model to perform a single forward pass to predict the entire dose volume, decoding it patch by patch. 
 
 ###### Option 1: every timestep a specific CT feature
 Let $\text{CT}^t_{\text{features}}$ be the CT features specific to the patch being processed at time step $t$. At each time step $t$, the RNN then updates its hidden state based on the previous hidden state, the latent representation and the patch-specific CT features:
 
-\begin{equation}
+$$
 h_t = \text{RNN}\left(h_{t-1}, [z, CT^t_{\text{features}}]\right),
-\end{equation}
+$$
 where $h_{t-1}$ is the hidden state from the previous time step, $z$ is the latent representation, and $CT^t_{\text{features}}$ are the CT features specific to the current patch.
 
 ###### Option 2: every time step the previous prediction output
 
 At each time step $t$, the RNN updates its hidden state based on the previous hidden state and the previous prediction. The initial hidden state $h_0$ is typically initialized to zeros or learned parameters. The input at the first time step includes the latent representation $z$:
 
-\begin{equation}
+$$
 h_1 = \text{RNN}(h_0, z)
-\end{equation}
+$$
 
 For subsequent time steps, the RNN uses the previous prediction as input:
 
-\begin{equation}
+$$
 h_t = \text{RNN}(h_{t-1}, D_{\text{pred, patch}, t-1}),
-\end{equation}
+$$
 
 where $h_{t-1}$ is the hidden state from the previous time step and $\hat{D}_{\text{patch}, t-1}$ is the predicted dose patch from the previous time step. The predicted dose patch at each step is given by:
 
-\begin{equation}
+$$
 D_{\text{pred, patch}, t} = f(h_t),
-\end{equation}
+$$
 
 where $f$ represents the function mapping the hidden state $h_t$ to the dose patch $\hat{D}_{\text{patch}, t}$.
 
 ###### Teacher forcing
 During training, teacher forcing can be used to improve the learning process. This involves using the ground truth patches $ D_{\text{true,patch}, t}$ as inputs to the RNN at each step, instead of the RNN's own predictions $D_{\text{pred, patch}, t}$. Mathematically, the input to the RNN at each step during training is:
 
-\begin{equation}
+$$
 h_{t} = \text{RNN}(h_{t-1}, D_{\text{true,patch}, t-1})
-\end{equation}
+$$
 
 Instead of:
 
-\begin{equation}
+$$
 h_{t} = \text{RNN}(h_{t-1}, D_{\text{pred, patch}, t-1})
-\end{equation}
+$$
 
 The loss function for the RNN-based method is computed based on the predicted dose patches and the ground truth dose patches. 
 <!-- #### 3. 
