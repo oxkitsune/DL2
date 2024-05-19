@@ -1,14 +1,13 @@
 import argparse
-
 from pathlib import Path
-from typing import Optional, TypeVar
 
 import wandb
 
-from src.data import DataLoader, get_paths
+from src.data import transform_data
 from src.models import UNETR
+
 from src.training import train_unetr
-from src.evaluation import evaluate
+from datasets import load_dataset, Array4D
 
 import torch
 
@@ -39,6 +38,9 @@ def get_args():
         help="The seed to use for the random number generator",
     )
     parser.add_argument(
+        "--lr", type=float, default=1e-04, help="The learning rate for the model"
+    )
+    parser.add_argument(
         "--dry-run",
         action="store_true",
         help="Run the script without wandb logging",
@@ -49,9 +51,7 @@ def get_args():
         default="dl2",
         help="The wandb project to log this run to",
     )
-    parser.add_argument(
-        "--lr", type=float, default=1e-04, help="The learning rate for the model"
-    )
+
     parser.add_argument(
         "--resume-run",
         type=str,
@@ -65,6 +65,8 @@ def get_args():
         help="The path to a model checkpoint to restore",
     )
 
+    parser.add_argument("--parallel", action="store_true", help="Use multiple GPUs")
+
     return parser.parse_args()
 
 
@@ -75,6 +77,7 @@ def setup_wandb(args):
 
     # start a new wandb run to track this script
     wandb.init(
+        entity="jkbkaiser1",
         # set the wandb project where this run will be logged
         project=args.project,
         # track hyperparameters and run metadata
@@ -82,6 +85,7 @@ def setup_wandb(args):
             "learning_rate": args.lr,
             "architecture": "Unetr",
             "epochs": args.epochs,
+            "batch_size": args.batch_size,
         },
         # this repo contains the entire dataset and code, so let's not upload it
         save_code=False,
@@ -94,22 +98,29 @@ def setup_wandb(args):
 
 def run():
     args = get_args()
-
     setup_wandb(args)
 
-    primary_directory = Path().resolve()
-    provided_data_dir = primary_directory / "data"
-    training_data_dir = provided_data_dir / "train-pats"
-    validation_data_dir = provided_data_dir / "validation-pats"
-    training_plan_paths = get_paths(training_data_dir)
-    validation_plan_paths = get_paths(validation_data_dir)
-    data_loader_train = DataLoader(training_plan_paths)
-    data_loader_validation = DataLoader(validation_plan_paths)
+    num_proc = torch.multiprocessing.cpu_count() - 2
 
-    data_loader_train.set_mode("training_model")
-    data_loader_validation.set_mode("training_model")
+    dataset = load_dataset("oxkitsune/open-kbp", num_proc=num_proc)
+
+    # apply transformations in numpy format, on cpu
+    dataset = (
+        dataset.with_format("numpy")
+        .map(
+            transform_data,
+            input_columns=["ct", "structure_masks"],
+            # we remove these columns as they are combined into the 'features' column or irrelevant
+            remove_columns=["ct", "structure_masks", "possible_dose_mask"],
+            writer_batch_size=25,
+            num_proc=num_proc,
+        )
+        # cast the features column to a 4D array, to make converting to torch 100x faster
+        .cast_column("features", Array4D((128, 128, 128, 3), dtype="float32"))
+    )
 
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+    dataset = dataset.with_format("torch", columns=["features", "dose"], device=device)
 
     model = UNETR(input_dim=3, output_dim=1)
     if args.resume_run:
@@ -121,9 +132,8 @@ def run():
         )
         model.load_state_dict(checkpoint)
 
-    train_unetr(
-        data_loader_train, model, args.epochs, data_loader_validation, PREDICTION_DIR
-    )
+    # run the training loop
+    train_unetr(dataset, args)
 
 
 if __name__ == "__main__":

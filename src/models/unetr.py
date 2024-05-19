@@ -4,10 +4,13 @@ import torch.nn as nn
 import torch.nn.functional as F
 import math
 
+
 class SingleDeconv3DBlock(nn.Module):
     def __init__(self, in_planes, out_planes):
         super().__init__()
-        self.block = nn.ConvTranspose3d(in_planes, out_planes, kernel_size=2, stride=2, padding=0, output_padding=0)
+        self.block = nn.ConvTranspose3d(
+            in_planes, out_planes, kernel_size=2, stride=2, padding=0, output_padding=0
+        )
 
     def forward(self, x):
         return self.block(x)
@@ -16,8 +19,13 @@ class SingleDeconv3DBlock(nn.Module):
 class SingleConv3DBlock(nn.Module):
     def __init__(self, in_planes, out_planes, kernel_size):
         super().__init__()
-        self.block = nn.Conv3d(in_planes, out_planes, kernel_size=kernel_size, stride=1,
-                               padding=((kernel_size - 1) // 2))
+        self.block = nn.Conv3d(
+            in_planes,
+            out_planes,
+            kernel_size=kernel_size,
+            stride=1,
+            padding=((kernel_size - 1) // 2),
+        )
 
     def forward(self, x):
         return self.block(x)
@@ -29,7 +37,7 @@ class Conv3DBlock(nn.Module):
         self.block = nn.Sequential(
             SingleConv3DBlock(in_planes, out_planes, kernel_size),
             nn.BatchNorm3d(out_planes),
-            nn.ReLU(True)
+            nn.ReLU(True),
         )
 
     def forward(self, x):
@@ -43,7 +51,7 @@ class Deconv3DBlock(nn.Module):
             SingleDeconv3DBlock(in_planes, out_planes),
             SingleConv3DBlock(out_planes, out_planes, kernel_size),
             nn.BatchNorm3d(out_planes),
-            nn.ReLU(True)
+            nn.ReLU(True),
         )
 
     def forward(self, x):
@@ -70,7 +78,10 @@ class SelfAttention(nn.Module):
         self.vis = False
 
     def transpose_for_scores(self, x):
-        new_x_shape = x.size()[:-1] + (self.num_attention_heads, self.attention_head_size)
+        new_x_shape = x.size()[:-1] + (
+            self.num_attention_heads,
+            self.attention_head_size,
+        )
         x = x.view(*new_x_shape)
         return x.permute(0, 2, 1, 3)
 
@@ -99,7 +110,7 @@ class SelfAttention(nn.Module):
 
 
 class Mlp(nn.Module):
-    def __init__(self, in_features, act_layer=nn.GELU, drop=0.):
+    def __init__(self, in_features, act_layer=nn.GELU, drop=0.0):
         super().__init__()
         self.fc1 = nn.Linear(in_features, in_features)
         self.act = act_layer()
@@ -127,12 +138,21 @@ class PositionwiseFeedForward(nn.Module):
 class Embeddings(nn.Module):
     def __init__(self, input_dim, embed_dim, cube_size, patch_size, dropout):
         super().__init__()
-        self.n_patches = int((cube_size[0] * cube_size[1] * cube_size[2]) / (patch_size * patch_size * patch_size))
+        self.n_patches = int(
+            (cube_size[0] * cube_size[1] * cube_size[2])
+            / (patch_size * patch_size * patch_size)
+        )
         self.patch_size = patch_size
         self.embed_dim = embed_dim
-        self.patch_embeddings = nn.Conv3d(in_channels=input_dim, out_channels=embed_dim,
-                                          kernel_size=patch_size, stride=patch_size)
-        self.position_embeddings = nn.Parameter(torch.zeros(1, self.n_patches, embed_dim))
+        self.patch_embeddings = nn.Conv3d(
+            in_channels=input_dim,
+            out_channels=embed_dim,
+            kernel_size=patch_size,
+            stride=patch_size,
+        )
+        self.position_embeddings = nn.Parameter(
+            torch.zeros(1, self.n_patches, embed_dim)
+        )
         self.dropout = nn.Dropout(dropout)
 
     def forward(self, x):
@@ -149,7 +169,10 @@ class TransformerBlock(nn.Module):
         super().__init__()
         self.attention_norm = nn.LayerNorm(embed_dim, eps=1e-6)
         self.mlp_norm = nn.LayerNorm(embed_dim, eps=1e-6)
-        self.mlp_dim = int((cube_size[0] * cube_size[1] * cube_size[2]) / (patch_size * patch_size * patch_size))
+        self.mlp_dim = int(
+            (cube_size[0] * cube_size[1] * cube_size[2])
+            / (patch_size * patch_size * patch_size)
+        )
         self.mlp = PositionwiseFeedForward(embed_dim, 2048)
         self.attn = SelfAttention(num_heads, embed_dim, dropout)
 
@@ -168,14 +191,28 @@ class TransformerBlock(nn.Module):
 
 
 class Transformer(nn.Module):
-    def __init__(self, input_dim, embed_dim, cube_size, patch_size, num_heads, num_layers, dropout, extract_layers):
+    def __init__(
+        self,
+        input_dim,
+        embed_dim,
+        cube_size,
+        patch_size,
+        num_heads,
+        num_layers,
+        dropout,
+        extract_layers,
+    ):
         super().__init__()
-        self.embeddings = Embeddings(input_dim, embed_dim, cube_size, patch_size, dropout)
+        self.embeddings = Embeddings(
+            input_dim, embed_dim, cube_size, patch_size, dropout
+        )
         self.layer = nn.ModuleList()
         self.encoder_norm = nn.LayerNorm(embed_dim, eps=1e-6)
         self.extract_layers = extract_layers
         for _ in range(num_layers):
-            layer = TransformerBlock(embed_dim, num_heads, dropout, cube_size, patch_size)
+            layer = TransformerBlock(
+                embed_dim, num_heads, dropout, cube_size, patch_size
+            )
             self.layer.append(copy.deepcopy(layer))
 
     def forward(self, x):
@@ -191,7 +228,16 @@ class Transformer(nn.Module):
 
 
 class UNETR(nn.Module):
-    def __init__(self, img_shape=(128, 128, 128), input_dim=4, output_dim=3, embed_dim=768, patch_size=16, num_heads=12, dropout=0.1):
+    def __init__(
+        self,
+        img_shape=(128, 128, 128),
+        input_dim=4,
+        output_dim=3,
+        embed_dim=768,
+        patch_size=16,
+        num_heads=12,
+        dropout=0.1,
+    ):
         super().__init__()
         self.input_dim = input_dim
         self.output_dim = output_dim
@@ -206,73 +252,57 @@ class UNETR(nn.Module):
         self.patch_dim = [int(x / patch_size) for x in img_shape]
 
         # Transformer Encoder
-        self.transformer = \
-            Transformer(
-                input_dim,
-                embed_dim,
-                img_shape,
-                patch_size,
-                num_heads,
-                self.num_layers,
-                dropout,
-                self.ext_layers
-                
-            )
+        self.transformer = Transformer(
+            input_dim,
+            embed_dim,
+            img_shape,
+            patch_size,
+            num_heads,
+            self.num_layers,
+            dropout,
+            self.ext_layers,
+        )
 
         # U-Net Decoder
-        self.decoder0 = \
-            nn.Sequential(
-                Conv3DBlock(input_dim, 32, 3),
-                Conv3DBlock(32, 64, 3)
-            )
+        self.decoder0 = nn.Sequential(
+            Conv3DBlock(input_dim, 32, 3), Conv3DBlock(32, 64, 3)
+        )
 
-        self.decoder3 = \
-            nn.Sequential(
-                Deconv3DBlock(embed_dim, 512),
-                Deconv3DBlock(512, 256),
-                Deconv3DBlock(256, 128)
-            )
+        self.decoder3 = nn.Sequential(
+            Deconv3DBlock(embed_dim, 512),
+            Deconv3DBlock(512, 256),
+            Deconv3DBlock(256, 128),
+        )
 
-        self.decoder6 = \
-            nn.Sequential(
-                Deconv3DBlock(embed_dim, 512),
-                Deconv3DBlock(512, 256),
-            )
+        self.decoder6 = nn.Sequential(
+            Deconv3DBlock(embed_dim, 512),
+            Deconv3DBlock(512, 256),
+        )
 
-        self.decoder9 = \
-            Deconv3DBlock(embed_dim, 512)
+        self.decoder9 = Deconv3DBlock(embed_dim, 512)
 
-        self.decoder12_upsampler = \
-            SingleDeconv3DBlock(embed_dim, 512)
+        self.decoder12_upsampler = SingleDeconv3DBlock(embed_dim, 512)
 
-        self.decoder9_upsampler = \
-            nn.Sequential(
-                Conv3DBlock(1024, 512),
-                Conv3DBlock(512, 512),
-                Conv3DBlock(512, 512),
-                SingleDeconv3DBlock(512, 256)
-            )
+        self.decoder9_upsampler = nn.Sequential(
+            Conv3DBlock(1024, 512),
+            Conv3DBlock(512, 512),
+            Conv3DBlock(512, 512),
+            SingleDeconv3DBlock(512, 256),
+        )
 
-        self.decoder6_upsampler = \
-            nn.Sequential(
-                Conv3DBlock(512, 256),
-                Conv3DBlock(256, 256),
-                SingleDeconv3DBlock(256, 128)
-            )
+        self.decoder6_upsampler = nn.Sequential(
+            Conv3DBlock(512, 256), Conv3DBlock(256, 256), SingleDeconv3DBlock(256, 128)
+        )
 
-        self.decoder3_upsampler = \
-            nn.Sequential(
-                Conv3DBlock(256, 128),
-                Conv3DBlock(128, 128),
-                SingleDeconv3DBlock(128, 64)
-            )
+        self.decoder3_upsampler = nn.Sequential(
+            Conv3DBlock(256, 128), Conv3DBlock(128, 128), SingleDeconv3DBlock(128, 64)
+        )
 
-        self.decoder0_header = \
-            nn.Sequential(
-                Conv3DBlock(128, 64),
-                Conv3DBlock(64, 64),
-                SingleConv3DBlock(64, output_dim, 1)
-            )
+        self.decoder0_header = nn.Sequential(
+            Conv3DBlock(128, 64),
+            Conv3DBlock(64, 64),
+            SingleConv3DBlock(64, output_dim, 1),
+        )
 
     def forward(self, x):
         z = self.transformer(x)
