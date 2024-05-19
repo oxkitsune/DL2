@@ -254,23 +254,31 @@ $$
 Autoregressive methods are used to predict sequences by conditioning on previous predictions. In the context of dose prediction, autoregression helps model dependencies between different patches or slices of the predicted dose. These slices could be axial slices (across X, Y or Z), but could also be across beam eye view (BEV) axes, which are the axes of the different radiation beams. There are multiple ways to incorporate autoregression.
 #### 1. Autoregressive input masking
 In the first method, we add an extra channel to the input of the model which will be a masked 3D dose. Therefore, the input is a concatentation of CT, PTV, OAR and the Masked 3D dose: 
+
 $$
 x = [CT, PTV, OAR, Mask],
 $$
+
 where $Mask$ is the masked 3D dose. Based on this input, the model predicts a small patch or slice of the dose at each step. The prediction can be represented as:
+
 $$
 D_{\text{pred, patch}} = f(x),
 $$
+
 where $f$ represents the model. After predicting a patch or slice, it is incorporated back into the masked 3D dose input for the next prediction. This process ensures that the model uses its previous predictions to inform future ones. The process continues until the entire dose volume is predicted.
 We have two setups of how to compute the loss. The first one is a loss based on the final predicted dose, calculated as:
+
 $$
 L_{MAE}(D_{pred}, D_{true}) = \frac{1}{N}\sum_{i}|D^i_{pred} - D^i_{true}|
 $$
+
 where $D^i_{\text{true}}$ is the ground truth dose and $N$ is the number of voxels.
 The second loss is based on the incrementally predicted patches:
+
 $$
 L_{\text{patch}}(D_{\text{patch}}, D_{\text{true,patch}} ) = \frac{1}{K} \sum_{j} \left| D^j_{\text{pred, patch}} - D^j_{\text{true,patch}} \right|
 $$
+
 where  $K$ is the number of elements in the patch, $D_{\text{pred, patch}}$ is the predicted dose for the patch, and $D_{\text{true,patch}}$ is the ground truth dose for the patch.
 
 ##### Teacher forcing extension
@@ -290,9 +298,11 @@ This may be specifically useful when conditioning along BEV axes, as we could in
 Another technique which can be used to incorporate autoregressiveness into the model, is by changing the model's architecture. In the default setup, the model uses a decoder that predicts the entire $D_{\text{pred}}$ at once. We aim to replace this decoder by an RNN-based decoder to introduce autoregression, allowing the model to predict dose patches/slices sequentially.
 
 The model architecture is modified to use an RNN (e.g. LSTM or GRU) as the output decoder. The RNN process starts from the latent dimension produced by the SWIN3D encoder. Let $z$ denote the latent representation obtained from the SWIN3D encoder, which includes features from CT, PTV, and OAR:
+
 $$
 z = \text{SWIN3D_Encoder}\left([CT, PTV, OAR]\right)
 $$
+
 The RNN processes the latent features and maintains hidden states $H_t$ that capture information about previous predictions. The initial hidden state $h_0$ is typically initialized as zeros or learned parameters. Instead of feeding the masked input back into the model (like in autoregression 1), the RNN uses its hidden states to remember the previous predictions. This allows the model to perform a single forward pass to predict the entire dose volume, decoding it patch by patch. 
 
 ###### Option 1: every timestep a specific CT feature
@@ -301,6 +311,7 @@ Let $\text{CT}^t_{\text{features}}$ be the CT features specific to the patch bei
 $$
 h_t = \text{RNN}\left(h_{t-1}, [z, CT^t_{\text{features}}]\right),
 $$
+
 where $h_{t-1}$ is the hidden state from the previous time step, $z$ is the latent representation, and $CT^t_{\text{features}}$ are the CT features specific to the current patch.
 
 ###### Option 2: every time step the previous prediction output
