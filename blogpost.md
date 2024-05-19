@@ -302,7 +302,7 @@ Another technique which can be used to incorporate autoregressiveness into the m
 The model architecture is modified to use an RNN (e.g. LSTM or GRU) as the output decoder. The RNN process starts from the latent dimension produced by the SWIN3D encoder. Let $z$ denote the latent representation obtained from the SWIN3D encoder, which includes features from CT, PTV, and OAR:
 
 $$
-z = \text{SWIN3D\_Encoder}\left([CT, PTV, OAR]\right)
+z = \text{SWIN3DEncoder}\left([CT, PTV, OAR]\right)
 $$
 
 The RNN processes the latent features and maintains hidden states $H_t$ that capture information about previous predictions. The initial hidden state $h_0$ is typically initialized as zeros or learned parameters. Instead of feeding the masked input back into the model (like in autoregression 1), the RNN uses its hidden states to remember the previous predictions. This allows the model to perform a single forward pass to predict the entire dose volume, decoding it patch by patch. 
@@ -339,7 +339,7 @@ $$
 where $f$ represents the function mapping the hidden state $h_t$ to the dose patch $\hat{D}_{\text{patch}, t}$.
 
 ###### Teacher forcing
-During training, teacher forcing can be used to improve the learning process. This involves using the ground truth patches $ D_{\text{true,patch}, t}$ as inputs to the RNN at each step, instead of the RNN's own predictions $D_{\text{pred, patch}, t}$. Mathematically, the input to the RNN at each step during training is:
+During training, teacher forcing can be used to improve the learning process. This involves using the ground truth patches $D_{\text{true,patch}, t}$ as inputs to the RNN at each step, instead of the RNN's own predictions $D_{\text{pred, patch}, t}$. Mathematically, the input to the RNN at each step during training is:
 
 $$
 h_{t} = \text{RNN}(h_{t-1}, D_{\text{true,patch}, t-1})
