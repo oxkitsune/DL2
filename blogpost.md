@@ -19,7 +19,7 @@ Radiation therapy is often used in cancer treatment, where about 50% of all pati
 
 Before radiation therapy can be delivered to treat cancer, a treatment plan must be formulated. This plan represents the most optimal configuration of the treatment device, aiming to maximize radiation to the planned target volume (PTV) while minimizing exposure to the organs at risk (OARs). The PTV determines different regions that should receive a minimum percentage of radiation. For example, the region closest around the tumor should get a higher percentage radiation, while a larger region around the tumor can get a slightly lower percentage radiation. An example of different PTVs is illustrated in Figure 1. OARs are organs that are sensitive to radiation and should thus receive as less radiation as possible.
 
-![Schematic-diagram-of-radiotherapy-irradiation-volumes](https://hackmd.io/_uploads/S1thHMHX0.jpg)
+![Schematic-diagram-of-radiotherapy-irradiation-volumes](figs/Schematic-diagram-of-radiotherapy-irradiation-volumes.png)
 Figure 1: Example of a planned target volume (PTV) [[8]](#8)
 
 
@@ -27,7 +27,7 @@ Figure 1: Example of a planned target volume (PTV) [[8]](#8)
 Treatment planning often requires manual adjustments by medical physicists or dosimetrists, introducing variability in plan quality that can affect treatment outcomes, and is very time consuming. Efforts to reduce this manual intervention is called automated treatment planning and can be divided into two categories, objective-based planning (OBP) and knowledge-based planning (KBP). OBP relies on optimization algorithms that adjust preset objectives to achieve the established clinical goals. KBP  uses a library of plans from previous patients to predict dose–volume objectives for the new patient. KBP methods are generally formulated as two-stage pipelines (see Figure 2). In the knowledge-based planning approach to treatment planning (see Figure 2), the first step is to create an initial dose distribution, which is typically predicted first using contoured CT images of the patient. Subsequently, an optimization model develops a treatment plan based on this predicted dose distribution. The accuracy of the initial dose distribution is crucial, as it significantly reduces the time required in the overall optimization process [[7]](#7). This research focuses on predicting the initial 3D dose prediction, the first step of the KBP pipeline.
 
 
-![OpenKBP_fig1](https://hackmd.io/_uploads/B1FrEGSmR.jpg)
+![OpenKBP_fig1](figs/OpenKBP_fig1.jpg)
 Figure 2: Overview of a complete knowledge-based planning pipeline [[7]](#7)
 
 
@@ -70,7 +70,7 @@ Each planning CT volume has a fixed dimension of 128 × 128 × 128 and an approx
 Figure 3 shows the overall architecture of the proposed TrDosePred. With a three-channel feature of contoured CT as input, a patch embedding block first projects it into a sequence of patch tokens. A transformer-based encoder and decoder then build the relationship between embedded input features and dose maps. Finally, a patch expanding block generates the 3D dose distribution. The individual components are further elaborated on in the following sections.
 
 <div style="text-align: center;">
-    <img src="https://hackmd.io/_uploads/Sy2SF8PQC.png" alt="architecture"/>
+    <img src="figs/architecture.png" alt="architecture"/>
     <p>Figure 3: Overview of architecture of TrDosePred <a href="#4">[4]</a></p>
 </div>
 
@@ -85,11 +85,11 @@ Symmetrically, a patch expanding block with a 2×4×4 transpose convolution and 
 
 <div style="display: flex; justify-content: center; align-items: center; gap: 20px;">
     <div style="text-align: center;">
-        <img src="https://hackmd.io/_uploads/HkjhFIvmC.png" alt="patch-embedding" width="300"/>
+        <img src="figs/patch-embedding.png" alt="patch-embedding" width="300"/>
         <p>Figure 4a: Patch embedding block <a href="#4">[4]</a></p>
     </div>
     <div style="text-align: center;">
-        <img src="https://hackmd.io/_uploads/S1faKUPXC.png" alt="patch-expanding" width="300"/>
+        <img src="figs/patch-expanding.png" alt="patch-expanding" width="300"/>
         <p>Figure 4b: Patch expanding block <a href="#4">[4]</a></p>
     </div>
 </div>
@@ -139,7 +139,7 @@ where $Q$, $K$, $V$ represent the query, key, and value matrices; $N_T$ represen
 Between the encoder and decoder blocks, down-sampling and up-sampling layers are inserted to adjust the feature map sizes as described in the previous section.
 
 <div style="text-align: center;">
-    <img src="https://hackmd.io/_uploads/H126F8vmC.png" alt="swin-transformers"/>
+    <img src="figs/swin-transformers.png" alt="swin-transformers"/>
     <p>Figure 5: Two consecutive Swin Transformer blocks <a href="#4">[4]</a></p>
 </div>
 
@@ -189,7 +189,7 @@ A frequently used approach is to adjust the loss function of a model by adding p
 
 In dose prediction, dose-volume histograms (DVHs) are commonly used to evaluate treatment plans [[6]](#6). DVHs are used to quantify the dose distribution around a target. They display the absorbed dose of an organ, over the relative volume of the organ that reached this dose. An example is shown in Figure 6.
 
-![Example-of-dose-volume-histogram-DVH-computed-with-MiM-Sureplan-701-software-research](https://hackmd.io/_uploads/H1RgWJSXA.png)
+![Example-of-dose-volume-histogram-DVH-computed-with-MiM-Sureplan-701-software-research](figs/DVH.jpg)
 Figure 6: An example of a dose-volume histogram. Here, the x-axis displays the absorbed dose, while the y-axis explains the volume of the organ that absorbed that dose.
 
 In treatment planning, DVHs are essential to ensure that the prescribed dose of radiation effectively targets the tumor while minimizing exposure to healthy tissues and critical organs. Therefore, it is useful to train the model on the DVH information. From this, a DVH loss was proposed [[5]](#5). This is a differential approximation of DVH. Given a binary segmentation mask, $M_s$ for the $s$-th structure, and the predicted and ground truth doses, we can then define a mean squared loss of the DVH as:
@@ -274,7 +274,7 @@ where  $K$ is the number of elements in the patch, $D_{\text{pred, patch}}$ is t
 ##### Teacher forcing extension
 Teacher forcing is a technique used in training autoregressive models to improve performance. Instead of using the model's own predictions as inputs for the next step, the ground truth data is used during training. It involves feeding observed sequence values (i.e. ground-truth samples) back into the model after each step, thus forcing the model to stay close to the ground-truth sequence. It can teach the model to be inherently autoregressively, as it learns implicitly that it should make a next patch prediction.
 
-![image](https://hackmd.io/_uploads/ryt1fG8mR.png)
+![image](figs/teacherforcing.png)
 
 In the context of our dose prediction model, teacher forcing can be applied by replacing the predicted dose patches with the ground truth dose patches during the training process. Mathematically, this means that instead of updating the masked 3D doe input with $D_{pred, patch}$, we update it with $D_{true, patch}$. 
 
