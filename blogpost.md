@@ -84,7 +84,7 @@ The patch embedding block comprises three submodules, each with a 3×3×3 convol
 Symmetrically, a patch expanding block with a 2×4×4 transpose convolution and 3×3×3 convolutions is used to recover the resolution of feature maps after decoding. A point-wise convolution is then employed to generate the final dose prediction (Figure 4b).
 
 <div style="display: flex; justify-content: center; align-items: center; gap: 20px;">
-    <div style="text-align: center;">
+    <div style="text-align: left;">
         <img src="figs/patch-embedding.png" alt="patch-embedding" width="300"/>
         <p>Figure 4a: Patch embedding block <a href="#4">[4]</a></p>
     </div>
