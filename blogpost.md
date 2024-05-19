@@ -232,7 +232,7 @@ $$
 M_p = \left(\frac{1}{|V_s|}\sum_{j\in V_s}d^p_j\right) ^\frac{1}{p}
 $$
 
-where $V_s$ are the voxels that belong to the $s$th structure and $d$ is equal to the dose.
+where $V_s$ are the voxels that belong to the $s$-th structure and $d$ is equal to the dose.
 
 The different moments of a structure represent different features of the structure. For example, $M_1$ is equal to the mean dose, and $M_\inf$ is equal to the maximum dose. In practice, the 10th moment can be used to approximate the maximum dose. In our experiments, the moments 1, 2 and 10 are used to compute the loss, following the work of [[5]](#5).
 
@@ -253,6 +253,7 @@ $$
 <!-- Two-three methods -->
 
 Autoregressive methods are used to predict sequences by conditioning on previous predictions. In the context of dose prediction, autoregression helps model dependencies between different patches or slices of the predicted dose. These slices could be axial slices (across X, Y or Z), but could also be across beam eye view (BEV) axes, which are the axes of the different radiation beams. There are multiple ways to incorporate autoregression.
+
 #### 1. Autoregressive input masking
 In the first method, we add an extra channel to the input of the model which will be a masked 3D dose. Therefore, the input is a concatentation of CT, PTV, OAR and the Masked 3D dose: 
 
@@ -292,16 +293,16 @@ In the context of our dose prediction model, teacher forcing can be applied by r
 This may be specifically useful when conditioning along BEV axes, as we could incrementally update the model with information of the previous beam.
 
 #### 2. RNN based neural network
-* Replace output decoder by an RNN.
+<!-- * Replace output decoder by an RNN.
 * Use hidden states to process the previous predictions instead of a masked input.
-* Use teacher forcing as a way to inherently make the sequence more focused on the ground truth
+* Use teacher forcing as a way to inherently make the sequence more focused on the ground truth -->
 
 Another technique which can be used to incorporate autoregressiveness into the model, is by changing the model's architecture. In the default setup, the model uses a decoder that predicts the entire $D_{\text{pred}}$ at once. We aim to replace this decoder by an RNN-based decoder to introduce autoregression, allowing the model to predict dose patches/slices sequentially.
 
 The model architecture is modified to use an RNN (e.g. LSTM or GRU) as the output decoder. The RNN process starts from the latent dimension produced by the SWIN3D encoder. Let $z$ denote the latent representation obtained from the SWIN3D encoder, which includes features from CT, PTV, and OAR:
 
 $$
-z = \text{SWIN3D_Encoder}\left([CT, PTV, OAR]\right)
+z = \text{SWIN3D\_Encoder}\left([CT, PTV, OAR]\right)
 $$
 
 The RNN processes the latent features and maintains hidden states $H_t$ that capture information about previous predictions. The initial hidden state $h_0$ is typically initialized as zeros or learned parameters. Instead of feeding the masked input back into the model (like in autoregression 1), the RNN uses its hidden states to remember the previous predictions. This allows the model to perform a single forward pass to predict the entire dose volume, decoding it patch by patch. 
