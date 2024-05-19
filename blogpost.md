@@ -199,8 +199,9 @@ $$
 $$
 
 which can be incorporated in the total loss function like this:
+
 $$
-    Loss = L_{MAE} + w_{DVH}\cdot L_{DVH}
+Loss = L_{MAE} + w_{DVH}\cdot L_{DVH}
 $$
 
 Here, the DVH of a dose and a structure mask for the $s$-th structure can be represented as:
@@ -235,6 +236,7 @@ where $V_s$ are the voxels that belong to the $s$th structure and $d$ is equal t
 The different moments of a structure represent different features of the structure. For example, $M_1$ is equal to the mean dose, and $M_\inf$ is equal to the maximum dose. In practice, the 10th moment can be used to approximate the maximum dose. In our experiments, the moments 1, 2 and 10 are used to compute the loss, following the work of [[5]](#5).
 
 Based on the DVH approximation, the final moment loss can be computed as: 
+
 $$
 L_{moment} = \sum_{p\in P}||M_p - \tilde{M}_p ||_2^2
 $$
@@ -242,7 +244,7 @@ $$
 Integrating the moment loss function in the model training works the same as with the DVH loss and looks like the following:
 
 $$
-    Loss = L_{MAE} + w_{Moment}\cdot L_{Moment}
+Loss = L_{MAE} + w_{Moment}\cdot L_{Moment}
 $$
 
 <!-- Explanation of Autoregression -->
