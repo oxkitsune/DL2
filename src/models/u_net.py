@@ -205,7 +205,7 @@ class UNet(nn.Module):
 
 
 class TrDosePred(nn.Module):
-    def __init__(self, n_heads=4):
+    def __init__(self, n_heads=8):
         super().__init__()
         self.embedding = PatchEmbedding()
         self.model = UNet(n_heads=n_heads)

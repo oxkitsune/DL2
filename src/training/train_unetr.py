@@ -142,7 +142,7 @@ if __name__ == "__main__":
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
     dataset = dataset.with_format("torch", columns=["features", "dose"], device=device)
 
-    model = TrDosePred(n_heads=1)
+    model = TrDosePred(n_heads=8)
     data_loader = DataLoader(dataset["train"], batch_size=1)
     optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3)
     criterion = torch.nn.L1Loss()
