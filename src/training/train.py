@@ -1,49 +1,90 @@
 import torch
-import torch.nn as nn
-import torch.optim as optim
 from tqdm import tqdm
+import wandb
+import os
+
+from src.models.conv_net import ConvNet
+from torch.utils.data import DataLoader
 
 
-def weights_init(m):
-    if isinstance(m, nn.Conv3d):
-        torch.nn.init.xavier_uniform_(
-            m.weight.data, gain=nn.init.calculate_gain("relu")
-        )
-    if isinstance(m, nn.ConvTranspose3d):
-        torch.nn.init.xavier_uniform_(
-            m.weight.data, gain=nn.init.calculate_gain("relu")
-        )
+def train_model(dataset, args):
+    device = (
+        torch.device("cuda:0") if torch.cuda.is_available() else torch.device("cpu")
+    )
+    print(f"Using device {device}")
+
+    # model = UNETR(input_dim=3, output_dim=1).to(device)
+    model = ConvNet(num_input_channels=3).to(device)
+
+    if args.parallel:
+        model = torch.nn.DataParallel(model, output_device=device)
+
+    criterion = torch.nn.L1Loss()
+    optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
+
+    train_dataloader = DataLoader(dataset["train"], batch_size=args.batch_size, shuffle=True)
+    dev_data_loader = DataLoader(dataset["validation"], batch_size=args.batch_size)
+
+    # pbar = tqdm(range(args.epochs), desc="Training model")
+    # for epoch in pbar:
+    #     train_loss = train_single_epoch(model, train_dataloader, optimizer, criterion)
+    #     dev_loss = evaluate(model, dev_data_loader, criterion)
+    #
+    #     wandb.log({"train_loss": train_loss, "dev_loss": dev_loss})
+    #     save_model_checkpoint_for_epoch(model)
+    #
+    #     pbar.write(
+    #         f"[{epoch}/{args.epochs}] Train loss: {train_loss:.3f} Dev loss: {dev_loss:.3f}"
+    #     )
 
 
-def train(model: nn.Module, data_loader: DataLoader, epochs: int, logger):
-    device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+def train_single_epoch(model, data_loader, optimizer, criterion):
+    model.train()
+    total_loss = 0
+    pbar = tqdm(data_loader, desc="Train", leave=False)
+    for batch in pbar:
+        optimizer.zero_grad()
 
-    loss_func = nn.L1Loss()  # MAE
-    optimizer = optim.Adam(model.parameters(), lr=1e-03)
+        # ensure features/dose are in the correct shape
+        # (batch_size, channels, height, width, depth)
+        features = batch["features"].transpose(1, -1)
+        target = batch["dose"].unsqueeze(1)
 
-    model.apply(weights_init)
-    model = model.to(device)
+        print(features)
 
-    for _ in range(epochs):
-        model.train()
+        outputs = model(features)
 
-        for batch in tqdm(data_loader.get_batches(), total=len(data_loader)):
-            features = batch.get_augmented_features()
-            input = torch.Tensor(features).transpose(1, 4).to(device)
+        loss = criterion(outputs, target)
+        loss.backward()
 
-            target = batch.get_target()
-            target = torch.Tensor(target).transpose(1, 4).to(device)
+        optimizer.step()
+        total_loss += loss.item()
 
-            optimizer.zero_grad()
+    return total_loss / len(data_loader)
 
-            output = model(input)
-            loss = loss_func(output, target)
-            logger.log({"loss": loss})
 
-            loss.backward()
-            optimizer.step()
+def evaluate(model, data_loader, criterion):
+    model.eval()
+    total_loss = 0
+    pbar = tqdm(data_loader, desc="Dev", leave=False)
+    for batch in pbar:
+        features = batch["features"].transpose(1, -1)
+        target = batch["dose"].unsqueeze(1)
 
-        model.eval()
-        with torch.no_grad():
-            pass
-            # Do evaluation
+        outputs = model(features)
+
+        loss = criterion(outputs, target)
+        total_loss += loss.item()
+
+    return total_loss / len(data_loader)
+
+
+def save_model_checkpoint_for_epoch(model):
+    # ensure checkpoints directory exists
+    os.makedirs(".checkpoints", exist_ok=True)
+
+    chpt_path = ".checkpoints/model_checkpoint.pt"
+
+    # save model checkpoint
+    torch.save(model.state_dict(), chpt_path)
+    wandb.save(chpt_path)           # Do evaluation

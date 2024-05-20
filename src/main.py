@@ -6,7 +6,7 @@ import wandb
 from src.data import transform_data
 from src.models import UNETR
 
-from src.training import train_unetr
+from src.training import train_model
 from datasets import load_dataset, Array4D
 
 import torch
@@ -100,7 +100,8 @@ def run():
     args = get_args()
     setup_wandb(args)
 
-    num_proc = torch.multiprocessing.cpu_count() - 2
+    # num_proc = torch.multiprocessing.cpu_count() - 2
+    num_proc = 2
 
     dataset = load_dataset("oxkitsune/open-kbp", num_proc=num_proc)
 
@@ -119,6 +120,12 @@ def run():
         .cast_column("features", Array4D((128, 128, 128, 3), dtype="float32"))
     )
 
+    print("hi2")
+    print("hi2")
+    print("hi2")
+    print("hi2")
+    print("hi2")
+
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
     dataset = dataset.with_format("torch", columns=["features", "dose"], device=device)
 
@@ -133,7 +140,7 @@ def run():
         model.load_state_dict(checkpoint)
 
     # run the training loop
-    train_unetr(dataset, args)
+    train_model(dataset, args)
 
 
 if __name__ == "__main__":
