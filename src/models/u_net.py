@@ -1,6 +1,7 @@
 import torch
 from torch import nn
-from Swin3D.modules.swin3d_layers import BasicLayer
+# from Swin3D.modules.swin3d_layers import BasicLayer
+from swin3d_torch import BasicLayer
 
 
 class Downsampling(nn.Module):
@@ -9,7 +10,7 @@ class Downsampling(nn.Module):
         self.conv = nn.Conv3d(
             in_channels, out_channels, kernel_size=3, stride=stride, padding=1
         )
-        self.norm = nn.LayerNorm(out_channels)
+        self.norm = nn.LayerNorm([1, out_channels, 16, 32, 32])
         self.activation = nn.GELU()
 
     def forward(self, x):
@@ -82,29 +83,43 @@ class PatchExpanding(nn.Module):
 
 
 class WrappedEncoder(nn.Module):
-    def __init__(self, dim: int, depth: int):
+    def __init__(self, dim: int, depth: int, num_heads: int = 8, downsampling=True):
         super().__init__()
-        self.encoder = BasicLayer(dim=dim, depth=depth)
-        self.downsampling = Downsampling(in_channels=dim, out_channels=2 * dim)
+        self.encoder = BasicLayer(dim=dim, depth=depth, num_heads=num_heads)
+        # self.encoder = SwinTransformerBlock3D(dim=dim, num_heads=num_heads)
+        if downsampling:
+            self.downsampling = Downsampling(in_channels=dim, out_channels=2 * dim)
+        else:
+            self.downsampling = None
 
     def forward(self, x):
         residual = self.encoder(x)
-        x = self.downsampling(residual)
+        if self.downsampling:
+            x = self.downsampling(residual)
         return x, residual
 
 
 class WrappedDecoder(nn.Module):
-    def __init__(self, dim: int, depth: int):
+    def __init__(self, dim: int, depth: int, num_heads: int = 8, transpose=True, add_residual=True):
         super().__init__()
-        self.decoder = BasicLayer(dim=dim, depth=depth)
-        self.transpose_conv = nn.ConvTranspose3d(
-            in_channels=dim, out_channels=dim // 2, kernel_size=2
-        )
+        self.decoder = BasicLayer(dim=dim, depth=depth, num_heads=num_heads)
+        self.add_residual = add_residual
+        # self.decoder = SwinTransformerBlock3D(dim=dim, num_heads=num_heads)
+        if transpose:
+            self.transpose_conv = nn.ConvTranspose3d(
+                in_channels=dim, out_channels=dim // 2, kernel_size=(2, 2, 2), padding=0
+            )
+        else:
+            self.transpose_conv = None
 
     def forward(self, x, residual):
-        x += residual
+        if self.add_residual:
+            x = torch.add(x, residual)
+        b, c, d, h, w = x.shape
         x = self.decoder(x)
-        x = self.transpose_conv(x)
+        if self.transpose_conv:
+            x = self.transpose_conv(x)
+            x = x[:, :, :d, :h, :w]
         return x
 
 
@@ -115,12 +130,12 @@ class UNet(nn.Module):
         self.encoder1 = WrappedEncoder(dim=96, depth=2)
         self.encoder2 = WrappedEncoder(dim=2 * 96, depth=2)
         self.encoder3 = WrappedEncoder(dim=4 * 96, depth=2)
-        self.encoder4 = WrappedEncoder(dim=8 * 96, depth=1)
+        self.encoder4 = WrappedEncoder(dim=8 * 96, depth=1, downsampling=False)
 
-        self.decoder1 = WrappedDecoder(dim=8 * 96, depth=2)
+        self.decoder1 = WrappedDecoder(dim=8 * 96, depth=2, add_residual=False)
         self.decoder2 = WrappedDecoder(dim=4 * 96, depth=2)
         self.decoder3 = WrappedDecoder(dim=2 * 96, depth=2)
-        self.decoder4 = WrappedDecoder(dim=96, depth=2)
+        self.decoder4 = WrappedDecoder(dim=96, depth=2, transpose=False)
 
         # self.encoder1 = BasicLayer(dim=96, depth=2)
         # self.downsampling1 = Downsampling(in_channels=96, out_channels=2 * 96)
@@ -145,7 +160,6 @@ class UNet(nn.Module):
         # self.decoder4 = BasicLayer(dim=96, depth=2)
 
     def forward(self, x):
-        # TODO residual connections
         x, residual1 = self.encoder1(x)
         x, residual2 = self.encoder2(x)
         x, residual3 = self.encoder3(x)
@@ -172,4 +186,23 @@ class UNet(nn.Module):
         # y3 = self.transpose_conv(y3)
         # y4 = self.decoder4(y3)
         return x
+    
 
+class TrDosePred(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.embedding = PatchEmbedding()
+        self.model = UNet()
+        self.expanding = PatchExpanding()
+
+    def forward(self, x):
+        x = self.embedding(x)
+        x = self.model(x)
+        x = self.expanding(x)
+        return x
+
+if __name__ == "__main__":
+    model = TrDosePred()
+    x = torch.randn(1, 3, 32, 128, 128)
+    y = model(x)
+    print(y.shape)
