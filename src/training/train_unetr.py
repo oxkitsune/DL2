@@ -66,14 +66,15 @@ def evaluate(model, data_loader, criterion, device):
     model.eval()
     total_loss = 0
     pbar = tqdm(data_loader, desc="Dev", leave=False)
-    for batch in pbar:
-        features = batch["features"].transpose(1, -1).to(device)
-        target = batch["dose"].unsqueeze(1).to(device)
+    with torch.no_grad():
+        for batch in pbar:
+            features = batch["features"].transpose(1, -1).to(device)
+            target = batch["dose"].unsqueeze(1).to(device)
 
-        outputs = model(features)
+            outputs = model(features)
 
-        loss = criterion(outputs, target)
-        total_loss += loss.item()
+            loss = criterion(outputs, target)
+            total_loss += loss.item()
 
     return total_loss / len(data_loader)
 
