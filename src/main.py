@@ -3,8 +3,7 @@ from pathlib import Path
 
 import wandb
 
-from src.data import transform_data
-from src.models import UNETR
+from src.data import transform_data, Augment
 
 from src.training import train_model
 from datasets import load_dataset, Array4D
@@ -120,24 +119,12 @@ def run():
         .cast_column("features", Array4D((128, 128, 128, 3), dtype="float32"))
     )
 
-    print("hi2")
-    print("hi2")
-    print("hi2")
-    print("hi2")
-    print("hi2")
-
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+
     dataset = dataset.with_format("torch", columns=["features", "dose"], device=device)
 
-    model = UNETR(input_dim=3, output_dim=1)
-    if args.resume_run:
-        run = wandb.Api().run(args.resume_run)
-        print(f"Loading model checkpoint {args.restore_checkpoint}")
-        run.file(args.restore_checkpoint).download(replace=True)
-        checkpoint = torch.load(
-            args.restore_checkpoint, weights_only=True, map_location=device
-        )
-        model.load_state_dict(checkpoint)
+    augment = Augment(42)
+    dataset.set_transform(augment)
 
     # run the training loop
     train_model(dataset, args)

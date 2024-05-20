@@ -1,31 +1,36 @@
-import numpy as np
-import scipy
 import torch
+from torchvision.transforms.functional import rotate
 
-
-class Transform3D(torch.nn.Module):
+class Augment(torch.nn.Module):
     def __init__(self, seed):
         super().__init__()
-        self.rng = np.random.default_rng(seed)
+        torch.manual_seed(seed)
 
-    def __call__(self, imgs):
-        # These are either one or zero, flips occur along the inferior-superior
-        # axis and right-left axis
-        infsup_flip, rl_flip = self.rng.integers(0, 2, 2) * 2 - 1
-        imgs = imgs[:, :, ::infsup_flip, ::rl_flip, :]
+    def __call__(self, batch):
+        features = batch["features"]
 
-        # Max translation of 20 voxels according to the paper, these translations
-        # occur along the inferior-superior axis and the right-left axis.
-        infsup_translation, rl_translation = self.rng.integers(-20, 21, 2)
-        imgs = np.roll(imgs, infsup_translation, axis=2)
-        imgs = np.roll(imgs, rl_translation, axis=3)
+        print(features)
+        print(type(features))
 
-        # Apply random rotation.
+        # Rotations
         rotations = [0, 40, 80, 120, 160, 200, 240, 280, 320]
-        rot = rotations[self.rng.integers(0, len(rotations))]
-        imgs = scipy.ndimage.rotate(
-            imgs, rot, axes=(1, 3), mode="nearest", order=0, reshape=False
-        )
-        imgs = np.divide(imgs, np.max(imgs), out=np.zeros_like(imgs), where=imgs != 0)
+        rot = rotations[torch.randint(0, len(rotations), (1,))]
 
-        return imgs
+        features = torch.transpose(features, 0, 3)
+        (_, _, _, batch_size, feature_size) = features.shape
+    
+        for feat in range(feature_size):
+            for sample in range(batch_size):
+                features[:, :, :, sample, feat] = rotate(features[:, :, :, sample, feat], rot)
+    
+        features = torch.transpose(features, 0, 3)
+
+        # Translations
+        shifts = torch.randint(-20, 21, (2,)).int()
+        features = torch.roll(features, shifts=shifts.tolist(), dims=(1, 2))
+    
+        # Flip
+        flips = torch.arange(2, 4)[torch.rand((2,)) > 0.5]
+        features = torch.flip(features, dims=flips.tolist())
+        
+        return batch

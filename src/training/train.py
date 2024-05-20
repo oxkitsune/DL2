@@ -25,17 +25,17 @@ def train_model(dataset, args):
     train_dataloader = DataLoader(dataset["train"], batch_size=args.batch_size, shuffle=True)
     dev_data_loader = DataLoader(dataset["validation"], batch_size=args.batch_size)
 
-    # pbar = tqdm(range(args.epochs), desc="Training model")
-    # for epoch in pbar:
-    #     train_loss = train_single_epoch(model, train_dataloader, optimizer, criterion)
-    #     dev_loss = evaluate(model, dev_data_loader, criterion)
-    #
-    #     wandb.log({"train_loss": train_loss, "dev_loss": dev_loss})
-    #     save_model_checkpoint_for_epoch(model)
-    #
-    #     pbar.write(
-    #         f"[{epoch}/{args.epochs}] Train loss: {train_loss:.3f} Dev loss: {dev_loss:.3f}"
-    #     )
+    pbar = tqdm(range(args.epochs), desc="Training model")
+    for epoch in pbar:
+        train_loss = train_single_epoch(model, train_dataloader, optimizer, criterion)
+        dev_loss = evaluate(model, dev_data_loader, criterion)
+
+        wandb.log({"train_loss": train_loss, "dev_loss": dev_loss})
+        save_model_checkpoint_for_epoch(model)
+
+        pbar.write(
+            f"[{epoch}/{args.epochs}] Train loss: {train_loss:.3f} Dev loss: {dev_loss:.3f}"
+        )
 
 
 def train_single_epoch(model, data_loader, optimizer, criterion):
@@ -49,8 +49,6 @@ def train_single_epoch(model, data_loader, optimizer, criterion):
         # (batch_size, channels, height, width, depth)
         features = batch["features"].transpose(1, -1)
         target = batch["dose"].unsqueeze(1)
-
-        print(features)
 
         outputs = model(features)
 
