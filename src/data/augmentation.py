@@ -1,5 +1,6 @@
 import torch
-from torchvision.transforms.functional import rotate
+from monai.transforms import Rotate
+import numpy as np
 
 class Augment(torch.nn.Module):
     def __init__(self, seed):
@@ -8,18 +9,14 @@ class Augment(torch.nn.Module):
 
     def augment_features(self, feat):
         # Rotations
-        rotations = [0, 40, 80, 120, 160, 200, 240, 280, 320]
+        rotations = torch.arange(0, 360, 40) * np.pi / 180     
         rot = rotations[torch.randint(0, len(rotations), (1,))]
-        self.rot = rot
+        r = Rotate((0, 0, rot), keep_size=True)
+        
+        for feature in range(feat.shape[-1]):
+            feat[:, :, :, :, feature] = r(feat[:, :, :, :, feature])
 
-        feat = torch.transpose(feat, 0, 3)
-        (_, _, _, batch_size, feature_size) = feat.shape
-
-        for feature in range(feature_size):
-            for sample in range(batch_size):
-                feat[:, :, :, sample, feature] = rotate(feat[:, :, :, sample, feature], rot)
-
-        feat = torch.transpose(feat, 0, 3)
+        self.r = r
 
         # Translations
         shifts = torch.randint(-20, 21, (2,)).int()
@@ -35,13 +32,7 @@ class Augment(torch.nn.Module):
 
     def augment_dose(self, dose):
         # Rotations
-        dose = torch.transpose(dose, 0, 3)
-        (_, _, _, batch_size) = dose.shape
-
-        for sample in range(batch_size):
-            dose[:, :, :, sample] = rotate(dose[:, :, :, sample], self.rot)
-
-        dose = torch.transpose(dose, 0, 3)
+        dose = self.r(dose)
 
         # Translations
         dose = torch.roll(dose, shifts=self.shifts.tolist(), dims=(1, 2))
