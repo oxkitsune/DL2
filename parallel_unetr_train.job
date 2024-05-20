@@ -28,4 +28,4 @@ python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 
-srun python -u -m src.main --epochs 200 --batch-size 4 --parallel
+srun python -u -m src.main --epochs 200 --batch-size 1
