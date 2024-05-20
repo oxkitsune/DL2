@@ -121,10 +121,20 @@ def run():
 
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
-    dataset = dataset.with_format("torch", columns=["features", "dose"], device=device)
+    # dataset = dataset.with_format("torch", columns=["features", "dose"], device=device)
+    dataset.set_format("torch", columns=["features", "dose"], device=device)
 
     augment = Augment(42)
-    dataset.set_transform(augment)
+    def transform(samples):
+        print(type(samples))
+        print(samples.keys())
+        print(type(samples["features"][0][0]))
+        # samples["features"] = samples["features"]
+        return samples
+
+    dataset = dataset.map(transform)
+
+    # dataset.set_transform(transform)
 
     # run the training loop
     train_model(dataset, args)
