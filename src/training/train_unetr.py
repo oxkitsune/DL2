@@ -14,8 +14,8 @@ def train_unetr(dataset, args):
     )
     print(f"Using device {device}")
 
-    model = UNETR(input_dim=3, output_dim=1).to(device)
-    # model = TrDosePred().to(device)
+    # model = UNETR(input_dim=3, output_dim=1).to(device)
+    model = TrDosePred().to(device)
 
     if args.parallel:
         model = torch.nn.DataParallel(model, output_device=device)
@@ -87,9 +87,12 @@ def save_model_checkpoint_for_epoch(model):
     torch.save(model.state_dict(), chpt_path)
     wandb.save(chpt_path)
 
+
 if __name__ == "__main__":
     import numpy as np
+
     NUM_RELEVANT_STRUCTURES = 7
+
     def transform_data(ct, structure_masks):
         # Need to add a channel dimension to the CT data
         # in order to end up with a feature map of shape (128, 128, 128, 3)
@@ -107,13 +110,16 @@ if __name__ == "__main__":
         ptv_channel = np.max(ptv_channels * labels, axis=-1, keepdims=True) / 70
 
         # Combine the channels into a single feature tensor
-        flattened_features = np.concatenate((ct_channel, oar_channel, ptv_channel), axis=-1)
+        flattened_features = np.concatenate(
+            (ct_channel, oar_channel, ptv_channel), axis=-1
+        )
 
         return {
             "features": flattened_features,
         }
 
     from datasets import load_dataset, Array4D
+
     dataset = load_dataset("oxkitsune/open-kbp", num_proc=1)
 
     # apply transformations in numpy format, on cpu
@@ -134,7 +140,7 @@ if __name__ == "__main__":
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
     dataset = dataset.with_format("torch", columns=["features", "dose"], device=device)
 
-    model = TrDosePred(n_heads = 1)
+    model = TrDosePred(n_heads=1)
     data_loader = DataLoader(dataset["train"], batch_size=1)
     optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3)
     criterion = torch.nn.L1Loss()
