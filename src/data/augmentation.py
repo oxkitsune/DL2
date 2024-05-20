@@ -8,6 +8,16 @@ class Augment(torch.nn.Module):
         torch.manual_seed(seed)
 
     def augment_features(self, feat):
+        # Flip
+        flips = torch.arange(2, 4)[torch.rand((2,)) > 0.5]
+        feat = torch.flip(feat, dims=flips.tolist())
+        self.flips = flips
+
+        # Translations
+        shifts = torch.randint(-20, 21, (2,)).int()
+        feat = torch.roll(feat, shifts=shifts.tolist(), dims=(1, 2))
+        self.shifts = shifts
+
         # Rotations
         rotations = torch.arange(0, 360, 40) * np.pi / 180     
         rot = rotations[torch.randint(0, len(rotations), (1,))]
@@ -17,28 +27,18 @@ class Augment(torch.nn.Module):
             feat[:, :, :, :, feature] = r(feat[:, :, :, :, feature])
 
         self.r = r
-
-        # Translations
-        shifts = torch.randint(-20, 21, (2,)).int()
-        feat = torch.roll(feat, shifts=shifts.tolist(), dims=(1, 2))
-        self.shifts = shifts
-
-        # Flip
-        flips = torch.arange(2, 4)[torch.rand((2,)) > 0.5]
-        feat = torch.flip(feat, dims=flips.tolist())
-        self.flips = flips
         
         return feat 
 
     def augment_dose(self, dose):
-        # Rotations
-        dose = self.r(dose)
+        # Flip
+        dose = torch.flip(dose, dims=self.flips.tolist())
 
         # Translations
         dose = torch.roll(dose, shifts=self.shifts.tolist(), dims=(1, 2))
 
-        # Flip
-        dose = torch.flip(dose, dims=self.flips.tolist())
+        # Rotations
+        dose = self.r(dose)
 
         return dose
 
