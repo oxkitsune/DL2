@@ -48,6 +48,7 @@ class Augment(torch.nn.Module):
 
         # Flip
         dose = torch.flip(dose, dims=self.flips.tolist())
+
         return dose
 
     def __call__(self, x):
