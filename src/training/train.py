@@ -4,6 +4,7 @@ import wandb
 import os
 
 from src.models.conv_net import ConvNet
+from src.models.unetr import UNETR
 from src.data import Augment
 from torch.utils.data import DataLoader, default_collate
 
@@ -22,8 +23,8 @@ def train_model(dataset, args):
     )
     print(f"Using device {device}")
 
-    # model = UNETR(input_dim=3, output_dim=1).to(device)
-    model = ConvNet(num_input_channels=3).to(device)
+    model = UNETR(input_dim=3, output_dim=1).to(device)
+    # model = ConvNet(num_input_channels=3).to(device)
 
     if args.parallel:
         model = torch.nn.DataParallel(model, output_device=device)
@@ -79,14 +80,15 @@ def evaluate(model, data_loader, criterion):
     model.eval()
     total_loss = 0
     pbar = tqdm(data_loader, desc="Dev", leave=False)
-    for batch in pbar:
-        features = batch["features"].transpose(1, -1)
-        target = batch["dose"].unsqueeze(1)
+    with torch.no_grad():
+        for batch in pbar:
+            features = batch["features"].transpose(1, -1)
+            target = batch["dose"].unsqueeze(1)
 
-        outputs = model(features)
+            outputs = model(features)
 
-        loss = criterion(outputs, target)
-        total_loss += loss.item()
+            loss = criterion(outputs, target)
+            total_loss += loss.item()
 
     return total_loss / len(data_loader)
 
