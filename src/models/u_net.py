@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 # from Swin3D.modules.swin3d_layers import BasicLayer
-from swin3d_torch import BasicLayer
+from src.models.swin3d_torch import BasicLayer
 
 
 class Downsampling(nn.Module):
@@ -10,12 +10,14 @@ class Downsampling(nn.Module):
         self.conv = nn.Conv3d(
             in_channels, out_channels, kernel_size=3, stride=stride, padding=1
         )
-        self.norm = nn.LayerNorm([1, out_channels, 16, 32, 32])
+        self.norm = nn.LayerNorm(out_channels)
         self.activation = nn.GELU()
 
     def forward(self, x):
         x = self.conv(x)
+        x = x.permute(0, 2, 3, 4, 1)
         x = self.norm(x)
+        x = x.permute(0, 4, 1, 2, 3)
         x = self.activation(x)
         return x
 
@@ -124,18 +126,18 @@ class WrappedDecoder(nn.Module):
 
 
 class UNet(nn.Module):
-    def __init__(self):
+    def __init__(self, n_heads=8):
         super().__init__()
         # TODO param values of basiclayer?
-        self.encoder1 = WrappedEncoder(dim=96, depth=2)
-        self.encoder2 = WrappedEncoder(dim=2 * 96, depth=2)
-        self.encoder3 = WrappedEncoder(dim=4 * 96, depth=2)
-        self.encoder4 = WrappedEncoder(dim=8 * 96, depth=1, downsampling=False)
+        self.encoder1 = WrappedEncoder(dim=96, depth=2, num_heads=n_heads)
+        self.encoder2 = WrappedEncoder(dim=2 * 96, depth=2, num_heads=n_heads)
+        self.encoder3 = WrappedEncoder(dim=4 * 96, depth=2, num_heads=n_heads)
+        self.encoder4 = WrappedEncoder(dim=8 * 96, depth=1, downsampling=False, num_heads=n_heads)
 
-        self.decoder1 = WrappedDecoder(dim=8 * 96, depth=2, add_residual=False)
-        self.decoder2 = WrappedDecoder(dim=4 * 96, depth=2)
-        self.decoder3 = WrappedDecoder(dim=2 * 96, depth=2)
-        self.decoder4 = WrappedDecoder(dim=96, depth=2, transpose=False)
+        self.decoder1 = WrappedDecoder(dim=8 * 96, depth=2, add_residual=False, num_heads=n_heads)
+        self.decoder2 = WrappedDecoder(dim=4 * 96, depth=2, num_heads=n_heads)
+        self.decoder3 = WrappedDecoder(dim=2 * 96, depth=2, num_heads=n_heads)
+        self.decoder4 = WrappedDecoder(dim=96, depth=2, transpose=False, num_heads=n_heads)
 
         # self.encoder1 = BasicLayer(dim=96, depth=2)
         # self.downsampling1 = Downsampling(in_channels=96, out_channels=2 * 96)
@@ -189,10 +191,10 @@ class UNet(nn.Module):
     
 
 class TrDosePred(nn.Module):
-    def __init__(self):
+    def __init__(self, n_heads=8):
         super().__init__()
         self.embedding = PatchEmbedding()
-        self.model = UNet()
+        self.model = UNet(n_heads=n_heads)
         self.expanding = PatchExpanding()
 
     def forward(self, x):
@@ -203,6 +205,6 @@ class TrDosePred(nn.Module):
 
 if __name__ == "__main__":
     model = TrDosePred()
-    x = torch.randn(1, 3, 32, 128, 128)
+    x = torch.randn(1, 3, 128, 128, 128)
     y = model(x)
     print(y.shape)
