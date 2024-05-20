@@ -4,7 +4,16 @@ import wandb
 import os
 
 from src.models.conv_net import ConvNet
-from torch.utils.data import DataLoader
+from src.data import Augment
+from torch.utils.data import DataLoader, default_collate
+
+augment = Augment(42)
+def transform(samples):
+    samples = default_collate(samples)
+    samples["features"] = augment(samples["features"])
+    samples["dose"] = augment(samples["dose"])
+
+    return samples
 
 
 def train_model(dataset, args):
@@ -22,7 +31,12 @@ def train_model(dataset, args):
     criterion = torch.nn.L1Loss()
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
 
-    train_dataloader = DataLoader(dataset["train"], batch_size=args.batch_size, shuffle=True)
+    train_dataloader = DataLoader(
+        dataset["train"], 
+        batch_size=args.batch_size, 
+        shuffle=True, 
+        collate_fn=transform
+    )
     dev_data_loader = DataLoader(dataset["validation"], batch_size=args.batch_size)
 
     pbar = tqdm(range(args.epochs), desc="Training model")
