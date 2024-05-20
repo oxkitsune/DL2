@@ -83,7 +83,7 @@ def setup_wandb(args):
         # track hyperparameters and run metadata
         config={
             "learning_rate": args.lr,
-            "architecture": "Unetr",
+            "architecture": "TrDosePred",
             "epochs": args.epochs,
             "batch_size": args.batch_size,
         },

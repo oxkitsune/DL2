@@ -1,5 +1,6 @@
 import torch
 from torch import nn
+
 # from Swin3D.modules.swin3d_layers import BasicLayer
 from src.models.swin3d_torch import BasicLayer
 
@@ -102,7 +103,14 @@ class WrappedEncoder(nn.Module):
 
 
 class WrappedDecoder(nn.Module):
-    def __init__(self, dim: int, depth: int, num_heads: int = 8, transpose=True, add_residual=True):
+    def __init__(
+        self,
+        dim: int,
+        depth: int,
+        num_heads: int = 8,
+        transpose=True,
+        add_residual=True,
+    ):
         super().__init__()
         self.decoder = BasicLayer(dim=dim, depth=depth, num_heads=num_heads)
         self.add_residual = add_residual
@@ -132,12 +140,18 @@ class UNet(nn.Module):
         self.encoder1 = WrappedEncoder(dim=96, depth=2, num_heads=n_heads)
         self.encoder2 = WrappedEncoder(dim=2 * 96, depth=2, num_heads=n_heads)
         self.encoder3 = WrappedEncoder(dim=4 * 96, depth=2, num_heads=n_heads)
-        self.encoder4 = WrappedEncoder(dim=8 * 96, depth=1, downsampling=False, num_heads=n_heads)
+        self.encoder4 = WrappedEncoder(
+            dim=8 * 96, depth=1, downsampling=False, num_heads=n_heads
+        )
 
-        self.decoder1 = WrappedDecoder(dim=8 * 96, depth=2, add_residual=False, num_heads=n_heads)
+        self.decoder1 = WrappedDecoder(
+            dim=8 * 96, depth=2, add_residual=False, num_heads=n_heads
+        )
         self.decoder2 = WrappedDecoder(dim=4 * 96, depth=2, num_heads=n_heads)
         self.decoder3 = WrappedDecoder(dim=2 * 96, depth=2, num_heads=n_heads)
-        self.decoder4 = WrappedDecoder(dim=96, depth=2, transpose=False, num_heads=n_heads)
+        self.decoder4 = WrappedDecoder(
+            dim=96, depth=2, transpose=False, num_heads=n_heads
+        )
 
         # self.encoder1 = BasicLayer(dim=96, depth=2)
         # self.downsampling1 = Downsampling(in_channels=96, out_channels=2 * 96)
@@ -188,10 +202,10 @@ class UNet(nn.Module):
         # y3 = self.transpose_conv(y3)
         # y4 = self.decoder4(y3)
         return x
-    
+
 
 class TrDosePred(nn.Module):
-    def __init__(self, n_heads=8):
+    def __init__(self, n_heads=4):
         super().__init__()
         self.embedding = PatchEmbedding()
         self.model = UNet(n_heads=n_heads)
@@ -202,6 +216,7 @@ class TrDosePred(nn.Module):
         x = self.model(x)
         x = self.expanding(x)
         return x
+
 
 if __name__ == "__main__":
     model = TrDosePred()
