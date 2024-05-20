@@ -28,9 +28,10 @@ def train_unetr(dataset, args):
 
     pbar = tqdm(range(args.epochs), desc="Training model")
     for epoch in pbar:
-        train_loss = train_single_epoch(model, train_dataloader, optimizer, criterion)
-        dev_loss = evaluate(model, dev_data_loader, criterion)
-
+        train_loss = train_single_epoch(
+            model, train_dataloader, optimizer, criterion, device
+        )
+        dev_loss = evaluate(model, dev_data_loader, criterion, device)
         wandb.log({"train_loss": train_loss, "dev_loss": dev_loss})
         save_model_checkpoint_for_epoch(model)
 
@@ -39,7 +40,7 @@ def train_unetr(dataset, args):
         )
 
 
-def train_single_epoch(model, data_loader, optimizer, criterion):
+def train_single_epoch(model, data_loader, optimizer, criterion, device):
     model.train()
     total_loss = 0
     pbar = tqdm(data_loader, desc="Train", leave=False)
@@ -48,8 +49,8 @@ def train_single_epoch(model, data_loader, optimizer, criterion):
 
         # ensure features/dose are in the correct shape
         # (batch_size, channels, height, width, depth)
-        features = batch["features"].transpose(1, -1)
-        target = batch["dose"].unsqueeze(1)
+        features = batch["features"].transpose(1, -1).to(device)
+        target = batch["dose"].unsqueeze(1).to(device)
         outputs = model(features)
 
         loss = criterion(outputs, target)
@@ -61,13 +62,13 @@ def train_single_epoch(model, data_loader, optimizer, criterion):
     return total_loss / len(data_loader)
 
 
-def evaluate(model, data_loader, criterion):
+def evaluate(model, data_loader, criterion, device):
     model.eval()
     total_loss = 0
     pbar = tqdm(data_loader, desc="Dev", leave=False)
     for batch in pbar:
-        features = batch["features"].transpose(1, -1)
-        target = batch["dose"].unsqueeze(1)
+        features = batch["features"].transpose(1, -1).to(device)
+        target = batch["dose"].unsqueeze(1).to(device)
 
         outputs = model(features)
 
