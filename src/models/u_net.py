@@ -11,15 +11,17 @@ class Downsampling(nn.Module):
         self.conv = nn.Conv3d(
             in_channels, out_channels, kernel_size=3, stride=stride, padding=1
         )
-        self.norm = nn.LayerNorm(out_channels)
+        self.norm = nn.LayerNorm(in_channels)
         self.activation = nn.GELU()
 
     def forward(self, x):
-        x = self.conv(x)
         x = x.permute(0, 2, 3, 4, 1)
         x = self.norm(x)
         x = x.permute(0, 4, 1, 2, 3)
+
         x = self.activation(x)
+
+        x = self.conv(x)
         return x
 
 
@@ -69,7 +71,7 @@ class ExpandingBlock(nn.Module):
     def forward(self, x):
         x = self.transpose_conv(x)
         x = self.conv(x)
-        x = self.activation(x)
+        # x = self.activation(x)
         return x
 
 
