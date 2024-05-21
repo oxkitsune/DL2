@@ -8,6 +8,8 @@ class Augment(torch.nn.Module):
         torch.manual_seed(seed)
 
     def augment_features(self, feat):
+        feat = feat.clone()
+
         # Flip
         flips = torch.arange(2, 4)[torch.rand((2,)) > 0.5]
         feat = torch.flip(feat, dims=flips.tolist())
@@ -31,6 +33,8 @@ class Augment(torch.nn.Module):
         return feat 
 
     def augment_dose(self, dose):
+        dose = dose.clone()
+
         # Flip
         dose = torch.flip(dose, dims=self.flips.tolist())
 
