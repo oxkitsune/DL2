@@ -9,6 +9,8 @@ from src.data import Augment
 from torch.utils.data import DataLoader, default_collate
 
 augment = Augment(42)
+
+
 def transform(samples):
     samples = default_collate(samples)
     samples["features"] = augment(samples["features"])
@@ -33,10 +35,7 @@ def train_model(dataset, args):
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
 
     train_dataloader = DataLoader(
-        dataset["train"], 
-        batch_size=args.batch_size, 
-        shuffle=True, 
-        collate_fn=transform
+        dataset["train"], batch_size=args.batch_size, shuffle=True, collate_fn=transform
     )
     dev_data_loader = DataLoader(dataset["validation"], batch_size=args.batch_size)
 
@@ -101,4 +100,4 @@ def save_model_checkpoint_for_epoch(model):
 
     # save model checkpoint
     torch.save(model.state_dict(), chpt_path)
-    wandb.save(chpt_path)           # Do evaluation
+    wandb.save(chpt_path)  # Do evaluation
