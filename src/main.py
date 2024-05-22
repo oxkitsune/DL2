@@ -105,10 +105,7 @@ def setup_model(args):
     if args.model == "unetr":
         from src.models.unetr import UNETR
 
-        model = UNETR(
-            in_channels=3,
-            out_channels=1,
-        )
+        model = UNETR()
     else:
         raise ValueError(f"Unknown model {args.model}")
 
