@@ -39,6 +39,15 @@ def mean_dvh_error(prediction, batch):
 
 
 def dvh_score(prediction, batch):
+    dvh_metrics = [dvh_score_for_single_prediction(pred, batch) for pred in prediction]
+
+    dvh_metrics = {
+        k: torch.stack([m[k] for m in dvh_metrics]) for k in dvh_metrics[0].keys()
+    }
+    return dvh_metrics
+
+
+def dvh_score_for_single_prediction(prediction, batch):
     voxel_dims = batch["voxel_dimensions"]
 
     voxels_within_tenths_cc = torch.maximum(
