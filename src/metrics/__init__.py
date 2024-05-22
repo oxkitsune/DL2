@@ -25,24 +25,20 @@ def dose_score(prediction, target, mask):
     return torch.abs(prediction - target).sum() / mask.sum()
 
 
-def mean_dvh_error(prediction, target, voxel_dimensions, structure_masks):
-    errors = _dvh_error(prediction, target, voxel_dimensions, structure_masks)
+def mean_dvh_error(prediction, target, voxel_dim, structure_masks):
+    errors = _dvh_error(prediction, target, voxel_dim, structure_masks)
     return torch.nanmean(torch.stack(list(errors.values())))
 
 
-def _dvh_error(prediction, target, voxel_dimensions, structure_masks):
+def _dvh_error(prediction, target, voxel_dim, structure_masks):
     batch_size = prediction.shape[0]
     reference_dvh_metrics = [
-        dvh_score_for_single_prediction(
-            batch["dose"][i], batch["voxel_dimensions"][i], batch["structure_masks"][i]
-        )
+        dvh_score_for_single_prediction(target[i], voxel_dim, structure_masks)
         for i in range(batch_size)
     ]
-    print(batch["structure_masks"].shape)
+    print(structure_masks.shape)
     pred_dvh_metrics = [
-        dvh_score_for_single_prediction(
-            prediction[i], batch["voxel_dimensions"][i], batch["structure_masks"][i]
-        )
+        dvh_score_for_single_prediction(prediction[i], voxel_dim, structure_masks)
         for i in range(batch_size)
     ]
 
