@@ -77,7 +77,7 @@ def dvh_score_for_single_prediction(prediction, voxel_dims, structure_masks):
         print(structure_masks.shape, roi_mask.shape)
 
         # print the indices of the mask
-        print(roi_mask.nonzero())
+        print(structure_masks[:, :, :, roi_index])
 
         if not roi_mask.any():
             continue
