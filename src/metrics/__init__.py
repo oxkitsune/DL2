@@ -61,13 +61,13 @@ def dvh_score_for_single_prediction(prediction, voxel_dims, structure_masks):
     metrics = {}
     for roi_index, roi in enumerate(ALL_ROIS):
         roi_mask = structure_masks[..., roi_index].to(torch.bool)
-        if roi_mask is None:
+        roi_dose = prediction[roi_mask]
+        roi_size = roi_dose.size(0)
+        if roi_mask is None or roi_size == 0:
             continue  # Skip over ROIs when the ROI is missing (i.e., not contoured)
 
-        roi_dose = prediction[roi_mask]
         for metric in ALL_DVH_METRICS[roi]:
             if metric == "D_0.1_cc":
-                roi_size = len(roi_dose)
                 fractional_volume_to_evaluate = voxels_within_tenths_cc / roi_size
                 print(voxel_dims)
                 print(voxels_within_tenths_cc)
