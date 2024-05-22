@@ -42,7 +42,7 @@ def dvh_score(prediction, batch):
     voxel_dims = batch["voxel_dimensions"]
 
     voxels_within_tenths_cc = torch.maximum(
-        torch.FloatTensor(
+        torch.Tensor(
             [1.0, 1.0, 1.0],
             device=torch.device(prediction.get_device()),
         ),
