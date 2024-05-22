@@ -65,7 +65,7 @@ def dvh_score_for_single_prediction(prediction, voxel_dims, structure_masks):
     )
     metrics = {k: {} for k in ALL_ROIS}
     for roi_index, roi in enumerate(ALL_ROIS):
-        # print("roi: idx: ", roi_index, roi)
+        print("roi: idx: ", roi_index, roi, type(structure_masks[..., roi_index]))
         roi_mask = structure_masks[..., roi_index].detach().cpu().clone().to(torch.bool)
         if not roi_mask.any():
             continue
@@ -77,7 +77,6 @@ def dvh_score_for_single_prediction(prediction, voxel_dims, structure_masks):
         for metric in ALL_DVH_METRICS[roi]:
             if metric == "D_0.1_cc":
                 fractional_volume_to_evaluate = voxels_within_tenths_cc / roi_size
-                print(fractional_volume_to_evaluate.shape)
                 metric_value = torch.quantile(roi_dose, fractional_volume_to_evaluate)
             elif metric == "mean":
                 metric_value = roi_dose.mean()
