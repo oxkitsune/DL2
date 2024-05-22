@@ -161,10 +161,10 @@ def run():
         ],
         device=device,
     )
-    # model = setup_model(args, device)
+    model = setup_model(args, device)
 
     # run the training loop
-    # train_model(model, dataset, args)
+    train_model(model, dataset, args)
 
 
 if __name__ == "__main__":
