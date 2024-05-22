@@ -39,7 +39,13 @@ def mean_dvh_error(prediction, batch):
 
 
 def dvh_score(prediction, batch):
-    dvh_metrics = [dvh_score_for_single_prediction(pred, batch) for pred in prediction]
+    batch_size = prediction.shape[0]
+    dvh_metrics = [
+        dvh_score_for_single_prediction(
+            prediction[i], batch["voxel_dimensions"][i], batch["structure_masks"][i]
+        )
+        for i in range(batch_size)
+    ]
 
     dvh_metrics = {
         k: torch.stack([m[k] for m in dvh_metrics]) for k in dvh_metrics[0].keys()
@@ -47,16 +53,14 @@ def dvh_score(prediction, batch):
     return dvh_metrics
 
 
-def dvh_score_for_single_prediction(prediction, batch):
-    voxel_dims = batch["voxel_dimensions"]
-
+def dvh_score_for_single_prediction(prediction, voxel_dims, structure_masks):
     voxels_within_tenths_cc = torch.maximum(
         torch.Tensor([1.0, 1.0, 1.0]).to(torch.device(prediction.get_device())),
         torch.round(100.0 / voxel_dims),
     )
     metrics = {}
     for roi_index, roi in enumerate(ALL_ROIS):
-        roi_mask = batch["structure_masks"][..., roi_index].to(torch.bool)
+        roi_mask = structure_masks[..., roi_index].to(torch.bool)
         roi_dose = prediction[roi_mask]
         for metric in ALL_DVH_METRICS[roi]:
             if metric == "D_0.1_cc":
