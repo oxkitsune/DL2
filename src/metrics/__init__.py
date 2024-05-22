@@ -70,7 +70,7 @@ def dvh_score_for_single_prediction(prediction, voxel_dims, structure_masks):
         if not roi_mask.any():
             continue
 
-        print(roi_mask.shape, prediction.shape, prediction.squeeze.shape)
+        print(roi_mask.shape, prediction.shape, prediction.squeeze().shape)
         roi_dose = prediction[roi_mask]
         roi_size = roi_dose.size(0)
 
