@@ -161,6 +161,8 @@ def run():
         ],
         device=device,
     )
+
+    print(dataset["train"][90]["structure_masks"][..., 0][0])
     model = setup_model(args, device)
 
     # run the training loop
