@@ -103,19 +103,21 @@ def run():
 
     dataset = load_dataset("oxkitsune/open-kbp", num_proc=num_proc)
 
+    # ensure the feature format is set for the new features column, this speeds up the dataset loading by 100x
+    features = dataset["train"].features.copy()
+    features["features"] = Array4D((128, 128, 128, 3), dtype="float32")
+    del features["ct"]
+    del features["possible_dose_mask"]
+
     # apply transformations in numpy format, on cpu
-    dataset = (
-        dataset.with_format("numpy")
-        .map(
-            transform_data,
-            input_columns=["ct", "structure_masks"],
-            # we remove these columns as they are combined into the 'features' column or irrelevant
-            remove_columns=["ct", "structure_masks", "possible_dose_mask"],
-            writer_batch_size=25,
-            num_proc=num_proc,
-        )
-        # cast the features column to a 4D array, to make converting to torch 100x faster
-        .cast_column("features", Array4D((128, 128, 128, 3), dtype="float32"))
+    dataset = dataset.with_format("numpy").map(
+        transform_data,
+        input_columns=["ct", "structure_masks"],
+        # we remove these columns as they are combined into the 'features' column or irrelevant
+        remove_columns=["ct", "possible_dose_mask"],
+        writer_batch_size=25,
+        num_proc=num_proc,
+        features=features,
     )
 
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
