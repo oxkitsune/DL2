@@ -63,6 +63,12 @@ def get_args():
         default=None,
         help="The path to a model checkpoint to restore",
     )
+    parser.add_argument(
+        "--model",
+        type=str,
+        default="unetr",
+        help="The model to use for training",
+    )
 
     parser.add_argument("--parallel", action="store_true", help="Use multiple GPUs")
 
@@ -82,7 +88,7 @@ def setup_wandb(args):
         # track hyperparameters and run metadata
         config={
             "learning_rate": args.lr,
-            "architecture": "Unetr",
+            "architecture": args.model,
             "epochs": args.epochs,
             "batch_size": args.batch_size,
         },
@@ -93,6 +99,20 @@ def setup_wandb(args):
         mode="disabled" if args.dry_run else "online",
         resume=args.resume_run is not None,
     )
+
+
+def setup_model(args):
+    if args.model == "unetr":
+        from src.models.unetr import UNETR
+
+        model = UNETR(
+            in_channels=3,
+            out_channels=1,
+        )
+
+        return model
+
+    raise ValueError(f"Unknown model {args.model}")
 
 
 def run():
@@ -123,8 +143,17 @@ def run():
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
     dataset = dataset.with_format("torch", columns=["features", "dose"], device=device)
 
+    model = setup_model(args)
+
+    if args.resume_run:
+        run = wandb.Api().run(args.resume_run)
+        print(f"Loading model checkpoint {args.restore_checkpoint}")
+        run.file(args.restore_checkpoint).download(replace=True)
+        checkpoint = torch.load(args.restore_checkpoint, weights_only=True)
+        model.load_state_dict(checkpoint)
+
     # run the training loop
-    train_model(dataset, args)
+    train_model(model, dataset, args)
 
 
 if __name__ == "__main__":

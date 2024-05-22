@@ -3,8 +3,6 @@ from tqdm import tqdm
 import wandb
 import os
 
-from src.models.conv_net import ConvNet
-from src.models.unetr import UNETR
 from src.data import Augment
 from torch.utils.data import DataLoader, default_collate
 
@@ -19,14 +17,11 @@ def transform(samples):
     return samples
 
 
-def train_model(dataset, args):
+def train_model(model, dataset, args):
     device = (
         torch.device("cuda:0") if torch.cuda.is_available() else torch.device("cpu")
     )
     print(f"Using device {device}")
-
-    model = UNETR(input_dim=3, output_dim=1).to(device)
-    # model = ConvNet(num_input_channels=3).to(device)
 
     if args.parallel:
         model = torch.nn.DataParallel(model, output_device=device)
@@ -44,7 +39,7 @@ def train_model(dataset, args):
         train_loss = train_single_epoch(model, train_dataloader, optimizer, criterion)
         dev_loss = evaluate(model, dev_data_loader, criterion)
 
-        wandb.log({"train_loss": train_loss, "dev_loss": dev_loss})
+        wandb.log({"train_loss": train_loss, "dev_loss": dev_loss, "epoch": epoch})
         save_model_checkpoint_for_epoch(model)
 
         pbar.write(
