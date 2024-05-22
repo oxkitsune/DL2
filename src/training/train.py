@@ -99,7 +99,7 @@ def train_single_epoch(model, data_loader, optimizer, criterion):
         metrics["dose_score"] += dose_score(
             outputs, target, batch["possible_dose_mask"]
         )
-        metrics["mean_dvh_error"] += mean_dvh_error(outputs.clone(), batch.clone())
+        metrics["mean_dvh_error"] += mean_dvh_error(outputs, batch)
 
     n_batches = len(data_loader)
     return {
