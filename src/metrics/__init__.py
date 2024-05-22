@@ -48,7 +48,7 @@ def _dvh_error(prediction, batch):
     dvh_metrics = {
         k: torch.stack(
             [
-                torch.abs(reference[k] - pred_dvh_metrics[i][k])
+                torch.nanmean(torch.abs(reference[k] - pred_dvh_metrics[i][k]))
                 for i, reference in enumerate(reference_dvh_metrics)
             ]
         )
