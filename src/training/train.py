@@ -25,6 +25,8 @@ def train_model(model, dataset, args):
     )
     print(f"Using device {device}")
 
+    torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+
     criterion = RadiotherapyLoss()
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
 
