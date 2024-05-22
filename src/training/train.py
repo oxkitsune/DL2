@@ -57,17 +57,17 @@ def train_model(model, dataset, args):
         )
         save_model_checkpoint_for_epoch(model)
 
-        padding = " " * len(f"[{epoch}/{args.epochs}]")
-        pbar.write(
-            f"[{epoch}/{args.epochs}] Train Loss: {train_metrics['loss']:.3f}, Dev Loss: {dev_metrics['loss']:.3f}"
-        )
-        pbar.write(f"{padding} Train Dose Score: {train_metrics['dose_score']:.3f}")
-        pbar.write(
-            f"{padding} Train Mean DVH Error: {train_metrics['mean_dvh_error']:.3f}"
-        )
-        pbar.write(f"{padding} Dev Dose Score: {dev_metrics['dose_score']:.3f}")
-        pbar.write(f"{padding} Dev Mean DVH Error: {dev_metrics['mean_dvh_error']:.3f}")
-        pbar.write("====================================")
+        pbar.write(f"============ Epoch {epoch}/{args.epochs} =============")
+        pbar.write("Training metrics:")
+        pbar.write(f"Loss {train_metrics['loss']:.3f}")
+        pbar.write(f"Dose score {train_metrics['dose_score']:.3f}")
+        pbar.write(f"Mean DVH error {train_metrics['mean_dvh_error']:.3f}")
+        pbar.write("")
+        pbar.write("Dev metrics:")
+        pbar.write(f"Loss {dev_metrics['loss']:.3f}")
+        pbar.write(f"Dose score {dev_metrics['dose_score']:.3f}")
+        pbar.write(f"Mean DVH error {dev_metrics['mean_dvh_error']:.3f}")
+        pbar.write("=======================================")
 
 
 def compute_metrics(prediction, batch):
