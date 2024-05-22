@@ -18,7 +18,7 @@ ALL_ROIS = ROIS["oars"] + ROIS["targets"]
 OAR_DVH_METRICS = {oar: ["D_0.1_cc", "mean"] for oar in ROIS["oars"]}
 TARGET_DVH_METRICS = {target: ["D_99", "D_95", "D_1"] for target in ROIS["targets"]}
 
-ALL_DVH_METRICS = OAR_DVH_METRICS | TARGET_DVH_METRICS
+ALL_DVH_METRICS = {**OAR_DVH_METRICS, **TARGET_DVH_METRICS}
 
 
 def dose_score(prediction, target, mask):
@@ -32,7 +32,7 @@ def mean_dvh_error(prediction, target, voxel_dim, structure_masks):
 
 def _dvh_error(prediction, target, voxel_dim, structure_masks):
     batch_size = prediction.shape[0]
-    print(structure_masks.shape)
+    print("Structure masks shape:", structure_masks.shape)
     reference_dvh_metrics = [
         dvh_score_for_single_prediction(
             target[i], voxel_dim[i], structure_masks[i].clone()
@@ -63,30 +63,38 @@ def _dvh_error(prediction, target, voxel_dim, structure_masks):
 
 
 def dvh_score_for_single_prediction(prediction, voxel_dims, structure_masks):
+    device = prediction.device
     voxels_within_tenths_cc = torch.maximum(
-        torch.Tensor([1.0, 1.0, 1.0]).to(torch.device(prediction.get_device())),
+        torch.tensor([1.0, 1.0, 1.0], device=device),
         torch.round(100.0 / voxel_dims),
     )
     metrics = {k: {} for k in ALL_ROIS}
     for roi_index, roi in enumerate(ALL_ROIS):
         if roi_index == 6:
             continue
-        print("roi: idx: ", roi_index, roi)
-        # print(structure_masks.shape)
-        roi_mask = structure_masks[:, :, :, roi_index].to(torch.bool)
-        print(structure_masks.shape, roi_mask.shape)
+        print(f"ROI: {roi}, Index: {roi_index}")
 
-        # print the indices of the mask
-        print(structure_masks[:, :, :, roi_index])
+        if roi_index >= structure_masks.shape[-1]:
+            raise IndexError(
+                f"ROI index {roi_index} is out of bounds for structure_masks with shape {structure_masks.shape}"
+            )
+
+        roi_mask = structure_masks[:, :, :, roi_index].to(torch.bool)
+        print(
+            f"Structure mask shape: {structure_masks.shape}, ROI mask shape: {roi_mask.shape}"
+        )
+        print(f"Indices of ROI mask: {structure_masks[:, :, :, roi_index].nonzero()}")
 
         if not roi_mask.any():
             continue
         roi_dose = prediction.squeeze()[roi_mask]
         roi_size = roi_dose.size(0)
+        print(f"ROI dose size: {roi_size}")
 
         metrics[roi] = {}
 
         for metric in ALL_DVH_METRICS[roi]:
+            print(f"Calculating metric: {metric}")
             if metric == "D_0.1_cc":
                 fractional_volume_to_evaluate = voxels_within_tenths_cc / roi_size
                 metric_value = torch.quantile(roi_dose, fractional_volume_to_evaluate)
@@ -99,6 +107,6 @@ def dvh_score_for_single_prediction(prediction, voxel_dims, structure_masks):
             elif metric == "D_1":
                 metric_value = torch.quantile(roi_dose, 0.99)
             else:
-                raise ValueError(f"Metrics {metric} is not supported.")
+                raise ValueError(f"Metric {metric} is not supported.")
             metrics[roi][metric] = metric_value
     return metrics
