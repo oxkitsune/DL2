@@ -6,7 +6,7 @@ import os
 
 from src.data import Augment
 from torch.utils.data import DataLoader, default_collate
-from src.training.loss import MomentDVHLoss
+from src.training.loss import MomentDVHLoss, DVHLoss, RadiotherapyLoss
 
 augment = Augment(42)
 
@@ -25,8 +25,7 @@ def train_model(model, dataset, args):
     )
     print(f"Using device {device}")
 
-    criterion = MomentDVHLoss()
-    # criterion = torch.nn.L1Loss()
+    criterion = RadiotherapyLoss()
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
 
     train_dataloader = DataLoader(
@@ -58,11 +57,11 @@ def train_single_epoch(model, data_loader, optimizer, criterion):
         # (batch_size, channels, height, width, depth)
         features = batch["features"].transpose(1, -1)
         target = batch["dose"].unsqueeze(1)
-        structure_masks = batch["dose"].unsqueeze(1)
+        structure_masks = batch["structure_masks"]
 
         outputs = model(features)
 
-        loss = criterion(outputs, target, structure_masks)
+        loss = criterion(outputs.squeeze(1), target.squeeze(1), structure_masks)
         loss.backward()
 
         optimizer.step()
@@ -79,10 +78,11 @@ def evaluate(model, data_loader, criterion):
         for batch in pbar:
             features = batch["features"].transpose(1, -1)
             target = batch["dose"].unsqueeze(1)
+            structure_masks = batch["structure_masks"]
 
             outputs = model(features)
 
-            loss = criterion(outputs, target)
+            loss = criterion(outputs.squeeze(1), target.squeeze(1), structure_masks)
             total_loss += loss.item()
 
     return total_loss / len(data_loader)

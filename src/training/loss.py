@@ -1,5 +1,39 @@
 import torch
 import torch.nn as nn
+
+
+class DVHLoss(nn.Module):
+    def __init__(self, n_bins: int):
+        super(DVHLoss, self).__init__()
+        self.n_bins = n_bins
+        self.bin_width = 80 // n_bins
+        self.loss = torch.nn.MSELoss()
+
+    def comp_hist(self, predicted_dose, structure_masks):
+        """
+        Calculate DVH loss: averaged over all OARs. Target hist is already computed
+            predicted dose (tensor) -- [N, C, D, H, W] C = 1
+            target hist (tensor)    -- [N, n_bins, n_oars]
+            target bins (tensor)    -- [N, n_bins]
+            oar (tensor)            -- [N, C, D, H, W] C == n_oars one hot encoded OAR including PTV
+        """
+        batch_size = predicted_dose.shape[0]
+        structure_masks = torch.permute(structure_masks, (0,4,1,2,3))
+        num_voxels = torch.sum(structure_masks, dim=(2, 3, 4))
+        hist = torch.zeros(size=(batch_size, self.n_bins, structure_masks.shape[1]))
+
+        for i in range(self.n_bins):
+            diff = torch.sigmoid((predicted_dose - i * self.bin_width) / self.bin_width)
+            diff = diff.repeat(structure_masks.shape[1], 1, 1, 1, 1) * structure_masks
+            num = torch.sum(diff, dim=(0, 2, 3, 4))
+            hist[:,i] = (num / num_voxels)
+
+        return hist
+
+    def forward(self, predicted_dose, target_dose, structure_masks):
+        predicted_hist = self.comp_hist(predicted_dose, structure_masks)
+        target_hist = self.comp_hist(target_dose, structure_masks)
+        return self.loss(predicted_hist, target_hist) / predicted_dose.shape[0]
    
 
 class MomentDVHLoss(nn.Module):
@@ -20,7 +54,9 @@ class MomentDVHLoss(nn.Module):
         batch_size = predicted_dose.size(0)
         total_moment_loss = 0.0
         
-        for structure_mask in structure_masks:
+        for structure_mask_i in range(structure_masks.shape[-1]):
+            structure_mask = structure_masks[:, :, :, :, structure_mask_i]
+
             # Compute Moment Loss for the current structure across the batch
             moment_loss_value = 0.0
             for p in self.moments:
@@ -55,3 +91,31 @@ class MomentDVHLoss(nn.Module):
         
         return moment
 
+
+class RadiotherapyLoss(nn.Module):
+    def __init__(self, use_mae=True, use_dvh=True, use_moment=True, alpha=1, beta=0.01, gamma=10):
+        super(RadiotherapyLoss, self).__init__()
+        self.use_mae = use_mae
+        self.use_dvh = use_dvh
+        self.use_moment = use_moment
+        self.alpha = alpha
+        self.beta = beta
+        self.gamma = gamma
+        
+        self.mae_loss = torch.nn.L1Loss()
+        self.dvh_loss = DVHLoss(n_bins=8)
+        self.moment_loss = MomentDVHLoss()
+        
+    def forward(self, output, target, structure_masks):
+        loss = 0
+        
+        if self.use_mae:
+            loss += self.alpha * self.mae_loss(output, target)
+        
+        if self.use_dvh:
+            loss += self.gamma * self.dvh_loss(output, target, structure_masks)
+        
+        if self.use_moment:
+            loss += self.beta * self.moment_loss(output, target, structure_masks)
+            
+        return loss

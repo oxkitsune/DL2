@@ -106,6 +106,10 @@ def setup_model(args, device):
         from src.models.unetr import UNETR
 
         model = UNETR(input_dim=3, output_dim=1).to(device)
+    if args.model == "conv":
+        from src.models.conv_net import ConvNet
+
+        model = ConvNet(num_input_channels=3).to(device)
     else:
         raise ValueError(f"Unknown model {args.model}")
 
@@ -151,7 +155,9 @@ def run():
     )
 
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-    dataset = dataset.with_format("torch", columns=["features", "dose"], device=device)
+    dataset = dataset.with_format(
+        "torch", columns=["features", "dose", "structure_masks"], device=device
+    )
     model = setup_model(args, device)
 
     # run the training loop
