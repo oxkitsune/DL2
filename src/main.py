@@ -4,9 +4,8 @@ from pathlib import Path
 import wandb
 
 from src.data import transform_data
-from src.models import UNETR
 
-from src.training import train_unetr
+from src.training import train_model
 from datasets import load_dataset, Array4D
 
 import torch
@@ -122,18 +121,8 @@ def run():
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
     dataset = dataset.with_format("torch", columns=["features", "dose"], device=device)
 
-    model = UNETR(input_dim=3, output_dim=1)
-    if args.resume_run:
-        run = wandb.Api().run(args.resume_run)
-        print(f"Loading model checkpoint {args.restore_checkpoint}")
-        run.file(args.restore_checkpoint).download(replace=True)
-        checkpoint = torch.load(
-            args.restore_checkpoint, weights_only=True, map_location=device
-        )
-        model.load_state_dict(checkpoint)
-
     # run the training loop
-    train_unetr(dataset, args)
+    train_model(dataset, args)
 
 
 if __name__ == "__main__":

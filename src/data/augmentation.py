@@ -1,31 +1,56 @@
-import numpy as np
-import scipy
 import torch
+from monai.transforms import Rotate
+import numpy as np
 
 
-class Transform3D(torch.nn.Module):
+class Augment(torch.nn.Module):
     def __init__(self, seed):
         super().__init__()
-        self.rng = np.random.default_rng(seed)
+        torch.manual_seed(seed)
 
-    def __call__(self, imgs):
-        # These are either one or zero, flips occur along the inferior-superior
-        # axis and right-left axis
-        infsup_flip, rl_flip = self.rng.integers(0, 2, 2) * 2 - 1
-        imgs = imgs[:, :, ::infsup_flip, ::rl_flip, :]
+    def augment_features(self, feat):
+        feat = feat.clone()
 
-        # Max translation of 20 voxels according to the paper, these translations
-        # occur along the inferior-superior axis and the right-left axis.
-        infsup_translation, rl_translation = self.rng.integers(-20, 21, 2)
-        imgs = np.roll(imgs, infsup_translation, axis=2)
-        imgs = np.roll(imgs, rl_translation, axis=3)
+        # Flip
+        flips = torch.arange(2, 4)[torch.rand((2,)) > 0.5]
+        feat = torch.flip(feat, dims=flips.tolist())
+        self.flips = flips
 
-        # Apply random rotation.
-        rotations = [0, 40, 80, 120, 160, 200, 240, 280, 320]
-        rot = rotations[self.rng.integers(0, len(rotations))]
-        imgs = scipy.ndimage.rotate(
-            imgs, rot, axes=(1, 3), mode="nearest", order=0, reshape=False
-        )
-        imgs = np.divide(imgs, np.max(imgs), out=np.zeros_like(imgs), where=imgs != 0)
+        # Translations
+        shifts = torch.randint(-5, 5, (2,)).int()
+        feat = torch.roll(feat, shifts=shifts.tolist(), dims=(1, 2))
+        self.shifts = shifts
 
-        return imgs
+        # Rotations
+        rotations = torch.arange(0, 360, 40) * np.pi / 180
+        rot = rotations[torch.randint(0, len(rotations), (1,))]
+        r = Rotate((0, 0, rot), keep_size=True)
+
+        for feature in range(feat.shape[-1]):
+            feat[:, :, :, :, feature] = r(feat[:, :, :, :, feature])
+
+        self.r = r
+
+        return feat
+
+    def augment_dose(self, dose):
+        dose = dose.clone()
+
+        # Flip
+        dose = torch.flip(dose, dims=self.flips.tolist())
+
+        # # Translations
+        dose = torch.roll(dose, shifts=self.shifts.tolist(), dims=(1, 2))
+
+        # Rotations
+        dose = self.r(dose)
+
+        return dose
+
+    def __call__(self, x):
+        if x.dim() == 5:
+            return self.augment_features(x)
+        elif x.dim() == 4:
+            return self.augment_dose(x)
+
+        return None

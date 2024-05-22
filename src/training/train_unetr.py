@@ -3,7 +3,8 @@ from tqdm import tqdm
 import wandb
 import os
 
-from src.models.unetr import UNETR
+# from src.models.unetr import UNETR
+from src.models.conv_net import ConvNet
 from torch.utils.data import DataLoader
 
 
@@ -13,7 +14,8 @@ def train_unetr(dataset, args):
     )
     print(f"Using device {device}")
 
-    model = UNETR(input_dim=3, output_dim=1).to(device)
+    # model = UNETR(input_dim=3, output_dim=1).to(device)
+    model = ConvNet(num_input_channels=3).to(device)
 
     if args.parallel:
         model = torch.nn.DataParallel(model, output_device=device)
@@ -21,7 +23,7 @@ def train_unetr(dataset, args):
     criterion = torch.nn.L1Loss()
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
 
-    train_dataloader = DataLoader(dataset["train"], batch_size=args.batch_size)
+    train_dataloader = DataLoader(dataset["train"], batch_size=args.batch_size, shuffle=True)
     dev_data_loader = DataLoader(dataset["validation"], batch_size=args.batch_size)
 
     pbar = tqdm(range(args.epochs), desc="Training model")
@@ -48,6 +50,8 @@ def train_single_epoch(model, data_loader, optimizer, criterion):
         # (batch_size, channels, height, width, depth)
         features = batch["features"].transpose(1, -1)
         target = batch["dose"].unsqueeze(1)
+
+        print(features)
 
         outputs = model(features)
 
