@@ -47,8 +47,8 @@ def _dvh_error(prediction, batch):
 
     dvh_metrics = {
         k: [
-            torch.abs(reference_dvh_metrics[i][k] - pred_dvh_metrics[i][k])
-            for i in len(reference_dvh_metrics)
+            torch.abs(reference[k] - pred_dvh_metrics[i][k])
+            for i, reference in enumerate(reference_dvh_metrics)
         ]
         for k in reference_dvh_metrics[0].keys()
     }
