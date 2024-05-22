@@ -32,12 +32,17 @@ def mean_dvh_error(prediction, target, voxel_dim, structure_masks):
 
 def _dvh_error(prediction, target, voxel_dim, structure_masks):
     batch_size = prediction.shape[0]
+    print(structure_masks.shape)
     reference_dvh_metrics = [
-        dvh_score_for_single_prediction(target[i], voxel_dim[i], structure_masks[i])
+        dvh_score_for_single_prediction(
+            target[i], voxel_dim[i], structure_masks[i].clone()
+        )
         for i in range(batch_size)
     ]
     pred_dvh_metrics = [
-        dvh_score_for_single_prediction(prediction[i], voxel_dim[i], structure_masks[i])
+        dvh_score_for_single_prediction(
+            prediction[i], voxel_dim[i], structure_masks[i].clone()
+        )
         for i in range(batch_size)
     ]
 
