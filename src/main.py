@@ -104,7 +104,7 @@ def run():
     dataset = load_dataset("oxkitsune/open-kbp", num_proc=num_proc)
 
     # ensure the feature format is set for the new features column, this speeds up the dataset loading by 100x
-    features = dataset.features.copy()
+    features = dataset["train"].features.copy()
     features["features"] = Array4D((128, 128, 128, 3), dtype="float32")
     del features["ct"]
     del features["possible_dose_mask"]
