@@ -42,23 +42,32 @@ def train_model(model, dataset, args):
         train_metrics = train_single_epoch(
             model, train_dataloader, optimizer, criterion
         )
-        print(train_metrics)
-        dev_loss = evaluate(model, dev_data_loader, criterion)
+        dev_metrics = evaluate(model, dev_data_loader, criterion)
 
         wandb.log(
             {
                 "train_loss": train_metrics["loss"],
                 "train_dose_score": train_metrics["dose_score"],
                 "train_mean_dvh_error": train_metrics["mean_dvh_error"],
-                "dev_loss": dev_loss,
+                "dev_loss": dev_metrics["loss"],
+                "dev_dose_score": dev_metrics["dose_score"],
+                "dev_mean_dvh_error": dev_metrics["mean_dvh_error"],
                 "epoch": epoch,
             }
         )
         save_model_checkpoint_for_epoch(model)
 
+        padding = " " * len(f"[{epoch}/{args.epochs}]")
         pbar.write(
-            f"[{epoch}/{args.epochs}] Train loss: {train_metrics['loss']:.3f} Dev loss: {dev_loss:.3f}"
+            f"[{epoch}/{args.epochs}] Train Loss: {train_metrics['loss']:.3f}, Dev Loss: {dev_metrics['loss']:.3f}"
         )
+        pbar.write(f"{padding} Train Dose Score: {train_metrics['dose_score']:.3f}")
+        pbar.write(
+            f"{padding} Train Mean DVH Error: {train_metrics['mean_dvh_error']:.3f}"
+        )
+        pbar.write(f"{padding} Dev Dose Score: {dev_metrics['dose_score']:.3f}")
+        pbar.write(f"{padding} Dev Mean DVH Error: {dev_metrics['mean_dvh_error']:.3f}")
+        pbar.write("====================================")
 
 
 def compute_metrics(prediction, batch):
@@ -98,14 +107,13 @@ def train_single_epoch(model, data_loader, optimizer, criterion):
         metrics["loss"] += loss.item()
         metrics["dose_score"] += dose_score(
             outputs, target, batch["possible_dose_mask"]
-        )
-        print(batch["structure_masks"].clone().detach()[..., 6])
+        ).item()
         metrics["mean_dvh_error"] += mean_dvh_error(
             outputs,
             batch["dose"].clone().detach(),
             batch["voxel_dimensions"].clone().detach(),
             batch["structure_masks"].clone().detach(),
-        )
+        ).item()
 
     n_batches = len(data_loader)
     return {
@@ -117,7 +125,7 @@ def train_single_epoch(model, data_loader, optimizer, criterion):
 
 def evaluate(model, data_loader, criterion):
     model.eval()
-    total_loss = 0
+    metrics = {"loss": 0, "dose_score": 0, "mean_dvh_error": 0}
     pbar = tqdm(data_loader, desc="Dev", leave=False)
     with torch.no_grad():
         for batch in pbar:
@@ -127,9 +135,22 @@ def evaluate(model, data_loader, criterion):
             outputs = model(features)
 
             loss = criterion(outputs, target)
-            total_loss += loss.item()
+            metrics["loss"] += loss.item()
+            metrics["dose_score"] += dose_score(
+                outputs, target, batch["possible_dose_mask"]
+            ).item()
+            metrics["mean_dvh_error"] += mean_dvh_error(
+                outputs,
+                batch["dose"].clone().detach(),
+                batch["voxel_dimensions"].clone().detach(),
+                batch["structure_masks"].clone().detach(),
+            ).item()
 
-    return total_loss / len(data_loader)
+    return {
+        "loss": metrics["loss"] / len(data_loader),
+        "dose_score": metrics["dose_score"] / len(data_loader),
+        "mean_dvh_error": metrics["mean_dvh_error"] / len(data_loader),
+    }
 
 
 def save_model_checkpoint_for_epoch(model):
