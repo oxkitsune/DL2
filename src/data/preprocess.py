@@ -20,8 +20,8 @@ def transform_data(ct, structure_masks):
     ptv_channel = np.max(ptv_channels * labels, axis=-1, keepdims=True) / 70
 
     # Combine the channels into a single feature tensor
+    # (depth, width, height, channel)
     flattened_features = np.concatenate((ct_channel, oar_channel, ptv_channel), axis=-1)
-
     return {
         "features": flattened_features,
     }

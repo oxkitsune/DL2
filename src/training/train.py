@@ -73,8 +73,10 @@ def train_single_epoch(model, data_loader, optimizer, criterion):
         optimizer.zero_grad()
 
         # ensure features/dose are in the correct shape
-        # (batch_size, channels, height, width, depth)
-        features = batch["features"].transpose(1, -1)
+        # (batch_size, channels, depth, width, height)
+        features = batch["features"].permute((0, 4, 1, 2, 3))
+
+        # (batch_size, depth, width, height)
         target = batch["dose"].unsqueeze(1)
 
         outputs = model(features)
@@ -103,7 +105,7 @@ def evaluate(model, data_loader, criterion):
     pbar = tqdm(data_loader, desc="Dev", leave=False)
     with torch.no_grad():
         for batch in pbar:
-            features = batch["features"].transpose(1, -1)
+            features = batch["features"].permute((0, 4, 1, 2, 3))
             target = batch["dose"].unsqueeze(1)
 
             outputs = model(features)
