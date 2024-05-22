@@ -72,6 +72,7 @@ def dvh_score_for_single_prediction(prediction, voxel_dims, structure_masks):
         if roi_mask is None or len(roi_mask) == 0:
             continue  # Skip over ROIs when the ROI is missing (i.e., not contoured)
 
+        print(roi_mask.shape)
         roi_dose = prediction.squeeze()[roi_mask]
         roi_size = roi_dose.size(0)
 
