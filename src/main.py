@@ -156,7 +156,7 @@ def run():
             "features",
             "dose",
             "structure_masks",
-            "voxel_size",
+            "voxel_dimensions",
             "possible_dose_mask",
         ],
         device=device,
