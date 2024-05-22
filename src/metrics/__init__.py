@@ -46,13 +46,16 @@ def _dvh_error(prediction, batch):
     ]
 
     dvh_metrics = {
-        k: torch.stack(
+        (metric, roi): torch.stack(
             [
-                torch.nanmean(torch.abs(reference[k] - pred_dvh_metrics[i][k]))
+                torch.nanmean(
+                    torch.abs(reference[roi][metric] - pred_dvh_metrics[i][roi][metric])
+                )
                 for i, reference in enumerate(reference_dvh_metrics)
             ]
         )
-        for k in reference_dvh_metrics[0].keys()
+        for roi in reference_dvh_metrics[0].keys()
+        for metric in reference_dvh_metrics[0][roi].keys()
     }
     return dvh_metrics
 
@@ -65,15 +68,13 @@ def dvh_score_for_single_prediction(prediction, voxel_dims, structure_masks):
     metrics = {}
     for roi_index, roi in enumerate(ALL_ROIS):
         roi_mask = structure_masks[..., roi_index].to(torch.bool)
+        if roi_mask is None:
+            continue  # Skip over ROIs when the ROI is missing (i.e., not contoured)
+        metrics[roi] = {}
         roi_dose = prediction.squeeze()[roi_mask]
         roi_size = roi_dose.size(0)
 
         for metric in ALL_DVH_METRICS[roi]:
-            if roi_mask is None or roi_size == 0:
-                metrics[(metric, roi)] = torch.full(roi_dose.shape, float("nan")).to(
-                    torch.device(prediction.get_device())
-                )
-                continue  # Skip over ROIs when the ROI is missing (i.e., not contoured)
             if metric == "D_0.1_cc":
                 fractional_volume_to_evaluate = voxels_within_tenths_cc / roi_size
                 metric_value = torch.quantile(roi_dose, fractional_volume_to_evaluate)
@@ -87,5 +88,5 @@ def dvh_score_for_single_prediction(prediction, voxel_dims, structure_masks):
                 metric_value = torch.quantile(roi_dose, 0.99)
             else:
                 raise ValueError(f"Metrics {metric} is not supported.")
-            metrics[(metric, roi)] = metric_value
+            metrics[roi][metric] = metric_value
     return metrics
