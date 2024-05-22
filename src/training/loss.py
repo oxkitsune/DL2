@@ -13,8 +13,6 @@ class DVHLoss(nn.Module):
         """
         Calculate DVH loss: averaged over all OARs. Target hist is already computed
             predicted dose (tensor) -- [N, C, D, H, W] C = 1
-            target hist (tensor)    -- [N, n_bins, n_oars]
-            target bins (tensor)    -- [N, n_bins]
             oar (tensor)            -- [N, C, D, H, W] C == n_oars one hot encoded OAR including PTV
         """
         batch_size = predicted_dose.shape[0]
@@ -24,7 +22,7 @@ class DVHLoss(nn.Module):
 
         for i in range(self.n_bins):
             diff = torch.sigmoid((predicted_dose - i * self.bin_width) / self.bin_width)
-            diff = diff.repeat(structure_masks.shape[1], 1, 1, 1, 1) * structure_masks
+            diff = diff.repeat(1, structure_masks.shape[1], 1, 1, 1) * structure_masks
             num = torch.sum(diff, dim=(0, 2, 3, 4))
             hist[:,i] = (num / num_voxels)
 
@@ -51,6 +49,9 @@ class MomentDVHLoss(nn.Module):
                                 Each element is a tensor of shape (batch_size, D, H, W)
         :return: Moment loss value.
         """
+        predicted_dose = predicted_dose.squeeze(1)
+        target_dose = target_dose.squeeze(1)
+
         batch_size = predicted_dose.size(0)
         total_moment_loss = 0.0
         

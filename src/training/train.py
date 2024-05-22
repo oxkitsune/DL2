@@ -6,7 +6,7 @@ import os
 
 from src.data import Augment
 from torch.utils.data import DataLoader, default_collate
-from src.training.loss import MomentDVHLoss, DVHLoss, RadiotherapyLoss
+from src.training.loss import RadiotherapyLoss
 
 augment = Augment(42)
 
@@ -55,13 +55,13 @@ def train_single_epoch(model, data_loader, optimizer, criterion):
 
         # ensure features/dose are in the correct shape
         # (batch_size, channels, height, width, depth)
-        features = batch["features"].transpose(1, -1)
+        features = batch["features"].permute((0, 4, 1, 2, 3))
         target = batch["dose"].unsqueeze(1)
         structure_masks = batch["structure_masks"]
 
         outputs = model(features)
 
-        loss = criterion(outputs.squeeze(1), target.squeeze(1), structure_masks)
+        loss = criterion(outputs, target, structure_masks)
         loss.backward()
 
         optimizer.step()
@@ -76,13 +76,13 @@ def evaluate(model, data_loader, criterion):
     pbar = tqdm(data_loader, desc="Dev", leave=False)
     with torch.no_grad():
         for batch in pbar:
-            features = batch["features"].transpose(1, -1)
+            features = batch["features"].permute((0, 4, 1, 2, 3))
             target = batch["dose"].unsqueeze(1)
             structure_masks = batch["structure_masks"]
 
             outputs = model(features)
 
-            loss = criterion(outputs.squeeze(1), target.squeeze(1), structure_masks)
+            loss = criterion(outputs, target, structure_masks)
             total_loss += loss.item()
 
     return total_loss / len(data_loader)
