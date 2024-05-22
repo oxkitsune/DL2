@@ -66,7 +66,12 @@ def compute_metrics(prediction, batch):
         "dose_score": dose_score(
             prediction, batch["dose"], batch["possible_dose_mask"]
         ),
-        "mean_dvh_error": mean_dvh_error(prediction, batch),
+        "mean_dvh_error": mean_dvh_error(
+            prediction,
+            batch["dose"].clone().detach(),
+            batch["voxel_dimensions"].clone().detach(),
+            batch["structure_masks"].clone().detach(),
+        ),
     }
 
 
