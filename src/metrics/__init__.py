@@ -51,7 +51,7 @@ def _dvh_error(prediction, batch):
                 torch.nanmean(
                     torch.abs(reference[roi][metric] - pred_dvh_metrics[i][roi][metric])
                 )
-                for i, reference in enumerate(reference_dvh_metrics)
+                for _ in range(len(reference_dvh_metrics))
             ]
         )
         for i, reference in enumerate(reference_dvh_metrics)
