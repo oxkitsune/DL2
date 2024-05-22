@@ -55,6 +55,7 @@ def dvh_score(prediction, batch):
                 fractional_volume_to_evaluate = (
                     100 - voxels_within_tenths_cc / roi_size * 100
                 )
+                print(fractional_volume_to_evaluate.shape)
                 metric_value = torch.quantile(roi_dose, fractional_volume_to_evaluate)
             elif metric == "mean":
                 metric_value = roi_dose.mean()
