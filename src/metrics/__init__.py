@@ -55,15 +55,15 @@ def dvh_score(prediction, batch):
                 fractional_volume_to_evaluate = (
                     100 - voxels_within_tenths_cc / roi_size * 100
                 )
-                metric_value = torch.percentile(roi_dose, fractional_volume_to_evaluate)
+                metric_value = torch.quantile(roi_dose, fractional_volume_to_evaluate)
             elif metric == "mean":
                 metric_value = roi_dose.mean()
             elif metric == "D_99":
-                metric_value = torch.percentile(roi_dose, 1)
+                metric_value = torch.quantile(roi_dose, 1)
             elif metric == "D_95":
-                metric_value = torch.percentile(roi_dose, 5)
+                metric_value = torch.quantile(roi_dose, 5)
             elif metric == "D_1":
-                metric_value = torch.percentile(roi_dose, 99)
+                metric_value = torch.quantile(roi_dose, 99)
             else:
                 raise ValueError(f"Metrics {metric} is not supported.")
             metrics[(metric, roi)] = metric_value
