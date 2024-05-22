@@ -38,6 +38,7 @@ def _dvh_error(prediction, batch):
         )
         for i in range(batch_size)
     ]
+    print(batch["structure_masks"].shape)
     pred_dvh_metrics = [
         dvh_score_for_single_prediction(
             prediction[i], batch["voxel_dimensions"][i], batch["structure_masks"][i]
@@ -69,7 +70,7 @@ def dvh_score_for_single_prediction(prediction, voxel_dims, structure_masks):
     metrics = {k: {} for k in ALL_ROIS}
     print(structure_masks.shape)
     for roi_index, roi in enumerate(ALL_ROIS):
-        print("roi: idx: ", roi_index, roi)
+        # print("roi: idx: ", roi_index, roi)
         roi_mask = structure_masks[..., roi_index].to(torch.bool)
         if not roi_mask.any():
             continue
