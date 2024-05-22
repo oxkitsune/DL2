@@ -35,13 +35,13 @@ def _dvh_error(prediction, target, voxel_dim, structure_masks):
     print("Structure masks shape:", structure_masks.shape)
     reference_dvh_metrics = [
         dvh_score_for_single_prediction(
-            target[i], voxel_dim[i], structure_masks[i].clone()
+            target[i].cpu(), voxel_dim[i].cpu(), structure_masks[i].cpu().clone()
         )
         for i in range(batch_size)
     ]
     pred_dvh_metrics = [
         dvh_score_for_single_prediction(
-            prediction[i], voxel_dim[i], structure_masks[i].clone()
+            prediction[i].cpu(), voxel_dim[i].cpu(), structure_masks[i].cpu().clone()
         )
         for i in range(batch_size)
     ]
@@ -63,7 +63,7 @@ def _dvh_error(prediction, target, voxel_dim, structure_masks):
 
 
 def dvh_score_for_single_prediction(prediction, voxel_dims, structure_masks):
-    device = prediction.device
+    device = torch.device("cpu")  # Force CPU for debugging
     voxels_within_tenths_cc = torch.maximum(
         torch.tensor([1.0, 1.0, 1.0], device=device),
         torch.round(100.0 / voxel_dims),
