@@ -68,6 +68,7 @@ def dvh_score_for_single_prediction(prediction, voxel_dims, structure_masks):
                 fractional_volume_to_evaluate = voxels_within_tenths_cc / roi_size
                 metric_value = torch.quantile(roi_dose, fractional_volume_to_evaluate)
                 print(metric_value.shape)
+                print(metric_value)
             elif metric == "mean":
                 metric_value = roi_dose.mean()
             elif metric == "D_99":
