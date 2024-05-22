@@ -58,7 +58,9 @@ def train_model(model, dataset, args):
 
 def compute_metrics(prediction, batch):
     return {
-        "dose_score": dose_score(prediction, batch["dose"]),
+        "dose_score": dose_score(
+            prediction, batch["dose"], batch["possible_dose_mask"]
+        ),
         "mean_dvh_error": mean_dvh_error(prediction, batch),
     }
 

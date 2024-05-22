@@ -144,7 +144,7 @@ def run():
         transform_data,
         input_columns=["ct", "structure_masks"],
         # we remove these columns as they are combined into the 'features' column or irrelevant
-        remove_columns=["ct", "possible_dose_mask"],
+        remove_columns=["ct"],
         writer_batch_size=25,
         num_proc=num_proc,
         features=features,
@@ -153,7 +153,13 @@ def run():
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
     dataset = dataset.with_format(
         "torch",
-        columns=["features", "dose", "structure_masks", "voxel_size", "reference_dose"],
+        columns=[
+            "features",
+            "dose",
+            "structure_masks",
+            "voxel_size",
+            "possible_dose_mask",
+        ],
         device=device,
     )
     model = setup_model(args, device)

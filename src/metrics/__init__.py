@@ -21,12 +21,12 @@ TARGET_DVH_METRICS = {target: ["D_99", "D_95", "D_1"] for target in ROIS["target
 ALL_DVH_METRICS = OAR_DVH_METRICS | TARGET_DVH_METRICS
 
 
-def dose_score(prediction, target):
-    return torch.abs(prediction - target).sum() / target.sum()
+def dose_score(prediction, target, mask):
+    return torch.abs(prediction - target).sum() / mask.sum()
 
 
 def mean_dvh_error(prediction, batch):
-    reference_dvh = dvh_score(batch["reference_dose"], batch)
+    reference_dvh = dvh_score(batch["dose"], batch)
     prediction_dvh = dvh_score(prediction, batch)
 
     errors = {}
@@ -39,9 +39,9 @@ def mean_dvh_error(prediction, batch):
 
 
 def dvh_score(prediction, batch):
-    voxel_size = batch["voxel_size"]
+    voxel_dims = batch["voxel_dimensions"]
 
-    voxels_within_tenths_cc = torch.maximum(1, torch.round(100 / voxel_size))
+    voxels_within_tenths_cc = torch.maximum(1, torch.round(100 / voxel_dims))
     metrics = {}
     for roi_index, roi in enumerate(ALL_ROIS):
         roi_mask = batch["structure_masks"][..., roi_index].to(torch.bool)
