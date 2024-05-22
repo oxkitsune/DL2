@@ -151,7 +151,11 @@ def run():
     )
 
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-    dataset = dataset.with_format("torch", columns=["features", "dose"], device=device)
+    dataset = dataset.with_format(
+        "torch",
+        columns=["features", "dose", "structure_masks", "voxel_size", "reference_dose"],
+        device=device,
+    )
     model = setup_model(args, device)
 
     # run the training loop

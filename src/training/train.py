@@ -3,6 +3,7 @@ from tqdm import tqdm
 import wandb
 import os
 
+from src.metrics import dose_score, mean_dvh_error
 from src.data import Augment
 from torch.utils.data import DataLoader, default_collate
 
@@ -33,20 +34,38 @@ def train_model(model, dataset, args):
 
     pbar = tqdm(range(args.epochs), desc="Training model")
     for epoch in pbar:
-        train_loss = train_single_epoch(model, train_dataloader, optimizer, criterion)
+        train_metrics = train_single_epoch(
+            model, train_dataloader, optimizer, criterion
+        )
+        print(train_metrics)
         dev_loss = evaluate(model, dev_data_loader, criterion)
 
-        wandb.log({"train_loss": train_loss, "dev_loss": dev_loss, "epoch": epoch})
+        wandb.log(
+            {
+                "train_loss": train_metrics["loss"],
+                "train_dose_score": train_metrics["dose_score"],
+                "train_mean_dvh_error": train_metrics["mean_dvh_error"],
+                "dev_loss": dev_loss,
+                "epoch": epoch,
+            }
+        )
         save_model_checkpoint_for_epoch(model)
 
         pbar.write(
-            f"[{epoch}/{args.epochs}] Train loss: {train_loss:.3f} Dev loss: {dev_loss:.3f}"
+            f"[{epoch}/{args.epochs}] Train loss: {train_metrics['loss']:.3f} Dev loss: {dev_loss:.3f}"
         )
+
+
+def compute_metrics(prediction, batch):
+    return {
+        "dose_score": dose_score(prediction, batch["dose"]),
+        "mean_dvh_error": mean_dvh_error(prediction, batch),
+    }
 
 
 def train_single_epoch(model, data_loader, optimizer, criterion):
     model.train()
-    total_loss = 0
+    metrics = {"loss": 0, "dose_score": 0, "mean_dvh_error": 0}
     pbar = tqdm(data_loader, desc="Train", leave=False)
     for batch in pbar:
         optimizer.zero_grad()
@@ -62,9 +81,16 @@ def train_single_epoch(model, data_loader, optimizer, criterion):
         loss.backward()
 
         optimizer.step()
-        total_loss += loss.item()
+        metrics["loss"] += loss.item()
+        metrics["dose_score"] += dose_score(outputs, target)
+        metrics["mean_dvh_error"] += mean_dvh_error(outputs, batch)
 
-    return total_loss / len(data_loader)
+    n_batches = len(data_loader)
+    return {
+        "loss": metrics["loss"] / n_batches,
+        "dose_score": metrics["dose_score"] / n_batches,
+        "mean_dvh_error": metrics["mean_dvh_error"] / n_batches,
+    }
 
 
 def evaluate(model, data_loader, criterion):
