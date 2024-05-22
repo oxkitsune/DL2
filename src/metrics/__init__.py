@@ -42,8 +42,10 @@ def dvh_score(prediction, batch):
     voxel_dims = batch["voxel_dimensions"]
 
     voxels_within_tenths_cc = torch.maximum(
-        torch.tensor([1, 1, 1], torch.float, prediction.get_device()),
-        torch.round(100 / voxel_dims),
+        torch.Tensor(
+            [1.0, 1.0, 1.0], dtype=torch.float, device=prediction.get_device()
+        ),
+        torch.round(100.0 / voxel_dims),
     )
     metrics = {}
     for roi_index, roi in enumerate(ALL_ROIS):
