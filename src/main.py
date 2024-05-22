@@ -105,7 +105,7 @@ def setup_model(args, device):
     if args.model == "unetr":
         from src.models.unetr import UNETR
 
-        model = UNETR(input_dim=3, output_dim=1)
+        model = UNETR(input_dim=3, output_dim=1).to(device)
     else:
         raise ValueError(f"Unknown model {args.model}")
 
