@@ -28,7 +28,7 @@ def train_model(model, dataset, args):
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
 
     train_dataloader = DataLoader(
-        dataset["train"], batch_size=args.batch_size, shuffle=True, collate_fn=transform
+        dataset["train"], batch_size=args.batch_size, collate_fn=transform
     )
     dev_data_loader = DataLoader(dataset["validation"], batch_size=args.batch_size)
 
