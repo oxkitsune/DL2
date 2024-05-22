@@ -83,7 +83,13 @@ def dvh_score_for_single_prediction(prediction, voxel_dims, structure_masks):
         print(
             f"Structure mask shape: {structure_masks.shape}, ROI mask shape: {roi_mask.shape}"
         )
-        print(f"Indices of ROI mask: {structure_masks[:, :, :, roi_index].nonzero()}")
+
+        try:
+            roi_mask_indices = structure_masks[:, :, :, roi_index].nonzero()
+            print(f"Indices of ROI mask: {roi_mask_indices}")
+        except Exception as e:
+            print(f"Error accessing ROI mask indices: {e}")
+            continue
 
         if not roi_mask.any():
             continue
