@@ -109,10 +109,18 @@ def setup_model(args):
             in_channels=3,
             out_channels=1,
         )
+    else:
+        raise ValueError(f"Unknown model {args.model}")
 
-        return model
+    if args.resume_run:
+        print(f"Resuming run {args.resume_run}")
+        run = wandb.Api().run(args.resume_run)
+        print(f"Loading model checkpoint {args.restore_checkpoint}")
+        run.file(args.restore_checkpoint).download(replace=True)
+        checkpoint = torch.load(args.restore_checkpoint, weights_only=True)
+        model.load_state_dict(checkpoint)
 
-    raise ValueError(f"Unknown model {args.model}")
+    return model
 
 
 def run():
@@ -142,15 +150,7 @@ def run():
 
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
     dataset = dataset.with_format("torch", columns=["features", "dose"], device=device)
-
     model = setup_model(args)
-
-    if args.resume_run:
-        run = wandb.Api().run(args.resume_run)
-        print(f"Loading model checkpoint {args.restore_checkpoint}")
-        run.file(args.restore_checkpoint).download(replace=True)
-        checkpoint = torch.load(args.restore_checkpoint, weights_only=True)
-        model.load_state_dict(checkpoint)
 
     # run the training loop
     train_model(model, dataset, args)
