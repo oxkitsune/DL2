@@ -23,9 +23,6 @@ def train_model(model, dataset, args):
     )
     print(f"Using device {device}")
 
-    if args.parallel:
-        model = torch.nn.DataParallel(model, output_device=device)
-
     criterion = torch.nn.L1Loss()
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
 

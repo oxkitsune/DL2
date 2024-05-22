@@ -101,13 +101,16 @@ def setup_wandb(args):
     )
 
 
-def setup_model(args):
+def setup_model(args, device):
     if args.model == "unetr":
         from src.models.unetr import UNETR
 
         model = UNETR(input_dim=3, output_dim=1)
     else:
         raise ValueError(f"Unknown model {args.model}")
+
+    if args.parallel:
+        model = torch.nn.DataParallel(model, output_device=device)
 
     if args.resume_run:
         print(f"Resuming run {args.resume_run}")
@@ -147,7 +150,7 @@ def run():
 
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
     dataset = dataset.with_format("torch", columns=["features", "dose"], device=device)
-    model = setup_model(args)
+    model = setup_model(args, device)
 
     # run the training loop
     train_model(model, dataset, args)
