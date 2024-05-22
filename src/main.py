@@ -137,7 +137,6 @@ def run():
     features = dataset["train"].features.copy()
     features["features"] = Array4D((128, 128, 128, 3), dtype="float32")
     del features["ct"]
-    del features["possible_dose_mask"]
 
     # apply transformations in numpy format, on cpu
     dataset = dataset.with_format("numpy").map(
