@@ -69,6 +69,7 @@ def dvh_score_for_single_prediction(prediction, voxel_dims, structure_masks):
         for metric in ALL_DVH_METRICS[roi]:
             if metric == "D_0.1_cc":
                 fractional_volume_to_evaluate = voxels_within_tenths_cc / roi_size
+                print("start")
                 print(voxel_dims)
                 print(voxels_within_tenths_cc)
                 print(roi_size)
