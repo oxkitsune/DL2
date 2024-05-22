@@ -26,21 +26,19 @@ def dose_score(prediction, target, mask):
 
 
 def mean_dvh_error(prediction, batch):
-    reference_dvh = dvh_score(batch["dose"], batch)
-    prediction_dvh = dvh_score(prediction, batch)
-
-    errors = {}
-    for metric, roi in ALL_DVH_METRICS:
-        errors[(metric, roi)] = torch.abs(
-            reference_dvh[(metric, roi)] - prediction_dvh[(metric, roi)]
-        )
-
+    errors = _dvh_error(prediction, batch)
     return torch.nanmean(torch.stack(list(errors.values())))
 
 
-def dvh_score(prediction, batch):
+def _dvh_error(prediction, batch):
     batch_size = prediction.shape[0]
-    dvh_metrics = [
+    reference_dvh_metrics = [
+        dvh_score_for_single_prediction(
+            batch["dose"][i], batch["voxel_dimensions"][i], batch["structure_masks"][i]
+        )
+        for i in range(batch_size)
+    ]
+    pred_dvh_metrics = [
         dvh_score_for_single_prediction(
             prediction[i], batch["voxel_dimensions"][i], batch["structure_masks"][i]
         )
@@ -48,7 +46,11 @@ def dvh_score(prediction, batch):
     ]
 
     dvh_metrics = {
-        k: torch.stack([m[k] for m in dvh_metrics]) for k in dvh_metrics[0].keys()
+        k: [
+            torch.abs(reference_dvh_metrics[i][k] - pred_dvh_metrics[i][k])
+            for i in len(reference_dvh_metrics)
+        ]
+        for k in reference_dvh_metrics[0].keys()
     }
     return dvh_metrics
 
