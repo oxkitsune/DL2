@@ -12,8 +12,8 @@ augment = Augment(42)
 
 def transform(samples):
     samples = default_collate(samples)
-    samples["features"] = augment(samples["features"])
-    samples["dose"] = augment(samples["dose"])
+    # samples["features"] = augment(samples["features"])
+    # samples["dose"] = augment(samples["dose"])
 
     return samples
 
