@@ -56,7 +56,7 @@ def _dvh_error(prediction, batch):
         )
         for i, reference in enumerate(reference_dvh_metrics)
         for roi in reference.keys()
-        for metric in reference[i][roi].keys()
+        for metric in reference[roi].keys()
     }
     return dvh_metrics
 
