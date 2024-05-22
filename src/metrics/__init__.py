@@ -41,7 +41,10 @@ def mean_dvh_error(prediction, batch):
 def dvh_score(prediction, batch):
     voxel_dims = batch["voxel_dimensions"]
 
-    voxels_within_tenths_cc = torch.maximum(1, torch.round(100 / voxel_dims))
+    voxels_within_tenths_cc = torch.maximum(
+        torch.tensor([1, 1, 1], torch.float, prediction.get_device()),
+        torch.round(100 / voxel_dims),
+    )
     metrics = {}
     for roi_index, roi in enumerate(ALL_ROIS):
         roi_mask = batch["structure_masks"][..., roi_index].to(torch.bool)
