@@ -70,9 +70,13 @@ def dvh_score_for_single_prediction(prediction, voxel_dims, structure_masks):
         roi_mask = structure_masks[..., roi_index].to(torch.bool)
         if roi_mask is None:
             continue  # Skip over ROIs when the ROI is missing (i.e., not contoured)
-        metrics[roi] = {}
         roi_dose = prediction.squeeze()[roi_mask]
         roi_size = roi_dose.size(0)
+
+        if roi_size == 0:
+            continue  # Skip over ROIs when the ROI is missing (i.e., not contoured)
+
+        metrics[roi] = {}
 
         for metric in ALL_DVH_METRICS[roi]:
             if metric == "D_0.1_cc":
