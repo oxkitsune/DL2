@@ -69,9 +69,7 @@ def dvh_score_for_single_prediction(prediction, voxel_dims, structure_masks):
         roi_mask = structure_masks[..., roi_index].detach().cpu().clone().to(torch.bool)
         if not roi_mask.any():
             continue
-
-        print(roi_mask.shape, prediction.shape, prediction.squeeze().shape)
-        roi_dose = prediction[roi_mask]
+        roi_dose = prediction.squeeze()[roi_mask]
         roi_size = roi_dose.size(0)
 
         metrics[roi] = {}
