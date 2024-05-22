@@ -69,25 +69,15 @@ def dvh_score_for_single_prediction(prediction, voxel_dims, structure_masks):
         for metric in ALL_DVH_METRICS[roi]:
             if metric == "D_0.1_cc":
                 fractional_volume_to_evaluate = voxels_within_tenths_cc / roi_size
-                print("start")
-                print(voxel_dims)
-                print(voxels_within_tenths_cc)
-                print(roi_size)
-                print(fractional_volume_to_evaluate)
                 metric_value = torch.quantile(roi_dose, fractional_volume_to_evaluate)
-                print(metric_value.shape)
-                print(metric_value)
-                print(roi_dose.shape)
-                print(roi_dose)
-
             elif metric == "mean":
                 metric_value = roi_dose.mean()
             elif metric == "D_99":
-                metric_value = torch.quantile(roi_dose, 1)
+                metric_value = torch.quantile(roi_dose, 0.01)
             elif metric == "D_95":
-                metric_value = torch.quantile(roi_dose, 5)
+                metric_value = torch.quantile(roi_dose, 0.05)
             elif metric == "D_1":
-                metric_value = torch.quantile(roi_dose, 99)
+                metric_value = torch.quantile(roi_dose, 0.99)
             else:
                 raise ValueError(f"Metrics {metric} is not supported.")
             metrics[(metric, roi)] = metric_value
