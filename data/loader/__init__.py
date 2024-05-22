@@ -5,9 +5,9 @@ from typing import Iterator, Optional, cast, Any
 import numpy as np
 from more_itertools import windowed
 
-from .data.loader.batch import DataBatch
-from .data.loader.shapes import DataShapes
-from .data.loader.utils import get_paths, load_file
+from .batch import DataBatch
+from .shapes import DataShapes
+from .utils import get_paths, load_file
 
 
 class DataLoader:
