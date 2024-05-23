@@ -34,13 +34,13 @@ def _dvh_error(prediction, target, voxel_dim, structure_masks):
     batch_size = prediction.shape[0]
     reference_dvh_metrics = [
         dvh_score_for_single_prediction(
-            target[i].cpu(), voxel_dim[i].cpu(), structure_masks[i].cpu().clone()
+            target[i], voxel_dim[i], structure_masks[i].cpu()
         )
         for i in range(batch_size)
     ]
     pred_dvh_metrics = [
         dvh_score_for_single_prediction(
-            prediction[i].cpu(), voxel_dim[i].cpu(), structure_masks[i].cpu().clone()
+            prediction[i], voxel_dim[i], structure_masks[i].cpu()
         )
         for i in range(batch_size)
     ]
@@ -62,7 +62,7 @@ def _dvh_error(prediction, target, voxel_dim, structure_masks):
 
 
 def dvh_score_for_single_prediction(prediction, voxel_dims, structure_masks):
-    device = torch.device("cpu")  # Force CPU for debugging
+    device = torch.device(voxel_dims.get_device())
     voxels_within_tenths_cc = torch.maximum(
         torch.tensor([1.0, 1.0, 1.0], device=device),
         torch.round(100.0 / voxel_dims),
@@ -77,6 +77,7 @@ def dvh_score_for_single_prediction(prediction, voxel_dims, structure_masks):
         roi_mask = structure_masks[:, :, :, roi_index].to(torch.bool)
         if not roi_mask.any():
             continue
+
         roi_dose = prediction.squeeze()[roi_mask]
         roi_size = roi_dose.size(0)
 
