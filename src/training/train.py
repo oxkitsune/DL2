@@ -6,6 +6,7 @@ import os
 from src.metrics import dose_score, mean_dvh_error
 from src.data import Augment
 from torch.utils.data import DataLoader, default_collate
+from src.training.loss import RadiotherapyLoss
 
 augment = Augment(42)
 
@@ -24,7 +25,9 @@ def train_model(model, dataset, args):
     )
     print(f"Using device {device}")
 
-    criterion = torch.nn.L1Loss()
+    torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+
+    criterion = RadiotherapyLoss()
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
 
     train_dataloader = DataLoader(
@@ -92,15 +95,16 @@ def train_single_epoch(model, data_loader, optimizer, criterion):
         optimizer.zero_grad()
 
         # ensure features/dose are in the correct shape
-        # (batch_size, channels, depth, width, height)
+        # (batch_size, channels, height, width, depth)
         features = batch["features"].permute((0, 4, 1, 2, 3))
 
         # (batch_size, depth, width, height)
         target = batch["dose"].unsqueeze(1)
+        structure_masks = batch["structure_masks"]
 
         outputs = model(features)
 
-        loss = criterion(outputs, target)
+        loss = criterion(outputs, target, structure_masks)
         loss.backward()
 
         optimizer.step()
@@ -131,10 +135,11 @@ def evaluate(model, data_loader, criterion):
         for batch in pbar:
             features = batch["features"].permute((0, 4, 1, 2, 3))
             target = batch["dose"].unsqueeze(1)
+            structure_masks = batch["structure_masks"]
 
             outputs = model(features)
-
-            loss = criterion(outputs, target)
+            loss = criterion(outputs, target, structure_masks)
+            
             metrics["loss"] += loss.item()
             metrics["dose_score"] += dose_score(
                 outputs, target, batch["possible_dose_mask"]

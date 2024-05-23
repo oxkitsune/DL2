@@ -106,6 +106,10 @@ def setup_model(args, device):
         from src.models.unetr import UNETR
 
         model = UNETR(input_dim=3, output_dim=1).to(device)
+    if args.model == "conv":
+        from src.models.conv_net import ConvNet
+
+        model = ConvNet(num_input_channels=3).to(device)
     else:
         raise ValueError(f"Unknown model {args.model}")
 
@@ -129,7 +133,8 @@ def run():
     args = get_args()
     setup_wandb(args)
 
-    num_proc = torch.multiprocessing.cpu_count() - 2
+    # num_proc = torch.multiprocessing.cpu_count() - 2
+    num_proc = 2
 
     dataset = load_dataset("oxkitsune/open-kbp", num_proc=num_proc)
 
