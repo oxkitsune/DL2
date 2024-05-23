@@ -50,7 +50,7 @@ def train_model(model, dataset, args):
 
 def train_single_epoch(model, data_loader, optimizer, criterion):
     model.train()
-    total_loss = 0
+    total_loss = 0    
     pbar = tqdm(data_loader, desc="Train", leave=False)
     for batch in pbar:
         optimizer.zero_grad()
@@ -58,7 +58,7 @@ def train_single_epoch(model, data_loader, optimizer, criterion):
         # ensure features/dose are in the correct shape
         # (batch_size, channels, height, width, depth)
         features = batch["features"].permute((0, 4, 1, 2, 3))
-        target = batch["dose"].unsqueeze(1)
+        target = batch["dose"].unsqueeze(1) / 70
         structure_masks = batch["structure_masks"]
 
         outputs = model(features)

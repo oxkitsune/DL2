@@ -6,7 +6,7 @@ class DVHLoss(nn.Module):
     def __init__(self, n_bins: int):
         super(DVHLoss, self).__init__()
         self.n_bins = n_bins
-        self.bin_width = 80 // n_bins
+        self.bin_width = 1 / n_bins
         self.loss = torch.nn.MSELoss()
 
     def comp_hist(self, predicted_dose, structure_masks):
@@ -29,17 +29,27 @@ class DVHLoss(nn.Module):
         return hist
 
     def forward(self, predicted_dose, target_dose, structure_masks):
+        # print min max and mean of predicted dose
+        # print("Predicted Dose")
+        # print(torch.min(predicted_dose))
+        # print(torch.max(predicted_dose))
+        # print(torch.mean(predicted_dose))
+        # print("Target Dose")
+        # print(torch.min(target_dose))
+        # print(torch.max(target_dose))
+        # print(torch.mean(target_dose))
         predicted_hist = self.comp_hist(predicted_dose, structure_masks)
-        print(predicted_hist)
+        # print(predicted_hist)
         target_hist = self.comp_hist(target_dose, structure_masks)
-        print(target_hist)
-        return self.loss(predicted_hist, target_hist) * 10e-8 / predicted_dose.shape[0]
+        # print(target_hist)
+        return self.loss(predicted_hist, target_hist)  / predicted_dose.shape[0]
    
 
 class MomentDVHLoss(nn.Module):
     def __init__(self, moments=[1, 2, 10]):
         super(MomentDVHLoss, self).__init__()
         self.moments = moments
+        self.mse = torch.nn.MSELoss()
 
     def forward(self, predicted_dose, target_dose, structure_masks):
         """
@@ -65,7 +75,7 @@ class MomentDVHLoss(nn.Module):
             for p in self.moments:
                 predicted_moment = self.compute_moment(predicted_dose, structure_mask, p)
                 target_moment = self.compute_moment(target_dose, structure_mask, p)
-                moment_loss_value += torch.norm(predicted_moment - target_moment, p=2) ** 2
+                moment_loss_value += self.mse(predicted_moment, target_moment)
 
             total_moment_loss += moment_loss_value
 
@@ -92,7 +102,13 @@ class MomentDVHLoss(nn.Module):
 
         # Compute the p-th moment
         moment = structure_dose_sum / structure_voxel_count
+        moment += 1e-6
+
         moment = moment ** (1 / p)
+        if moment[0] == 0:
+            print("Moment is zero")
+            print(structure_dose_sum)
+            print(structure_voxel_count)
 
         return moment
 
@@ -104,8 +120,8 @@ class RadiotherapyLoss(nn.Module):
         use_dvh=True, 
         use_moment=True, 
         alpha=1, 
-        beta=0.000001, 
-        gamma=10
+        beta=0.001, 
+        gamma=0.0000005
     ):
         super(RadiotherapyLoss, self).__init__()
         self.use_mae = use_mae
@@ -116,7 +132,7 @@ class RadiotherapyLoss(nn.Module):
         self.gamma = gamma
         
         self.mae_loss = torch.nn.L1Loss()
-        self.dvh_loss = DVHLoss(n_bins=8)
+        self.dvh_loss = DVHLoss(n_bins=10)
         self.moment_loss = MomentDVHLoss()
         
     def forward(self, output, target, structure_masks):
@@ -144,7 +160,7 @@ class RadiotherapyLoss(nn.Module):
  
         if self.use_moment:
             l =  self.beta * self.moment_loss(output, target, structure_masks)
-            # print("Moment", l)
+            print("Moment", l)
             loss += l
 
         print("final", loss)
