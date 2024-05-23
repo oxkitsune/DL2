@@ -120,7 +120,7 @@ class RadiotherapyLoss(nn.Module):
         use_dvh=True, 
         use_moment=True, 
         alpha=1, 
-        beta=0.001, 
+        beta=0.00001, 
         gamma=0.0000005
     ):
         super(RadiotherapyLoss, self).__init__()
