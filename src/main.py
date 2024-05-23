@@ -114,7 +114,7 @@ def setup_model(args, device):
         from src.models.unetr import UNETR
 
         model = UNETR(input_dim=3, output_dim=1).to(device)
-    if args.model == "conv":
+    elif args.model == "conv":
         from src.models.conv_net import ConvNet
 
         model = ConvNet(num_input_channels=3).to(device)
