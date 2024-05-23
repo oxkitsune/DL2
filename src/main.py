@@ -137,21 +137,30 @@ def run():
     features = dataset["train"].features.copy()
     features["features"] = Array4D((128, 128, 128, 3), dtype="float32")
     del features["ct"]
-    del features["possible_dose_mask"]
 
     # apply transformations in numpy format, on cpu
     dataset = dataset.with_format("numpy").map(
         transform_data,
         input_columns=["ct", "structure_masks"],
         # we remove these columns as they are combined into the 'features' column or irrelevant
-        remove_columns=["ct", "possible_dose_mask"],
+        remove_columns=["ct"],
         writer_batch_size=25,
         num_proc=num_proc,
         features=features,
     )
 
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-    dataset = dataset.with_format("torch", columns=["features", "dose"], device=device)
+    dataset = dataset.with_format(
+        "torch",
+        columns=[
+            "features",
+            "dose",
+            "structure_masks",
+            "voxel_dimensions",
+            "possible_dose_mask",
+        ],
+        device=device,
+    )
     model = setup_model(args, device)
 
     # run the training loop

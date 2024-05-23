@@ -5,8 +5,6 @@ from typing import Any, Optional
 
 import numpy as np
 
-from src.data.augmentation import Transform3D
-
 
 class DataBatch:
     def __init__(
@@ -94,11 +92,6 @@ class DataBatch:
         ptv_channel = np.max(ptv_channels * labels, axis=-1, keepdims=True) / 70
 
         return np.concatenate((ct_channel, oar_channels, ptv_channel), axis=-1)
-
-    def get_augmented_features(self) -> Any:
-        feat = self.get_flattend_oar_features()
-        transform = Transform3D(seed=42)
-        return transform(feat)
 
     def get_target(self) -> Any:
         if self.dose is None:
