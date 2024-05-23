@@ -247,7 +247,7 @@ class UNETR(nn.Module):
         self.num_heads = num_heads
         self.dropout = dropout
         self.num_layers = 12
-        self.ext_layers = [3, 6, 9, 12]
+        self.ext_layers = [3, 6, 9]
 
         self.patch_dim = [int(x / patch_size) for x in img_shape]
 
