@@ -69,6 +69,13 @@ def get_args():
         default="unetr",
         help="The model to use for training",
     )
+    # "mae", "dvh", "moment", "all"
+    parser.add_argument(
+        "--loss",
+        type=str,
+        default="mae",
+        help="Loss to use for training",
+    )
 
     parser.add_argument("--parallel", action="store_true", help="Use multiple GPUs")
 
@@ -89,6 +96,7 @@ def setup_wandb(args):
         config={
             "learning_rate": args.lr,
             "architecture": args.model,
+            "loss": args.loss,
             "epochs": args.epochs,
             "batch_size": args.batch_size,
         },

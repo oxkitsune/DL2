@@ -29,19 +29,8 @@ class DVHLoss(nn.Module):
         return hist
 
     def forward(self, predicted_dose, target_dose, structure_masks):
-        # print min max and mean of predicted dose
-        # print("Predicted Dose")
-        # print(torch.min(predicted_dose))
-        # print(torch.max(predicted_dose))
-        # print(torch.mean(predicted_dose))
-        # print("Target Dose")
-        # print(torch.min(target_dose))
-        # print(torch.max(target_dose))
-        # print(torch.mean(target_dose))
         predicted_hist = self.comp_hist(predicted_dose, structure_masks)
-        # print(predicted_hist)
         target_hist = self.comp_hist(target_dose, structure_masks)
-        # print(target_hist)
         return self.loss(predicted_hist, target_hist)  / predicted_dose.shape[0]
    
 
@@ -103,12 +92,7 @@ class MomentDVHLoss(nn.Module):
         # Compute the p-th moment
         moment = structure_dose_sum / structure_voxel_count
         moment += 1e-6
-
         moment = moment ** (1 / p)
-        if moment[0] == 0:
-            print("Moment is zero")
-            print(structure_dose_sum)
-            print(structure_voxel_count)
 
         return moment
 
@@ -137,32 +121,17 @@ class RadiotherapyLoss(nn.Module):
         
     def forward(self, output, target, structure_masks):
         loss = 0
-        print("Computing loss")
 
-        if torch.isnan(structure_masks).any():
-            print("STRUCTURE MASKS contain NaN values.")
-        
         if self.use_mae:
-            if torch.isnan(output).any():
-                print("Output contain NaN values.")
-
-            if torch.isnan(target).any():
-                print("Targets contain NaN values.")
-
             l = self.alpha * self.mae_loss(output, target)
-            print("MAE", l)
             loss += l
         
         if self.use_dvh:
             l = self.gamma * self.dvh_loss(output, target, structure_masks)
-            print("DVH", l)
             loss += l
  
         if self.use_moment:
             l =  self.beta * self.moment_loss(output, target, structure_masks)
-            print("Moment", l)
             loss += l
-
-        print("final", loss)
 
         return loss

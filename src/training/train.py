@@ -10,14 +10,26 @@ from src.training.loss import RadiotherapyLoss
 
 augment = Augment(42)
 
-
 def transform(samples):
     samples = default_collate(samples)
-    samples["features"] = augment(samples["features"])
-    samples["dose"] = augment(samples["dose"])
+    samples["features"] = augment.fit(samples["features"])
+    samples["dose"] = augment.augment_dose(samples["dose"])
+    samples["structure_masks"] = augment.augment_structure_masks(samples["structure_masks"])
 
     return samples
 
+
+def setup_loss(args):
+    if args.loss == "all":
+        return RadiotherapyLoss()
+    elif args.loss == "mae":
+        return RadiotherapyLoss(use_dvh=False, use_moment=False)
+    elif args.loss == "dvh":
+        return RadiotherapyLoss(use_moment=False)
+    elif args.loss == "moment":
+        return RadiotherapyLoss(use_dvh=False)
+
+    raise Exception(f"{args.loss} is ot a valid loss function")
 
 def train_model(model, dataset, args):
     device = (
@@ -25,9 +37,7 @@ def train_model(model, dataset, args):
     )
     print(f"Using device {device}")
 
-    torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
-
-    criterion = RadiotherapyLoss()
+    criterion = setup_loss(args)
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
 
     train_dataloader = DataLoader(
