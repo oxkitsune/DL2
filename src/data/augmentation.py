@@ -8,7 +8,7 @@ class Augment(torch.nn.Module):
         super().__init__()
         torch.manual_seed(seed)
 
-    def augment_features(self, feat):
+    def fit(self, feat):
         feat = feat.clone()
 
         # Flip
@@ -33,6 +33,20 @@ class Augment(torch.nn.Module):
 
         return feat
 
+    def augment_structure_masks(self, structure_masks):
+        structure_masks = structure_masks.clone()
+
+        structure_masks = torch.flip(structure_masks, dims=self.flips.tolist())
+
+        # Translations
+        structure_masks = torch.roll(structure_masks, shifts=self.shifts.tolist(), dims=(1, 2))
+
+        # Rotations
+        for structure in range(structure_masks.shape[-1]):
+            structure_masks[:, :, :, :, structure] = self.r(structure_masks[:, :, :, :, structure])
+
+        return structure_masks
+
     def augment_dose(self, dose):
         dose = dose.clone()
 
@@ -46,11 +60,3 @@ class Augment(torch.nn.Module):
         dose = self.r(dose)
 
         return dose
-
-    def __call__(self, x):
-        if x.dim() == 5:
-            return self.augment_features(x)
-        elif x.dim() == 4:
-            return self.augment_dose(x)
-
-        return None
