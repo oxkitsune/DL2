@@ -141,8 +141,7 @@ def run():
     args = get_args()
     setup_wandb(args)
 
-    # num_proc = torch.multiprocessing.cpu_count() - 2
-    num_proc = 2
+    num_proc = torch.multiprocessing.cpu_count() - 2
 
     dataset = load_dataset("oxkitsune/open-kbp", num_proc=num_proc)
 
