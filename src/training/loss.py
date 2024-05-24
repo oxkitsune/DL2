@@ -119,7 +119,7 @@ class RadiotherapyLoss(nn.Module):
         self.dvh_loss = DVHLoss(n_bins=10)
         self.moment_loss = MomentDVHLoss()
         
-    def forward(self, output, target, structure_masks):
+    def forward(self, output, target, structure_masks=None):
         loss = 0
 
         if self.use_mae:

@@ -5,7 +5,7 @@ import wandb
 
 from src.data import transform_data
 
-from src.training import train_model
+from src.training import train_model, ar_train_model
 from datasets import load_dataset, Array4D
 
 import torch
@@ -76,6 +76,11 @@ def get_args():
         default="mae",
         help="Loss to use for training",
     )
+    parser.add_argument(
+        "--ar",
+        action="store_true",
+        help="Use AR_UNETR model",
+    )
 
     parser.add_argument("--parallel", action="store_true", help="Use multiple GPUs")
 
@@ -118,6 +123,10 @@ def setup_model(args, device):
         from src.models.conv_net import ConvNet
 
         model = ConvNet(num_input_channels=3).to(device)
+    elif args.model == "arunetr":
+        from src.models.ar_unetr import AR_UNETR
+        
+        model = AR_UNETR(input_dim=4, output_dim=1).to(device)
     else:
         raise ValueError(f"Unknown model {args.model}")
 
@@ -142,7 +151,7 @@ def run():
     setup_wandb(args)
 
     num_proc = torch.multiprocessing.cpu_count() - 2
-
+    
     dataset = load_dataset("oxkitsune/open-kbp", num_proc=num_proc)
 
     # ensure the feature format is set for the new features column, this speeds up the dataset loading by 100x
@@ -176,8 +185,10 @@ def run():
     model = setup_model(args, device)
 
     # run the training loop
-    train_model(model, dataset, args)
-
+    if args.ar == True:
+        ar_train_model(model, dataset, args)
+    else:
+        train_model(model, dataset, args)
 
 if __name__ == "__main__":
     run()
