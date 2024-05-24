@@ -170,6 +170,7 @@ def run():
     )
 
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+    
     dataset = dataset.with_format(
         "torch",
         columns=[
@@ -181,7 +182,6 @@ def run():
         ],
         device=device,
     )
-    
     model = setup_model(args, device)
 
     # run the training loop
