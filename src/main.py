@@ -66,7 +66,7 @@ def get_args():
     parser.add_argument(
         "--model",
         type=str,
-        default="unetr",
+        default="arunetr",
         help="The model to use for training",
     )
     # "mae", "dvh", "moment", "all"
@@ -151,7 +151,7 @@ def run():
     setup_wandb(args)
 
     num_proc = torch.multiprocessing.cpu_count() - 2
-
+    num_proc = 1
     dataset = load_dataset("oxkitsune/open-kbp", num_proc=num_proc)
 
     # ensure the feature format is set for the new features column, this speeds up the dataset loading by 100x
@@ -182,11 +182,13 @@ def run():
         ],
         device=device,
     )
-        
+    
+    print("Setting up model")
     model = setup_model(args, device)
 
     # run the training loop
     if args.ar == True:
+        print("Starting model training")
         ar_train_model(model, dataset, args)
     else:
         train_model(model, dataset, args)

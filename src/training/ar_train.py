@@ -104,37 +104,63 @@ def train_single_epoch(model, data_loader, optimizer, criterion, teacher_forcing
         torch.device("cuda:0") if torch.cuda.is_available() else torch.device("cpu")
     )
     model.train()
-    total_loss = 0
+    metrics = {"loss": 0, "loss_slice": 0, "dose_score": 0, "mean_dvh_error": 0}
     pbar = tqdm(data_loader, desc="Train", leave=False)
     
     for batch in pbar:
-        
-        target = batch["dose"].unsqueeze(1)
-        input_target_dose = torch.zeros_like(target, device=device)
-        
         # ensure features/dose are in the correct shape
         # (batch_size, channels, height, width, depth)
-        features = batch["features"].transpose(1, -1)
+        features = batch["features"].permute((0, 4, 1, 2, 3))
+        target = batch["dose"].unsqueeze(1)
         
+        # this will be the 4th channel starting out as zeros
+        input_target_dose = torch.zeros_like(target, device=device)
+        
+        # combine the input
         combined_input = torch.cat([features, input_target_dose], dim=1)
-        
+        structure_masks = batch["structure_masks"]
+
+        # we loop through every slice
         for x in range(0, 128, 8):
-        
             optimizer.zero_grad()
             outputs = model(combined_input)
-            loss = criterion(outputs, target[:, :, :, :, x:x+8])
             
+            # calculate loss wrt relevant slice
+            loss = criterion(outputs, target[:, :, :, :, x:x+8], structure_masks)
+            loss.backward()
+            
+            # when using teacher forcing, you train inputting the correct slices for next prediction
             if teacher_forcing:
                 combined_input[:, 3, :, :, x:x+8] = target[:, :, :, :, x:x+8]
             else:
                 combined_input[:, 3, :, :, x:x+8] = outputs.detach()
-            
-            loss.backward()
-
+                
             optimizer.step()
-            total_loss += loss.item()
-
-    return total_loss / len(data_loader)
+            metrics["loss_slice"] += loss.item()
+            
+        # after predicting a full slice, just for reference calculate the loss
+        # NOTE: keep in mind that when using teacher forcing, this will cause the loss should be near 0, as all the correct slices are in the 4th channel
+        
+        # the outputs is now the fully filled in 4th channel
+        outputs = combined_input[:, 3, ...]
+        loss = criterion(outputs, target, structure_masks)
+        metrics["loss"] += loss.item()
+        metrics["dose_score"] += dose_score(
+        outputs, target, batch["possible_dose_mask"]
+        ).item()
+        # metrics["mean_dvh_error"] += mean_dvh_error(
+        # outputs,
+        # batch["dose"].clone().detach(),
+        # batch["voxel_dimensions"].clone().detach(),
+        # batch["structure_masks"].clone().detach(),
+        # ).item()
+        
+    n_batches = len(data_loader)
+    return {
+        "loss": metrics["loss"] / n_batches,
+        "dose_score": metrics["dose_score"] / n_batches,
+        "mean_dvh_error": metrics["mean_dvh_error"] / n_batches,
+    }
 
 
 def evaluate(model, data_loader, criterion):

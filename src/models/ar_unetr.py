@@ -227,7 +227,7 @@ class Transformer(nn.Module):
         return extract_layers
 
 
-class ARNETR(nn.Module):
+class AR_UNETR(nn.Module):
     def __init__(
         self,
         img_shape=(128, 128, 128),
