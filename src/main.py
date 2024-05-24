@@ -151,6 +151,7 @@ def run():
     setup_wandb(args)
 
     num_proc = torch.multiprocessing.cpu_count() - 2
+    
     dataset = load_dataset("oxkitsune/open-kbp", num_proc=num_proc)
 
     # ensure the feature format is set for the new features column, this speeds up the dataset loading by 100x
@@ -170,7 +171,6 @@ def run():
     )
 
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-    
     dataset = dataset.with_format(
         "torch",
         columns=[
