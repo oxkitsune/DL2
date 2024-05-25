@@ -268,16 +268,23 @@ class UNETR(nn.Module):
             Conv3DBlock(input_dim, 32, 3), Conv3DBlock(32, 64, 3)
         )
 
+        # self.decoder3 = nn.Sequential(
+        #     Deconv3DBlock(embed_dim, 512),
+        #     Deconv3DBlock(512, 256),
+        #     Deconv3DBlock(256, 128),
+        # )
+
         self.decoder3 = nn.Sequential(
             Deconv3DBlock(embed_dim, 512),
             Deconv3DBlock(512, 256),
-            Deconv3DBlock(256, 128),
         )
 
-        self.decoder6 = nn.Sequential(
-            Deconv3DBlock(embed_dim, 512),
-            Deconv3DBlock(512, 256),
-        )
+        # self.decoder6 = nn.Sequential(
+        #     Deconv3DBlock(embed_dim, 512),
+        #     Deconv3DBlock(512, 256),
+        # )
+
+        self.decoder6 = Deconv3DBlock(embed_dim, 512)
 
         # self.decoder9 = Deconv3DBlock(embed_dim, 512)
 
@@ -322,8 +329,15 @@ class UNETR(nn.Module):
         z6 = self.decoder6(z6)
         print("decoded z6", z6.shape)
         z6 = self.decoder6_upsampler(torch.cat([z6, z9], dim=1))
+        print("upsampled z6", z6.shape)
+        print("z3", z3.shape)
         z3 = self.decoder3(z3)
+        print("decoded z3", z3.shape)
         z3 = self.decoder3_upsampler(torch.cat([z3, z6], dim=1))
+        print("upsampled z3", z3.shape)
+        print("z0", z0.shape)
         z0 = self.decoder0(z0)
+        print("decoded z0", z0.shape)
         output = self.decoder0_header(torch.cat([z0, z3], dim=1))
+        print("output", output.shape)
         return output
