@@ -6,6 +6,7 @@ NUM_RELEVANT_STRUCTURES = 7
 def transform_data(ct, structure_masks):
     # Need to add a channel dimension to the CT data
     # in order to end up with a feature map of shape (128, 128, 128, 3)
+    ct_channel = np.clip(ct, -1024, 1500) / 1000
     ct_channel = np.expand_dims(ct, -1)
 
     # These are all encoded as ones and zeros originally
