@@ -227,6 +227,35 @@ class Transformer(nn.Module):
         return extract_layers
 
 
+class DecoderBlock(nn.Module):
+    def __init__(
+        self,
+        num_decoder_blocks: int,
+        upsample_dim: int,
+        embed_dim: int = 768,
+        decoder_dim: int = 512,
+    ):
+        super().__init__()
+        decoder_layers = [Deconv3DBlock(embed_dim, decoder_dim)]
+        for _ in range(num_decoder_blocks):
+            in_dim = decoder_dim
+            decoder_dim = decoder_dim // 2
+            decoder_layers.append(Deconv3DBlock(in_dim, decoder_dim))
+
+        self.decoder = nn.Sequential(*decoder_layers)
+
+        self.upsampler = nn.Sequential(
+            Conv3DBlock(upsample_dim, upsample_dim // 2),
+            Conv3DBlock(upsample_dim // 2, upsample_dim // 2),
+            SingleDeconv3DBlock(upsample_dim // 2, upsample_dim // 4),
+        )
+
+    def forward(self, x, z):
+        x = self.decoder(x)
+        x = self.upsampler(torch.cat([x, z], dim=1))
+        return x
+
+
 class UNETR(nn.Module):
     def __init__(
         self,
@@ -263,40 +292,65 @@ class UNETR(nn.Module):
             self.ext_layers,
         )
 
-        # U-Net Decoder
+        # U-Net structure
         self.decoder0 = nn.Sequential(
             Conv3DBlock(input_dim, 32, 3), Conv3DBlock(32, 64, 3)
         )
 
-        self.decoder3 = nn.Sequential(
-            Deconv3DBlock(embed_dim, 512),
-            Deconv3DBlock(512, 256),
-            Deconv3DBlock(256, 128),
-        )
+        modules = []
+        n_ext_layers = len(self.ext_layers)
+        for i in range(len(self.ext_layers)):
+            # number of decoder blocks to add, each layer will have one less decoder block
+            # than the previous layer, since the output of the previous layer is concatenated
+            # with the upsampled output of the current layer
+            num_decoder_blocks = n_ext_layers - i - 1
 
-        self.decoder6 = nn.Sequential(
-            Deconv3DBlock(embed_dim, 512),
-            Deconv3DBlock(512, 256),
-        )
+            # start with 512 and divide by 2 for each layer
+            # multiply by 2 to account for concatenation of skip connection
+            upsample_start_dim = (512 / (2**i)) * 2
 
-        self.decoder9 = Deconv3DBlock(embed_dim, 512)
+            modules.append(
+                DecoderBlock(
+                    num_decoder_blocks=num_decoder_blocks,
+                    upsample_start_dim=upsample_start_dim,
+                    embed_dim=embed_dim,
+                )
+            )
+
+        self.unet = nn.ModuleList(modules)
+        for i, ext in enumerate(self.ext_layers):
+            print(f"z{ext}", self.unet[i])
+
+        exit(0)
+        # self.decoder3 = nn.Sequential(
+        #     Deconv3DBlock(embed_dim, 512),
+        #     Deconv3DBlock(512, 256),
+        #     Deconv3DBlock(256, 128),
+        # )
+
+        # self.decoder6 = nn.Sequential(
+        #     Deconv3DBlock(embed_dim, 512),
+        #     Deconv3DBlock(512, 256),
+        # )
+
+        # self.decoder9 = Deconv3DBlock(embed_dim, 512)
 
         self.decoder12_upsampler = SingleDeconv3DBlock(embed_dim, 512)
 
-        self.decoder9_upsampler = nn.Sequential(
-            Conv3DBlock(1024, 512),
-            Conv3DBlock(512, 512),
-            Conv3DBlock(512, 512),
-            SingleDeconv3DBlock(512, 256),
-        )
+        # self.decoder9_upsampler = nn.Sequential(
+        #     Conv3DBlock(1024, 512),
+        #     Conv3DBlock(512, 512),
+        #     Conv3DBlock(512, 512),
+        #     SingleDeconv3DBlock(512, 256),
+        # )
 
-        self.decoder6_upsampler = nn.Sequential(
-            Conv3DBlock(512, 256), Conv3DBlock(256, 256), SingleDeconv3DBlock(256, 128)
-        )
+        # self.decoder6_upsampler = nn.Sequential(
+        #     Conv3DBlock(512, 256), Conv3DBlock(256, 256), SingleDeconv3DBlock(256, 128)
+        # )
 
-        self.decoder3_upsampler = nn.Sequential(
-            Conv3DBlock(256, 128), Conv3DBlock(128, 128), SingleDeconv3DBlock(128, 64)
-        )
+        # self.decoder3_upsampler = nn.Sequential(
+        #     Conv3DBlock(256, 128), Conv3DBlock(128, 128), SingleDeconv3DBlock(128, 64)
+        # )
 
         self.decoder0_header = nn.Sequential(
             Conv3DBlock(128, 64),
