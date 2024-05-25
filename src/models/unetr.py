@@ -247,7 +247,7 @@ class UNETR(nn.Module):
         self.num_heads = num_heads
         self.dropout = dropout
         self.num_layers = 12
-        self.ext_layers = [3, 6, 9, 12]
+        self.ext_layers = [3, 6, 9]
 
         self.patch_dim = [int(x / patch_size) for x in img_shape]
 
@@ -281,7 +281,7 @@ class UNETR(nn.Module):
 
         self.decoder9 = Deconv3DBlock(embed_dim, 512)
 
-        self.decoder12_upsampler = SingleDeconv3DBlock(embed_dim, 512)
+        # self.decoder12_upsampler = SingleDeconv3DBlock(embed_dim, 512)
 
         self.decoder9_upsampler = nn.Sequential(
             Conv3DBlock(1024, 512),
@@ -306,15 +306,15 @@ class UNETR(nn.Module):
 
     def forward(self, x):
         z = self.transformer(x)
-        z0, z3, z6, z9, z12 = x, *z
+        z0, z3, z6, z9 = x, *z
         z3 = z3.transpose(-1, -2).view(-1, self.embed_dim, *self.patch_dim)
         z6 = z6.transpose(-1, -2).view(-1, self.embed_dim, *self.patch_dim)
         z9 = z9.transpose(-1, -2).view(-1, self.embed_dim, *self.patch_dim)
-        z12 = z12.transpose(-1, -2).view(-1, self.embed_dim, *self.patch_dim)
+        # z12 = z12.transpose(-1, -2).view(-1, self.embed_dim, *self.patch_dim)
 
-        z12 = self.decoder12_upsampler(z12)
-        z9 = self.decoder9(z9)
-        z9 = self.decoder9_upsampler(torch.cat([z9, z12], dim=1))
+        # z12 = self.decoder12_upsampler(z12)
+        # z9 = self.decoder9(z9)
+        z9 = self.decoder9_upsampler(z9, dim=1)
         z6 = self.decoder6(z6)
         z6 = self.decoder6_upsampler(torch.cat([z6, z9], dim=1))
         z3 = self.decoder3(z3)
