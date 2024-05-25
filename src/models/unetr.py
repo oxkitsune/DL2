@@ -279,7 +279,7 @@ class UNETR(nn.Module):
             Deconv3DBlock(512, 256),
         )
 
-        self.decoder9 = Deconv3DBlock(embed_dim, 512)
+        # self.decoder9 = Deconv3DBlock(embed_dim, 512)
 
         # self.decoder12_upsampler = SingleDeconv3DBlock(embed_dim, 512)
 
@@ -315,8 +315,12 @@ class UNETR(nn.Module):
 
         # z12 = self.decoder12_upsampler(z12)
         # z9 = self.decoder9(z9)
+        print("z9", z9.shape)
         z9 = self.decoder9_upsampler(z9)
+        print("upsampled z9", z9.shape)
+        print("z6", z6.shape)
         z6 = self.decoder6(z6)
+        print("decoded z6", z6.shape)
         z6 = self.decoder6_upsampler(torch.cat([z6, z9], dim=1))
         z3 = self.decoder3(z3)
         z3 = self.decoder3_upsampler(torch.cat([z3, z6], dim=1))
