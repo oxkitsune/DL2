@@ -307,12 +307,12 @@ class UNETR(nn.Module):
 
             # start with 512 and divide by 2 for each layer
             # multiply by 2 to account for concatenation of skip connection
-            upsample_start_dim = (512 / (2**i)) * 2
+            upsample_dim = (512 / (2**i)) * 2
 
             modules.append(
                 DecoderBlock(
                     num_decoder_blocks=num_decoder_blocks,
-                    upsample_start_dim=upsample_start_dim,
+                    upsample_dim=upsample_dim,
                     embed_dim=embed_dim,
                 )
             )
