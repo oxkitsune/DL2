@@ -315,7 +315,7 @@ class UNETR(nn.Module):
 
         # z12 = self.decoder12_upsampler(z12)
         # z9 = self.decoder9(z9)
-        z9 = self.decoder9_upsampler(z9, dim=1)
+        z9 = self.decoder9_upsampler(z9)
         z6 = self.decoder6(z6)
         z6 = self.decoder6_upsampler(torch.cat([z6, z9], dim=1))
         z3 = self.decoder3(z3)
