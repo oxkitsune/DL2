@@ -296,21 +296,39 @@ class UNETR(nn.Module):
         #     Conv3DBlock(512, 512),
         #     SingleDeconv3DBlock(512, 256),
         # )
-        self.decoder9_upsampler = SingleDeconv3DBlock(embed_dim, 512)
 
         self.decoder6_upsampler = nn.Sequential(
+            Conv3DBlock(1024, 512),
+            Conv3DBlock(512, 512),
+            Conv3DBlock(512, 512),
+            SingleDeconv3DBlock(512, 256),
+        )
+
+        # self.decoder6_upsampler = nn.Sequential(
+        #     Conv3DBlock(512, 256), Conv3DBlock(256, 256), SingleDeconv3DBlock(256, 128)
+        # )
+
+        self.decoder3_upsampler = nn.Sequential(
             Conv3DBlock(512, 256), Conv3DBlock(256, 256), SingleDeconv3DBlock(256, 128)
         )
 
-        self.decoder3_upsampler = nn.Sequential(
-            Conv3DBlock(256, 128), Conv3DBlock(128, 128), SingleDeconv3DBlock(128, 64)
-        )
+        # self.decoder3_upsampler = nn.Sequential(
+        #     Conv3DBlock(256, 128), Conv3DBlock(128, 128), SingleDeconv3DBlock(128, 64)
+        # )
 
         self.decoder0_header = nn.Sequential(
+            Conv3DBlock(256, 128),
             Conv3DBlock(128, 64),
+            SingleDeconv3DBlock(128, 64),
             Conv3DBlock(64, 64),
             SingleConv3DBlock(64, output_dim, 1),
         )
+
+        # self.decoder0_header = nn.Sequential(
+        #     Conv3DBlock(128, 64),
+        #     Conv3DBlock(64, 64),
+        #     SingleConv3DBlock(64, output_dim, 1),
+        # )
 
     def forward(self, x):
         z = self.transformer(x)
