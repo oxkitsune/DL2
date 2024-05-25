@@ -283,12 +283,13 @@ class UNETR(nn.Module):
 
         # self.decoder12_upsampler = SingleDeconv3DBlock(embed_dim, 512)
 
-        self.decoder9_upsampler = nn.Sequential(
-            Conv3DBlock(1024, 512),
-            Conv3DBlock(512, 512),
-            Conv3DBlock(512, 512),
-            SingleDeconv3DBlock(512, 256),
-        )
+        # self.decoder9_upsampler = nn.Sequential(
+        #     Conv3DBlock(1024, 512),
+        #     Conv3DBlock(512, 512),
+        #     Conv3DBlock(512, 512),
+        #     SingleDeconv3DBlock(512, 256),
+        # )
+        self.decoder9_upsampler = Deconv3DBlock(embed_dim, 512)
 
         self.decoder6_upsampler = nn.Sequential(
             Conv3DBlock(512, 256), Conv3DBlock(256, 256), SingleDeconv3DBlock(256, 128)
