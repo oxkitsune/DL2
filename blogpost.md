@@ -200,6 +200,10 @@ DVH loss can be regarded as a physics-based loss function because it directly in
 Moment loss is a variant of the DVH loss. It is based on the concept that a DVH can be approximated using several moments of a structure, which are different quantative measures to represent a function, such as the mean or the maximum [[5]](#5). A DVH can be approximated using several moments as follows:
 
 $$
+\text{DVH}
+$$.
+
+$$
 \text{DVH} \sim (M_i, M_j, ..., M_p)
 $$.
 
