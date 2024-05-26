@@ -176,21 +176,30 @@ DVHs are essential for ensuring that the prescribed radiation dose effectively t
 
 Given a binary segmentation mask, $B_s$ for the $s$-th structure, along with the predicted and ground truth doses, the mean squared loss of the DVH can be defined as follows:
 
-$`L_{DVH}(D_{true}, D_{pred}, B_{s}) = \frac{1}{n_s}\frac{1}{n_t}\sum_s \lVert DVH(D_{true}, B_s) - DVH(D_{pred}, B_s) \rVert_2^2.`$
+$$
+L_{DVH}(D_{true}, D_{pred}, B_{s}) = \frac{1}{n_s}\frac{1}{n_t}\sum_s \lVert DVH(D_{true}, B_s) - DVH(D_{pred}, B_s) \rVert_2^2.
+$$
 
 where $n_s$ represents the number of structures and $n_t$ denotes the number of different bins in the histogram.
 This loss function can be integrated into the total loss function as follows:
-\begin{equation}
-    Loss = L_{MAE} + w_{DVH}\cdot L_{DVH},
-\end{equation} where $w_{DVH}$ is the weight given to the DVH loss.
+
+$$
+Loss = L_{MAE} + w_{DVH}\cdot L_{DVH},
+$$
+
+where $w_{DVH}$ is the weight given to the DVH loss.
 
 The DVH of a dose and a structure mask for the $s$-th structure can be expressed as:
 
-$$DVH(D, B_s) = (v_{s, d_1}, v_{s, d_2}, ..., v_{s, d_n})$$
+$$
+\text{DVH}(D, B_s) = (v_{s, d_1}, v_{s, d_2}, ..., v_{s, d_n})
+$$
 
 where $v_{s, d_t}$ represents the volume-at-dose corresponding to the dose $d_t$. Each value in the DVH corresponds to a distinct bin in the histogram. Specifically, $v_{s, d_t}$ is defined as the fraction of the volume of a region-of-interest (ROI), which can be either an OAR or a PTV, receiving a dose of at least $d_t$. This value can be approximated as:
 
-$$v_{s, t}(D, B_s) = \frac{\sum_i\sigma(\frac{D(i) - d_t}{\beta})B_s(i)}{\sum_iB_s(i)}.$$
+$$
+v_{s, t}(D, B_s) = \frac{\sum_i\sigma(\frac{D(i) - d_t}{\beta})B_s(i)}{\sum_iB_s(i)}.
+$$
 
 Here, $\sigma$ denotes the sigmoid function, $\sigma(x) = \frac{1}{1+e^{-x}}$, $D(i)$ is the dose at voxel $i$, $d_t$ is the threshold dose, $\beta$ represents the histogram bin width and $B_s(i)$ whether voxel $i$ belongs to the $s$-th structure.
 
@@ -198,10 +207,6 @@ DVH loss can be regarded as a physics-based loss function because it directly in
 
 ### Moment loss
 Moment loss is a variant of the DVH loss. It is based on the concept that a DVH can be approximated using several moments of a structure, which are different quantative measures to represent a function, such as the mean or the maximum [[5]](#5). A DVH can be approximated using several moments as follows:
-
-$$
-\text{DVH}
-$$
 
 $$
 \text{DVH} \sim (M_i, M_j, ..., M_p)
@@ -246,18 +251,24 @@ Autoregressive methods are used to predict sequences by conditioning on previous
 #### 1. Autoregressive input masking
 In the first method, an additional channel is added to the model input, which is a masked 3D dose. Thus, the input is a concatentation of CT, PTV, OAR and the masked 3D dose:
 
-$$x = [CT, PTV, OAR, Mask],$$
+$$
+x = [CT, PTV, OAR, Mask],
+$$
 
 where $Mask$ is the masked 3D dose. Based on this input, the model predicts a small slice of the dose at each step. The prediction is formulated as:
 
-$$D_{\text{pred, slice}} = f(x).$$
+$$
+D_{\text{pred, slice}} = f(x).
+$$
 
 Here, $f$ denotes the function implemented by the model to predict the dose slice from the concatenated input.
 
 After predicting a slice, it is incorporated back into the masked 3D dose input for the subsequent prediction. This iterative process ensures that the model leverages its previous predictions to inform future ones. The process continues until the entire dose volume is predicted.
 The loss function is calculated based on the incrementally predicted slices:
 
-$$L_{\text{slice}}(D_{\text{pred, slice}}, D_{\text{true,slice}} ) = \frac{1}{K} \sum_{j}^K \left| D^j_{\text{pred, slice}} - D^j_{\text{true,slice}} \right|$$
+$$
+L_{\text{slice}}(D_{\text{pred, slice}}, D_{\text{true,slice}} ) = \frac{1}{K} \sum_{j}^K \left| D^j_{\text{pred, slice}} - D^j_{\text{true,slice}} \right|
+$$
 
 where $D_{\text{pred, slice}}$ represents the predicted slice dose, $D_{\text{true,slice}}$ represents the ground truth slice dose and $K$ denotes the total number of elements in the slice.
 
@@ -277,7 +288,12 @@ Another technique to incorporate autoregressiveness into the model is by modifyi
 </div>
 
 A typical RNN works by the following formula:
-$$h_t = \tanh(x_t W_{ih}^T + b_{ih} + h_{t-1} W_{hh}^T + b_{hh}),$$ where $h_t$ is the hidden state at time $t$, $x_t$ is the input at time $t$, and $h_{t-1}$ is the hidden state from the previous time step ($t-1$) or the initial hidden state at time $0$. However, since we are dealing with 3D structures, we implement a convolutional approach (ConvRNN), which functions similarly but is adapted for 3D inputs.
+
+$$
+h_t = \tanh(x_t W_{ih}^T + b_{ih} + h_{t-1} W_{hh}^T + b_{hh}),
+$$
+
+where $h_t$ is the hidden state at time $t$, $x_t$ is the input at time $t$, and $h_{t-1}$ is the hidden state from the previous time step ($t-1$) or the initial hidden state at time $0$. However, since we are dealing with 3D structures, we implement a convolutional approach (ConvRNN), which functions similarly but is adapted for 3D inputs.
 
 <div style="text-align: center;">
     <img src="figs/unet_rnn.png" alt="architecture"/>
