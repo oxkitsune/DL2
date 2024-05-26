@@ -201,7 +201,7 @@ Moment loss is a variant of the DVH loss. It is based on the concept that a DVH 
 
 $$
 \text{DVH}
-$$.
+$$
 
 $$
 \text{DVH} \sim (M_i, M_j, ..., M_p)
