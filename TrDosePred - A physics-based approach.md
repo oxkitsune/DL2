@@ -272,9 +272,7 @@ The UNETR architecture is modified to use a ConvRNN in the output decoding. The 
 
 To make computation more feasible, the size of the residual stream is reduced from $768$ to $128$ and the patch size is increased from $16$ to $32$. The latent representation $\textbf{z}$ obtained from the encoder, includes features from CT, PTV, and OAR:
 
-$$
-\textbf{z} = [z_3, z_6, z_9] = \text{UNETR_Encoder}\left([CT, PTV, OAR]\right).
-$$
+$` \textbf{z} = [z_3, z_6, z_9] = \text{UNETR_Encoder}\left([CT, PTV, OAR]\right). `$
 
 The ConvRNN processes the latent features and maintains hidden states $h_t$ that capture information about previous predictions. The initial hidden state $h_0$ is initialized as $\textbf{z}$. This allows the model to perform a single forward pass to predict the entire dose volume, decoding it slice by slice.
 
@@ -428,12 +426,12 @@ The patch embedding block comprises three submodules, each with a 3×3×3 convol
 Symmetrically, a patch expanding block with a 2×4×4 transpose convolution and 3×3×3 convolutions is used to recover the resolution of feature maps after decoding. A point-wise convolution is then employed to generate the final dose prediction (Figure 4b).
 
 <div style="display: flex; justify-content: center; align-items: center; gap: 20px;">
-    <div style="text-align: center;">
-        <img src="https://hackmd.io/_uploads/HkjhFIvmC.png" alt="patch-embedding" width="300"/>
+    <div style="text-align: left;">
+        <img src="figs/patch-embedding.png" alt="patch-embedding" width="300"/>
         <p>Figure 4a: Patch embedding block <a href="#4">[4]</a></p>
     </div>
     <div style="text-align: center;">
-        <img src="https://hackmd.io/_uploads/S1faKUPXC.png" alt="patch-expanding" width="300"/>
+        <img src="figs/patch-expanding.png" alt="patch-expanding" width="300"/>
         <p>Figure 4b: Patch expanding block <a href="#4">[4]</a></p>
     </div>
 </div>
@@ -482,6 +480,6 @@ where $Q$, $K$, $V$ represent the query, key, and value matrices; $d_k$ is the d
 Between the encoder and decoder blocks, down-sampling and up-sampling layers are inserted to adjust the feature map sizes as described in the previous section.
 
 <div style="text-align: center;">
-    <img src="https://hackmd.io/_uploads/H126F8vmC.png" alt="swin-transformers"/>
+    <img src="figs/swin-transformers.png" alt="swin-transformers"/>
     <p>Figure 5: Two consecutive Swin Transformer blocks <a href="#4">[4]</a></p>
 </div>
