@@ -471,9 +471,9 @@ Here, $Z_i'$ and $Z_i$ denote the output of the 3D(S)W-MSA and MLP module for th
 
 The attention in each 3D local window is computed as:
 
-\begin{equation}
+$$
 \text{Attention}(Q, K, V) = \text{SoftMax}\left(\frac{QK^T}{\sqrt{d_k}} + B\right)
-\end{equation}
+$$
 
 where $Q$, $K$, $V$ represent the query, key, and value matrices; $d_k$ is the dimension of the query and key, and $B$ is the bias matrix.
 
