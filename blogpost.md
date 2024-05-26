@@ -272,9 +272,7 @@ The UNETR architecture is modified to use a ConvRNN in the output decoding. The 
 
 To make computation more feasible, the size of the residual stream is reduced from $768$ to $128$ and the patch size is increased from $16$ to $32$. The latent representation $\textbf{z}$ obtained from the encoder, includes features from CT, PTV, and OAR:
 
-```math
-\textbf{z} = [z\_3, z\_6, z\_9] = \text{UNETR_Encoder}\left([CT, PTV, OAR]\right)
-```
+$`\textbf{z} = [z\_3, z\_6, z\_9] = \text{UNETR_Encoder}\left([CT, PTV, OAR]\right)`$
 
 The ConvRNN processes the latent features and maintains hidden states $h_t$ that capture information about previous predictions. The initial hidden state $h_0$ is initialized as $\textbf{z}$. This allows the model to perform a single forward pass to predict the entire dose volume, decoding it slice by slice.
 
