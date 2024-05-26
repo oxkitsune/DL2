@@ -199,27 +199,39 @@ DVH loss can be regarded as a physics-based loss function because it directly in
 ### Moment loss
 Moment loss is a variant of the DVH loss. It is based on the concept that a DVH can be approximated using several moments of a structure, which are different quantative measures to represent a function, such as the mean or the maximum [[5]](#5). A DVH can be approximated using several moments as follows:
 
-$` DVH \sim (M_1, M_2, ..., M_p). `$
+$$
+DVH \sim (M_1, M_2, ..., M_p)
+$$.
 
 Here, $M_p$ represents the moment of order p, which is defined as:
-$$M_p = \left(\frac{1}{|V_s|}\sum_{j\in V_s}d^p_j\right) ^\frac{1}{p}$$
+
+$$
+M_p = \left(\frac{1}{|V_s|}\sum_{j\in V_s}d^p_j\right)^\frac{1}{p}
+$$
 
 where $V_s$ denotes the voxels belonging to the $s$th structure and $d$ represents the dose.
 
 Different moments of a structure capture various characteristics of the structure. For instance, $M_1$ corresponds to the mean dose, while $M_\inf$ corresponds to the maximum dose. In practice, the 10th moment ($M_{10}$) can be used to approximate the maximum dose. In our experiments, the moments 1, 2 and 10 are used to compute the loss, following the work of [[5]](#5).
 
 Based on the DVH approximation, the final moment loss is calculated as:
-$$L_{moment} = \sum_{p\in P}||M_p - \tilde{M}_p ||_2^2$$
+
+$$
+L_{moment} = \sum_{p\in P}||M_p - \tilde{M}_p ||_2^2
+$$
 
 Here, $\tilde{M}_p$ denotes the corresponding moment derived from the predicted dose.
 
 Integrating the moment loss function in the model training process is analogous to incorporating the DVH loss and is represented as follows:
 
-$$Loss = L_{MAE} + w_{Moment}\cdot L_{Moment},$$
+$$
+Loss = L_{MAE} + w_{Moment}\cdot L_{Moment},
+$$
 
 where $w_{Moment}$ denotes the weight assigned to the moment loss function. Lastly, following the research of [[5]](#5), the MAE, DVH loss and Moment loss can be combined into a unified loss function:
 
-$$Loss = L_{MAE} + w_{DVH}\cdot L_{DVH} + w_{Moment}\cdot L_{Moment}$$
+$$
+Loss = L_{MAE} + w_{DVH}\cdot L_{DVH} + w_{Moment}\cdot L_{Moment}
+$$
 
 <!-- Explanation of Autoregression -->
 ## Autoregression
