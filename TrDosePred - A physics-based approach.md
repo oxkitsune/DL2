@@ -23,7 +23,7 @@ Before radiation therapy can be delivered to treat cancer, a treatment plan must
 Figure 1: Example of a planned target volume (PTV) [[8]](#8) -->
 
 <div style="text-align: center;">
-    <img src="https://hackmd.io/_uploads/S1thHMHX0.jpg" alt="PTV"/>
+    <img src="figs/Schematic-diagram-of-radiotherapy-irradiation-volumes.png" alt="PTV"/>
     <p>Figure 1: Example of a planned target volume (PTV) <a href="#8">[8]</a></p>
 </div>
 
@@ -92,7 +92,7 @@ Dose-volume histograms (DVHs) are commonly used to evaluate treatment plans [[6]
 
 The DVH score is computed as the MAE of a set of specific criterea. These criterea are the $D_{mean}$ and $D_{0.1cc}$ for the seven OARs and the dose received by 1%, 95% and 99% ($D_1$, $D_{95}$, $D_{99}$) of the voxels within the target volumes for the three PTVs, where $D_{0.1cc}$ is the maximum dose received by the most exposed 0.1 cubic centimeters (cc) of a specified volume.
 
-Another metric that is used for evaluation is the dose score, which is computed by taking the MAE between predicted dose and target dose. 
+Another metric that is used for evaluation is the dose score, which is computed by taking the MAE between predicted dose and target dose.
 
 Both metrics are expressed in the Gray (Gy) unit, which is the International System of Units measurement for absorbed dose of ionizing radiation. For both metrics lower scores indicate better adherence to clinical objectives.
 
@@ -182,11 +182,11 @@ Given a binary segmentation mask, $B_s$ for the $s$-th structure, along with the
     L_{DVH}(D_{true}, D_{pred}, B_{s}) = \frac{1}{n_s}\frac{1}{n_t}\sum_s \lVert DVH(D_{true}, B_s) - DVH(D_{pred}, B_s) \rVert_2^2.
 \end{equation}
 
-where $n_s$ represents the number of structures and $n_t$ denotes the number of different bins in the histogram. 
+where $n_s$ represents the number of structures and $n_t$ denotes the number of different bins in the histogram.
 This loss function can be integrated into the total loss function as follows:
 \begin{equation}
     Loss = L_{MAE} + w_{DVH}\cdot L_{DVH},
-\end{equation} where $w_{DVH}$ is the weight given to the DVH loss. 
+\end{equation} where $w_{DVH}$ is the weight given to the DVH loss.
 
 The DVH of a dose and a structure mask for the $s$-th structure can be expressed as:
 
@@ -236,7 +236,7 @@ where $w_{Moment}$ denotes the weight assigned to the moment loss function. Last
 Autoregressive methods are used to predict sequences by conditioning on previous predictions. In the context of dose prediction, autoregression helps in model dependencies between different slices of the predicted dose. These slices could be axial slices (across X, Y or Z) or can be along the beam eye view (BEV) axes, which correspond to the directions of the various radiation beams. There are multiple approaches to incorporating autoregression in this context.
 
 #### 1. Autoregressive input masking
-In the first method, an additional channel is added to the model input, which is a masked 3D dose. Thus, the input is a concatentation of CT, PTV, OAR and the masked 3D dose: 
+In the first method, an additional channel is added to the model input, which is a masked 3D dose. Thus, the input is a concatentation of CT, PTV, OAR and the masked 3D dose:
 
 $$x = [CT, PTV, OAR, Mask],$$
 
@@ -244,7 +244,7 @@ where $Mask$ is the masked 3D dose. Based on this input, the model predicts a sm
 
 $$D_{\text{pred, slice}} = f(x).$$
 
-Here, $f$ denotes the function implemented by the model to predict the dose slice from the concatenated input. 
+Here, $f$ denotes the function implemented by the model to predict the dose slice from the concatenated input.
 
 After predicting a slice, it is incorporated back into the masked 3D dose input for the subsequent prediction. This iterative process ensures that the model leverages its previous predictions to inform future ones. The process continues until the entire dose volume is predicted.
 The loss function is calculated based on the incrementally predicted slices:
@@ -256,12 +256,12 @@ where $D_{\text{pred, slice}}$ represents the predicted slice dose, $D_{\text{tr
 ##### Teacher forcing extension
 Teacher forcing is a technique used in training autoregressive models to improve performance. During training, rather than using the model's own predictinos as inputs for subsequent steps, ground truth data is utilized. This involves feeding observed sequence values (i.e. ground-truth samples) back into the model after each step with a certain probability, guiding the model to remain close to the ground truth sequence. This method can teach the model to be inherently autoregressive by implicitly learning to make the next slice prediction.
 
-In the context of our dose prediction model, teacher forcing can be applied by replacing the predicted dose slices with the ground truth dose slices during the training process. Mathematically, this implies that instead of updating the masked 3D dose input with $D_{pred, slice}$, it is updated with $D_{true, slice}$. 
+In the context of our dose prediction model, teacher forcing can be applied by replacing the predicted dose slices with the ground truth dose slices during the training process. Mathematically, this implies that instead of updating the masked 3D dose input with $D_{pred, slice}$, it is updated with $D_{true, slice}$.
 
 This apporach may be particularly beneficial when conditioning along BEV axes, as it allows for incremental updates to the model with information from the previous beam.
 
 #### 2. RNN based neural network
-Another technique to incorporate autoregressiveness into the model is by modifying the model's architecture. In the default model setup, the model uses a decoder that predicts the entire $D_{\text{pred}}$ at once. We aim to replace this decoder with an RNN-based decoder to introduce autoregression, enabling the model to predict dose slices sequentially. Instead of feeding the masked input back into the model, as in the first autoregressive method, the RNN leverages its hidden states to maintain context and continuity between predictions. 
+Another technique to incorporate autoregressiveness into the model is by modifying the model's architecture. In the default model setup, the model uses a decoder that predicts the entire $D_{\text{pred}}$ at once. We aim to replace this decoder with an RNN-based decoder to introduce autoregression, enabling the model to predict dose slices sequentially. Instead of feeding the masked input back into the model, as in the first autoregressive method, the RNN leverages its hidden states to maintain context and continuity between predictions.
 
 <div style="text-align: center;">
     <img src="https://hackmd.io/_uploads/rJNY4jeVA.png" alt="architecture"/>
@@ -284,13 +284,13 @@ $$
 \textbf{z} = [z_3, z_6, z_9] = \text{UNETR_Encoder}\left([CT, PTV, OAR]\right).
 $$
 
-The ConvRNN processes the latent features and maintains hidden states $h_t$ that capture information about previous predictions. The initial hidden state $h_0$ is initialized as $\textbf{z}$. This allows the model to perform a single forward pass to predict the entire dose volume, decoding it slice by slice. 
+The ConvRNN processes the latent features and maintains hidden states $h_t$ that capture information about previous predictions. The initial hidden state $h_0$ is initialized as $\textbf{z}$. This allows the model to perform a single forward pass to predict the entire dose volume, decoding it slice by slice.
 
-Let $\mathbf{x}$ be the CT image and its features, $\text{Conv}(\mathbf{x}) = \mathbf{f}$ be the convolutional block producing the feature map $\mathbf{f}$, and $\text{Slice}(\mathbf{f}) = f_t$ be the operation that selects a specific slice, resulting in the slice feature map $f_t$. 
+Let $\mathbf{x}$ be the CT image and its features, $\text{Conv}(\mathbf{x}) = \mathbf{f}$ be the convolutional block producing the feature map $\mathbf{f}$, and $\text{Slice}(\mathbf{f}) = f_t$ be the operation that selects a specific slice, resulting in the slice feature map $f_t$.
 $$\mathbf{x} \xrightarrow{\text{Conv}(\cdot)} \mathbf{f} \xrightarrow{\text{Slice}(\cdot)} f_t$$ At each time step $t$, the ConvRNN then updates its hidden state based on the previous hidden state, the latent representation and the slice-specific CT feature map:
 \begin{equation}
 o_t, h_t = \text{ConvRNN}\left(h_{t-1}, f_t\right),
-\end{equation} where $h_{t-1}$ is the hidden state from the previous time step, $f_t$ are features specific to the current slice and $o_t$ is the output from the current ConvRNN step. 
+\end{equation} where $h_{t-1}$ is the hidden state from the previous time step, $f_t$ are features specific to the current slice and $o_t$ is the output from the current ConvRNN step.
 
 Each output is then concatenated to form $\textbf{o}$. This is then projected to $\mathbf{o}'$. Finally $\mathbf{o}'$ is jointly decoded with the CT feature map to a final $D_{pred}$:
 $$D_{pred} = \text{DecoderConv} \left(\mathbf{f}, \mathbf{o}'\right)$$
@@ -300,14 +300,14 @@ $$D_{pred} = \text{DecoderConv} \left(\mathbf{f}, \mathbf{o}'\right)$$
 \begin{equation}
 h_t = \text{ConvRNN}(h_{t-1}, o_{t-1}).
 \end{equation}  -->
- 
-<!-- #### 3. 
+
+<!-- #### 3.
 3. Neural translation method
 * Based on translation task
 * Uses any type of encoder, and transformer based decoder
 * Encoder can use full input
 * Decoder has for each prediction acess to the encoded state which has global information
-* Decoder predicts slices autoregressively using masked self-attention, thus only allowing the model to use information of previoulsy predicted slices for its predictions. 
+* Decoder predicts slices autoregressively using masked self-attention, thus only allowing the model to use information of previoulsy predicted slices for its predictions.
  -->
 
 <!-- Explanation of KANs?-->
@@ -391,7 +391,7 @@ This project can roughly be divided into three components: reproducing the origi
 
 <a id="7">[7]</a> Babier, A., Zhang, B., Mahmood, R., Moore, K. L., Purdie, T. G., McNiven, A. L., & Chan, T. C. (2021). OpenKBP: the open‐access knowledge‐based planning grand challenge and dataset. Medical Physics, 48(9), 5549-5561.
 
-<a id="8">[8]</a> Moghaddasi, Leyla & Bezak, Eva & Marcu, Loredana. (2012). In Silico Modelling of Tumour Margin Diffusion and Infiltration: Review of Current Status. Computational and mathematical methods in medicine. 2012. 672895. 10.1155/2012/672895. 
+<a id="8">[8]</a> Moghaddasi, Leyla & Bezak, Eva & Marcu, Loredana. (2012). In Silico Modelling of Tumour Margin Diffusion and Infiltration: Review of Current Status. Computational and mathematical methods in medicine. 2012. 672895. 10.1155/2012/672895.
 
 <a id="9">[9]</a> Ma, C. M., Li, J. S., Pawlicki, T., Jiang, S. B., Deng, J., Lee, M. C., ... & Brain, S. (2002). A Monte Carlo dose calculation tool for radiotherapy treatment planning. Physics in Medicine & Biology, 47(10), 1671.
 
@@ -460,21 +460,21 @@ The windows are cyclically shifted between consecutive transformer blocks to est
 4. The output of the MLP module is added to the input via another residual connection.
 
 \begin{equation}
-Z_i' = \text{3D W-MSA}(\text{LN}(Z_{i-1})) + Z_{i-1} 
+Z_i' = \text{3D W-MSA}(\text{LN}(Z_{i-1})) + Z_{i-1}
 \end{equation}
 
 \begin{equation}
-Z_i = \text{MLP}(\text{LN}(Z_i')) + Z_i' 
+Z_i = \text{MLP}(\text{LN}(Z_i')) + Z_i'
 \end{equation}
 
 For the next block, the same steps are repeated with a shifted window-based self-attention:
 
 \begin{equation}
-Z_{i+1}' = \text{3D SW-MSA}(\text{LN}(Z_i)) + Z_i 
+Z_{i+1}' = \text{3D SW-MSA}(\text{LN}(Z_i)) + Z_i
 \end{equation}
 
 \begin{equation}
-Z_{i+1} = \text{MLP}(\text{LN}(Z_{i+1}')) + Z_{i+1}' 
+Z_{i+1} = \text{MLP}(\text{LN}(Z_{i+1}')) + Z_{i+1}'
 \end{equation}
 
 Here, $Z_i'$ and $Z_i$ denote the output of the 3D(S)W-MSA and MLP module for the $i$-th block, respectively.
@@ -482,7 +482,7 @@ Here, $Z_i'$ and $Z_i$ denote the output of the 3D(S)W-MSA and MLP module for th
 The attention in each 3D local window is computed as:
 
 \begin{equation}
-\text{Attention}(Q, K, V) = \text{SoftMax}\left(\frac{QK^T}{\sqrt{d_k}} + B\right) 
+\text{Attention}(Q, K, V) = \text{SoftMax}\left(\frac{QK^T}{\sqrt{d_k}} + B\right)
 \end{equation}
 
 where $Q$, $K$, $V$ represent the query, key, and value matrices; $d_k$ is the dimension of the query and key, and $B$ is the bias matrix.
