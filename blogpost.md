@@ -219,7 +219,7 @@ $$Loss = L_{MAE} + w_{Moment}\cdot L_{Moment},$$
 
 where $w_{Moment}$ denotes the weight assigned to the moment loss function. Lastly, following the research of [[5]](#5), the MAE, DVH loss and Moment loss can be combined into a unified loss function:
 
-$`Loss = L_{MAE} + w_{DVH}\cdot L_{DVH} + w_{Moment}\cdot L_{Moment}`$
+$$Loss = L_{MAE} + w_{DVH}\cdot L_{DVH} + w_{Moment}\cdot L_{Moment}$$
 
 <!-- Explanation of Autoregression -->
 ## Autoregression
@@ -285,7 +285,10 @@ o_t, h_t = \text{ConvRNN}\left(h_{t-1}, f_t\right),
 \end{equation} where $h_{t-1}$ is the hidden state from the previous time step, $f_t$ are features specific to the current slice and $o_t$ is the output from the current ConvRNN step.
 
 Each output is then concatenated to form $\textbf{o}$. This is then projected to $\mathbf{o}'$. Finally $\mathbf{o}'$ is jointly decoded with the CT feature map to a final $D_{pred}$:
-$$D_{pred} = \text{DecoderConv} \left(\mathbf{f}, \mathbf{o}'\right)$$
+
+$$
+D_{pred} = \text{DecoderConv} \left(\mathbf{f}, \mathbf{o}'\right)
+$$
 
 <!-- A slight modification of this approach is to not use the CT feature map as $x_t$, but rather the previous ConvRNN output $o_{t-1}$.
 
