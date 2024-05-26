@@ -112,21 +112,31 @@ UNTER, which stands for UNEt TRansformers, is a hybrid model combining the stren
 
 The UNETR architecture first embeds non overlapping patches with a dimensionality of 16 from the image. These patches are then projected into a K dimensional embedding space using a linear layer. A learnable one dimensional embedding is then added to preserve positional information. The final embeddings then have a size of 768. These embeddings are then passed through a stack of 12 transformer blocks, each constisting of a layer of multi-head self-attention (MSA) and multilayer perceptrons (MLPs). Following:
 
-$`\textbf{z}'_i = \text{MSA}(\text{Norm}(\textbf{z}_i-1)) + \textbf{z}_i-1`$
+$$
+\textbf{z}'_i = \text{MSA}(\text{Norm}(\textbf{z}_i-1)) + \textbf{z}_i-1
+$$
 
-$$\textbf{z}'_i = \text{MLP}(\text{Norm}(\textbf{z}_i)) + \textbf{z}'_i$$
+$$
+\textbf{z}'_i = \text{MLP}(\text{Norm}(\textbf{z}_i)) + \textbf{z}'_i
+$$
 
 Where $\text{Norm}$ indicates Layer Norm and each MLP constist of two linear layers with a $\text{GELU}$ activation function. Each MSA sublayer includes $n$  self-attention (SA) heads. Each SA block is a parameterized function that maps queries ($q$) to corresponding keys ($k$) and values ($v$) within a sequence $z \in \mathbb{R}^{N \times K}$. To compute the attention wheights the similarity between elements in $z$ and their key-value pairs is evaluated as follows:
 
-$$A = \text{Softmax}(\frac{\textbf{qk}^T}{\sqrt K_h})$$
+$$
+A = \text{Softmax}(\frac{\textbf{qk}^T}{\sqrt K_h})
+$$
 
 where $K_h$ is used as a scaling factor. This attention can the be used compute the output of a single SA block as follows:
 
-$$ \text{SA}(\textbf{v}) = A\textbf{v}$$
+$$
+\text{SA}(\textbf{v}) = A\textbf{v}
+$$
 
 The output of the entire MSA block can then be formulated as follows:
 
-$`\text{MSA}(\textbf{z}) = [\text{SA}_1(\textbf{z}), \text{SA}_2(\textbf{z}), ...,\text{SA}_n(\textbf{z}) ]W_{\text{msa}}`$
+$$
+\text{MSA}(\textbf{z}) = [\text{SA}_1(\textbf{z}), \text{SA}_2(\textbf{z}), ...,\text{SA}_n(\textbf{z}) ]W_{\text{msa}}
+$$
 
 where $W_{\text{msa}}$ are trainable parameter weights for the MSA block.
 
