@@ -151,13 +151,17 @@ In fields where physics plays a critical role, such as turbulence modelling, the
 
 For dose prediction, common loss functions include the mean absolute error (MAE) and mean squared error (MSE). TrDosePred utilizes the MAE loss function. In this context, $D_{pred}$ represents the predicted dose and $D_{true}$ is the ground truth.
 
-$$L_{MAE}(D_{pred}, D_{true}) = \frac{1}{N}\sum_{i}|D^i_{pred} - D^i_{true}|$$
+$$
+L_{MAE}(D_{pred}, D_{true}) = \frac{1}{N}\sum_{i}|D^i_{pred} - D^i_{true}|
+$$
 
 A frequently used technique involves modifying the loss function of a model by incorporating physics-based regularization terms. Specifically, this approach utilizes the MAE loss as a foundation, upon which a weighted physics-based loss component is added. This additional loss term can be domain-specific and encodes relationships that are particularly relevant to the domain of the model's application.
 
-$`Loss = L_{MAE}(D_{pred}, D_{true}) + w_{phy} Loss_{phy}(D_{pred}).`$
+$$
+Loss = L_{MAE}(D_{pred}, D_{true}) + w_{phy} Loss_{phy}(D_{pred}).
+$$
 
-Here,$`Loss_{phy}`$ is the physics-based loss and $w_{phy}$ is the weight given to the physics-based loss.
+Here, $`Loss_{phy}`$ is the physics-based loss and $w_{phy}$ is the weight given to the physics-based loss.
 
 Typically, the weight $w_{phy}$ is selected such that the contribution of the physics-based loss is smaller than that of the primary loss function, which, in our case, is the MAE loss. This ensures that while the physics-based constraints influence the model, they do not overshadow the main predictive objective.
 
