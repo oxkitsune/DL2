@@ -35,7 +35,7 @@ Treatment planning often requires manual adjustments by medical physicists or do
 <!-- ![OpenKBP_fig1](https://hackmd.io/_uploads/B1FrEGSmR.jpg)
 Figure 2: Overview of a complete knowledge-based planning pipeline [[7]](#7) -->
 <div style="text-align: center;">
-    <img src="https://hackmd.io/_uploads/B1FrEGSmR.jpg" alt="Data"/>
+    <img src="figs/OpenKBP_fig1.jpg" alt="Data"/>
     <p>Figure 2: Overview of a complete knowledge-based planning pipeline <a href="#7">[7]</a></p>
 </div>
 
@@ -78,7 +78,7 @@ The dataset was divided as is done in the OpenKBP challenge [[7]](#7): patients 
 Figure 3 shows the overall SWIN-based architecture of the proposed TrDosePred. With a three-channel feature of contoured CT as input, a patch embedding block first projects it into a sequence of patch tokens. A transformer-based encoder and decoder then build the relationship between embedded input features and dose maps. Finally, a patch expanding block generates the 3D dose distribution. The individual components are further elaborated on in the [appendix](##Swin-Components).
 
 <div style="text-align: center;">
-    <img src="https://hackmd.io/_uploads/Sy2SF8PQC.png" alt="architecture"/>
+    <img src="figs/architecture.png" alt="architecture"/>
     <p>Figure 3: Overview of architecture of TrDosePred <a href="#4">[4]</a></p>
 </div>
 
@@ -86,7 +86,7 @@ Figure 3 shows the overall SWIN-based architecture of the proposed TrDosePred. W
 Dose-volume histograms (DVHs) are commonly used to evaluate treatment plans [[6]](#6). DVHs are used to quantify the dose distribution around a target. They display the absorbed dose of an organ, over the relative volume of the organ that reached this dose. An example is shown in Figure 6.
 
 <div style="text-align: center;">
-    <img src="https://hackmd.io/_uploads/H1RgWJSXA.png" alt="DVH example"/>
+    <img src="figs/DVH.jpg" alt="DVH example"/>
     <p>Figure 6: An example of a dose-volume histogram. Here, the x-axis displays the absorbed dose, while the y-axis explains the volume of the organ that absorbed that dose. Every line represents a different structure.</p>
 </div>
 
