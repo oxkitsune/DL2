@@ -205,7 +205,7 @@ $$
 
 $$
 \text{DVH} \sim (M_i, M_j, ..., M_p)
-$$.
+$$
 
 Here, $M_p$ represents the moment of order p, which is defined as:
 
