@@ -135,10 +135,10 @@ $$
 The output of the entire MSA block can then be formulated as follows:
 
 $$
-\text{MSA}(\textbf{z})
+\text{MSA}(\textbf{z}) = [\text{SA}_1(\textbf{z})]
 $$
 
- <!-- = [\text{SA}_1(\textbf{z}), \text{SA}_2(\textbf{z}), ...,\text{SA}_n(\textbf{z})]W_{msa} -->
+ <!-- = , \text{SA}_2(\textbf{z}), ...,\text{SA}_n(\textbf{z})]W_{msa} -->
 
 <!-- \text{MSA}(\textbf{z}) = [\text{SA}_1(\textbf{z}), \text{SA}_2(\textbf{z}), ...,\text{SA}_n(\textbf{z})]W_{msa} -->
 
