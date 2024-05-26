@@ -155,11 +155,9 @@ $$L_{MAE}(D_{pred}, D_{true}) = \frac{1}{N}\sum_{i}|D^i_{pred} - D^i_{true}|$$
 
 A frequently used technique involves modifying the loss function of a model by incorporating physics-based regularization terms. Specifically, this approach utilizes the MAE loss as a foundation, upon which a weighted physics-based loss component is added. This additional loss term can be domain-specific and encodes relationships that are particularly relevant to the domain of the model's application.
 
-\begin{equation}
-    Loss = L_{MAE}(D_{pred}, D_{true}) + w_{phy} Loss_{phy}(D_{pred}).
-\end{equation}
+$`Loss = L_{MAE}(D_{pred}, D_{true}) + w_{phy} Loss_{phy}(D_{pred}).`$
 
-Here,$Loss_{phy}$ is the physics-based loss and $w_{phy}$ is the weight given to the physics-based loss.
+Here,$`Loss_{phy}`$ is the physics-based loss and $w_{phy}$ is the weight given to the physics-based loss.
 
 Typically, the weight $w_{phy}$ is selected such that the contribution of the physics-based loss is smaller than that of the primary loss function, which, in our case, is the MAE loss. This ensures that while the physics-based constraints influence the model, they do not overshadow the main predictive objective.
 
@@ -178,9 +176,7 @@ DVHs are essential for ensuring that the prescribed radiation dose effectively t
 
 Given a binary segmentation mask, $B_s$ for the $s$-th structure, along with the predicted and ground truth doses, the mean squared loss of the DVH can be defined as follows:
 
-\begin{equation}
-    L_{DVH}(D_{true}, D_{pred}, B_{s}) = \frac{1}{n_s}\frac{1}{n_t}\sum_s \lVert DVH(D_{true}, B_s) - DVH(D_{pred}, B_s) \rVert_2^2.
-\end{equation}
+$`L_{DVH}(D_{true}, D_{pred}, B_{s}) = \frac{1}{n_s}\frac{1}{n_t}\sum_s \lVert DVH(D_{true}, B_s) - DVH(D_{pred}, B_s) \rVert_2^2.`$
 
 where $n_s$ represents the number of structures and $n_t$ denotes the number of different bins in the histogram.
 This loss function can be integrated into the total loss function as follows:
@@ -203,9 +199,7 @@ DVH loss can be regarded as a physics-based loss function because it directly in
 ### Moment loss
 Moment loss is a variant of the DVH loss. It is based on the concept that a DVH can be approximated using several moments of a structure, which are different quantative measures to represent a function, such as the mean or the maximum [[5]](#5). A DVH can be approximated using several moments as follows:
 
-\begin{equation}
-DVH \sim (M_1, M_2, ..., M_p).
-\end{equation}
+$` DVH \sim (M_1, M_2, ..., M_p). `$
 
 Here, $M_p$ represents the moment of order p, which is defined as:
 $$M_p = \left(\frac{1}{|V_s|}\sum_{j\in V_s}d^p_j\right) ^\frac{1}{p}$$
@@ -225,9 +219,7 @@ $$Loss = L_{MAE} + w_{Moment}\cdot L_{Moment},$$
 
 where $w_{Moment}$ denotes the weight assigned to the moment loss function. Lastly, following the research of [[5]](#5), the MAE, DVH loss and Moment loss can be combined into a unified loss function:
 
-\begin{equation}
-    Loss = L_{MAE} + w_{DVH}\cdot L_{DVH} + w_{Moment}\cdot L_{Moment}
-\end{equation}
+$`Loss = L_{MAE} + w_{DVH}\cdot L_{DVH} + w_{Moment}\cdot L_{Moment}`$
 
 <!-- Explanation of Autoregression -->
 ## Autoregression
@@ -264,7 +256,7 @@ This apporach may be particularly beneficial when conditioning along BEV axes, a
 Another technique to incorporate autoregressiveness into the model is by modifying the model's architecture. In the default model setup, the model uses a decoder that predicts the entire $D_{\text{pred}}$ at once. We aim to replace this decoder with an RNN-based decoder to introduce autoregression, enabling the model to predict dose slices sequentially. Instead of feeding the masked input back into the model, as in the first autoregressive method, the RNN leverages its hidden states to maintain context and continuity between predictions.
 
 <div style="text-align: center;">
-    <img src="https://hackmd.io/_uploads/rJNY4jeVA.png" alt="architecture"/>
+    <img src="figs/simple_rnn.png" alt="architecture"/>
     <p>Figure 3: Simple version of an RNN. <a href="#4"></a></p>
 </div>
 
@@ -272,7 +264,7 @@ A typical RNN works by the following formula:
 $$h_t = \tanh(x_t W_{ih}^T + b_{ih} + h_{t-1} W_{hh}^T + b_{hh}),$$ where $h_t$ is the hidden state at time $t$, $x_t$ is the input at time $t$, and $h_{t-1}$ is the hidden state from the previous time step ($t-1$) or the initial hidden state at time $0$. However, since we are dealing with 3D structures, we implement a convolutional approach (ConvRNN), which functions similarly but is adapted for 3D inputs.
 
 <div style="text-align: center;">
-    <img src="https://hackmd.io/_uploads/BJtmkTg40.png" alt="architecture"/>
+    <img src="figs/unet_rnn.png" alt="architecture"/>
     <p>Figure 3: A UNETR inspired Convolutional RNN. <a href="#4"></a></p>
 </div>
 
