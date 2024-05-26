@@ -272,7 +272,7 @@ The UNETR architecture is modified to use a ConvRNN in the output decoding. The 
 
 To make computation more feasible, the size of the residual stream is reduced from $768$ to $128$ and the patch size is increased from $16$ to $32$. The latent representation $\textbf{z}$ obtained from the encoder, includes features from CT, PTV, and OAR:
 
-$` \textbf{z} = [z_3, z_6, z_9] = \text{UNETR_Encoder}\left([CT, PTV, OAR]\right). `$
+$$ \textbf{z} = [z_3, z_6, z_9] = \text{UNETR_Encoder}\left([CT, PTV, OAR]\right). $$
 
 The ConvRNN processes the latent features and maintains hidden states $h_t$ that capture information about previous predictions. The initial hidden state $h_0$ is initialized as $\textbf{z}$. This allows the model to perform a single forward pass to predict the entire dose volume, decoding it slice by slice.
 
@@ -449,23 +449,23 @@ The windows are cyclically shifted between consecutive transformer blocks to est
 3. This output is then normalized again and passed through the MLP module.
 4. The output of the MLP module is added to the input via another residual connection.
 
-\begin{equation}
+$$
 Z_i' = \text{3D W-MSA}(\text{LN}(Z_{i-1})) + Z_{i-1}
-\end{equation}
+$$
 
-\begin{equation}
+$$
 Z_i = \text{MLP}(\text{LN}(Z_i')) + Z_i'
-\end{equation}
+$$
 
 For the next block, the same steps are repeated with a shifted window-based self-attention:
 
-\begin{equation}
+$$
 Z_{i+1}' = \text{3D SW-MSA}(\text{LN}(Z_i)) + Z_i
-\end{equation}
+$$
 
-\begin{equation}
+$$
 Z_{i+1} = \text{MLP}(\text{LN}(Z_{i+1}')) + Z_{i+1}'
-\end{equation}
+$$
 
 Here, $Z_i'$ and $Z_i$ denote the output of the 3D(S)W-MSA and MLP module for the $i$-th block, respectively.
 
