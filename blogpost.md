@@ -135,8 +135,11 @@ $$
 The output of the entire MSA block can then be formulated as follows:
 
 $$
-W_{msa}
+\text{MSA}(\textbf{z})
 $$
+
+ <!-- = [\text{SA}_1(\textbf{z}), \text{SA}_2(\textbf{z}), ...,\text{SA}_n(\textbf{z})]W_{msa} -->
+
 <!-- \text{MSA}(\textbf{z}) = [\text{SA}_1(\textbf{z}), \text{SA}_2(\textbf{z}), ...,\text{SA}_n(\textbf{z})]W_{msa} -->
 
 where $W_{\text{msa}}$ are trainable parameter weights for the MSA block.
