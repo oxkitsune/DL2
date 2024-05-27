@@ -1,12 +1,6 @@
----
-title: "Physics-Informed Deep Learning for Transformer Based Radiotherapy Dose Prediction"
-author: "Gijs de Jong, Jakob Kaiser, Macha Meijer, Thijmen Nijdam and Derck Prinzhorn"
-date: '27-05-2024'
----
-
 # Physics-Informed Deep Learning for Transformer Based Radiotherapy Dose Prediction
 **Gijs de Jong, Jakob Kaiser, Macha Meijer, Thijmen Nijdam and Derck Prinzhorn**
-**Teaching Assistant: Stefanos Achlatis**
+>Supervised by Stefanos Achlatis, s.s.achlatis@uva.nl
 
 
 ---
@@ -83,11 +77,11 @@ Figure 3 shows the overall SWIN-based architecture of the proposed TrDosePred. W
 </div>
 
 ## Metrics
-Dose-volume histograms (DVHs) are commonly used to evaluate treatment plans [[6]](#6). DVHs are used to quantify the dose distribution around a target. They display the absorbed dose of an organ, over the relative volume of the organ that reached this dose. An example is shown in Figure 6.
+Dose-volume histograms (DVHs) are commonly used to evaluate treatment plans [[6]](#6). DVHs are used to quantify the dose distribution around a target. They display the absorbed dose of an organ, over the relative volume of the organ that reached this dose. An example is shown in Figure 4.
 
 <div style="text-align: center;">
-    <img src="figs/DVH.jpg" alt="DVH example"/>
-    <p>Figure 6: An example of a dose-volume histogram. Here, the x-axis displays the absorbed dose, while the y-axis explains the volume of the organ that absorbed that dose. Every line represents a different structure.</p>
+    <img src="figs/DVH.jpg" alt="DVH example" style="width: 50%"/>
+    <p>Figure 4: An example of a dose-volume histogram. Here, the x-axis displays the absorbed dose, while the y-axis explains the volume of the organ that absorbed that dose. Every line represents a different structure.</p>
 </div>
 
 The DVH score is computed as the MAE of a set of specific criterea. These criterea are the $D_{mean}$ and $D_{0.1cc}$ for the seven OARs and the dose received by 1%, 95% and 99% ($D_1$, $D_{95}$, $D_{99}$) of the voxels within the target volumes for the three PTVs, where $D_{0.1cc}$ is the maximum dose received by the most exposed 0.1 cubic centimeters (cc) of a specified volume.
@@ -105,14 +99,14 @@ The radiation that is applied during radiotherapy is administered through beams.
 Another limitation of TrDosePred is the unavailability of the code [[4]](#4). This makes it difficult to reproduce the architecture and continue research in this direction.
 
 # Reproduction
-To ensure reproducibility of the results, the SWIN-based architecture was initially implemented. However, due to insufficient information regarding the parameters of this architecture such as the number of multihead attention blocks and the number of layers in the MLP, the implemented model failed to achieve proper learning. Therefore, an alternative architecture incorporating transformers, namely the UNETR architecture, was used [[22]](#22).
+To ensure reproducibility of the results, the SWIN-based architecture was initially implemented. However, due to insufficient information regarding the hyperparameters of this architecture such as the number of multi-head attention blocks and the number of layers in the MLP, the implemented model failed to achieve proper learning. Due to limited computational resources, it was not possible to do an extensive hyperparameter search. Therefore, an alternative architecture incorporating transformers, namely the UNETR architecture, was used [[22]](#22).
 
 ## UNETR
-UNTER, which stands for UNEt TRansformers, is a hybrid model combining the strengths of convolutional neural networks (CNNs), specifically the U-Net architecture, with transformer-based attention mechanisms.
+UNETR, which stands for UNEt TRansformers, is a hybrid model combining the strengths of convolutional neural networks (CNNs), specifically the U-Net architecture, with transformer-based attention mechanisms.
 
 The UNETR architecture first embeds non overlapping patches with a dimensionality of 16 from the image. These patches are then projected into a K dimensional embedding space using a linear layer. A learnable one dimensional embedding is then added to preserve positional information. The final embeddings then have a size of 768. These embeddings are then passed through a stack of 12 transformer blocks, each constisting of a layer of multi-head self-attention (MSA) and multilayer perceptrons (MLPs). Following:
 
-$$\textbf{z}'_i = \text{MSA}(\text{Norm}(\textbf{z}_i-1)) + \textbf{z}_i-1$$
+$$\textbf{z}'_i = \text{MSA}(\text{Norm}(\textbf{z} _{i-1})) + \textbf{z} _{i-1}$$
 
 $$\textbf{z}'_i = \text{MLP}(\text{Norm}(\textbf{z}_i)) + \textbf{z}'_i$$
 
@@ -137,7 +131,9 @@ Features from different levels of resolution from the encoder are then merged wi
 After all the features from all resolutions have been combined, the resulting features are fed into a 1x1x1 convolutional layer followed by a softmax activation function to generate the final dose prediction.
 
 ## Training
-Training has been setup using hugging face such that data preprocessing is fully parallelized. During training use was made of the PyTorch `DataParallel` module in order to train in parallel on multiple GPUs. Each model has been trained for 300 epochs using NVIDIA A1000 GPUs with a batch size of 4 and a learning rate of $4 \times 10^{-4}$.
+The dataset provided by <a href="#7">[7]</a> was mirrored to [Hugging Face](https://huggingface.co/datasets/oxkitsune/open-kbp) in order to take advantage of the `datasets` library. Using this library the data preprocessing is fully parallelized, and cached for efficient loading during training.
+Using PyTorch's `DataParallel` module, the model is trained in parallel using multiple GPUs. Each GPU does a forward pass on a subset of the batch, storing the gradients. Once the entire batch is complete, the gradients are collected on a single GPU for a backward pass.
+Each model has been trained for 300 epochs using a batch size of 4 on NVIDIA A100 GPUs boasting 40Gb of memory each. The learning rate is scheduled using the CosineAnnealingLR scheduler <a href="#23">[23]</a> and a max learning rate of $1 \times 10^{-4}$, to match the original work.
 
 <!-- Introduction to contributions -->
 # Physics-based extensions to UNETR
@@ -229,9 +225,9 @@ $$Loss = L_{MAE} + w_{DVH}\cdot L_{DVH} + w_{Moment}\cdot L_{Moment}$$
 Autoregressive methods are used to predict sequences by conditioning on previous predictions. In the context of dose prediction, autoregression helps in model dependencies between different slices of the predicted dose. These slices could be axial slices (across X, Y or Z) or can be along the beam eye view (BEV) axes, which correspond to the directions of the various radiation beams. There are multiple approaches to incorporating autoregression in this context.
 
 #### 1. Autoregressive input masking
-In the first method, an additional channel is added to the model input, which is a masked 3D dose. Thus, the input is a concatentation of CT, PTV, OAR and the masked 3D dose:
+In the first method, an additional channel is added to the model input, which is a masked 3D dose. Thus, the input is a concatentation of CT, PTVs, OARs and the masked 3D dose:
 
-$$x = [CT, PTV, OAR, Mask],$$
+$$x = [CT, PTVs, OARs, Mask],$$
 
 where $Mask$ is the masked 3D dose. Based on this input, the model predicts a small slice of the dose at each step. The prediction is formulated as:
 
@@ -257,8 +253,8 @@ This apporach may be particularly beneficial when conditioning along BEV axes, a
 Another technique to incorporate autoregressiveness into the model is by modifying the model's architecture. In the default model setup, the model uses a decoder that predicts the entire $D_{\text{pred}}$ at once. We aim to replace this decoder with an RNN-based decoder to introduce autoregression, enabling the model to predict dose slices sequentially. Instead of feeding the masked input back into the model, as in the first autoregressive method, the RNN leverages its hidden states to maintain context and continuity between predictions.
 
 <div style="text-align: center;">
-    <img src="figs/simple_rnn.png" alt="architecture"/>
-    <p>Figure 3: Simple version of an RNN. <a href="#4"></a></p>
+    <img src="figs/simple_rnn.jpg" alt="architecture"/>
+    <p>Figure 5: Simple version of an RNN. <a href="#4"></a></p>
 </div>
 
 A typical RNN works by the following formula:
@@ -266,16 +262,16 @@ $$h_t = \tanh(x_t W_{ih}^T + b_{ih} + h_{t-1} W_{hh}^T + b_{hh}),$$ where $h_t$ 
 
 <div style="text-align: center;">
     <img src="figs/unet_rnn.png" alt="architecture"/>
-    <p>Figure 3: A UNETR inspired Convolutional RNN. <a href="#4"></a></p>
+    <p>Figure 6: A UNETR inspired Convolutional RNN. <a href="#4"></a></p>
 </div>
 
 The UNETR architecture is modified to use a ConvRNN in the output decoding. The ConvRNN process starts from the latent dimension produced by the UNETR encoder, which is a combination of three residual streams.
 
-To make computation more feasible, the size of the residual stream is reduced from $768$ to $128$ and the patch size is increased from $16$ to $32$. The latent representation $\textbf{z}$ obtained from the encoder, includes features from CT, PTV, and OAR:
+To make computation more feasible, the size of the residual stream is reduced from $768$ to $128$ and the patch size is increased from $16$ to $32$. The latent representation $\textbf{z}$ obtained from the encoder, includes features from CT, PTVs, and OARs:
 
-$$ \textbf{z} = [z_3, z_6, z_9] = \text{UNETREncoder}\left([CT, PTV, OAR]\right). $$
+$$ \textbf{z} = [z_3, z_6, z_9] = \text{UNETREncoder}\left([CT, PTVs, OARs]\right). $$
 
-The ConvRNN processes the latent features and maintains hidden states $h_t$ that capture information about previous predictions. The initial hidden state $h_0$ is initialized as $\textbf{z}$. This allows the model to perform a single forward pass to predict the entire dose volume, decoding it slice by slice.
+The ConvRNN processes the latent features and maintains hidden states $h_t$ that capture information about previous predictions. The initial hidden state $h_0$ is initialized as $z \in \mathbf{z}$. This allows the model to perform a single forward pass to predict the entire dose volume, decoding it slice by slice.
 
 Let $\mathbf{x}$ be the CT image and its features, $\text{Conv}(\mathbf{x}) = \mathbf{f}$ be the convolutional block producing the feature map $\mathbf{f}$, and $\text{Slice}(\mathbf{f}) = f_t$ be the operation that selects a specific slice, resulting in the slice feature map $f_t$.
 $$\mathbf{x} \xrightarrow{\text{Conv}(\cdot)} \mathbf{f} \xrightarrow{\text{Slice}(\cdot)} f_t$$ At each time step $t$, the ConvRNN then updates its hidden state based on the previous hidden state, the latent representation and the slice-specific CT feature map:
@@ -283,14 +279,14 @@ $$\mathbf{x} \xrightarrow{\text{Conv}(\cdot)} \mathbf{f} \xrightarrow{\text{Slic
 o_t, h_t = \text{ConvRNN}\left(h_{t-1}, f_t\right),
 \end{equation} where $h_{t-1}$ is the hidden state from the previous time step, $f_t$ are features specific to the current slice and $o_t$ is the output from the current ConvRNN step.
 
-Each output is then concatenated to form $\textbf{o}$. This is then projected to $\mathbf{o}'$. Finally $\mathbf{o}'$ is jointly decoded with the CT feature map to a final $D_{pred}$:
-$$D_{pred} = \text{DecoderConv} \left(\mathbf{f}, \mathbf{o}'\right)$$
+Each output is then concatenated to construct $\textbf{o}$. Finally, $\mathbf{o}$ is jointly decoded with the CT feature map to a final $D_{pred}$:
+$$D_{pred} = \text{DecoderConv} \left(\mathbf{f}, \mathbf{o}\right)$$
 
-<!-- A slight modification of this approach is to not use the CT feature map as $x_t$, but rather the previous ConvRNN output $o_{t-1}$.
-
-\begin{equation}
-h_t = \text{ConvRNN}(h_{t-1}, o_{t-1}).
-\end{equation}  -->
+This recurrent methodology can be applied to each latent dim $z$, by decoding, upsampling and concatenating every intermediate $\mathbf{o}$, and finally decoding it jointly with the CT feature map, as visualized below.
+<div style="text-align: center;">
+    <img src="https://hackmd.io/_uploads/B1VgpNzVR.png" alt="architecture"/>
+    <p>Figure 7: A schematic overview of the augmented UNETR architecture with integrated RNN blocks (in red). <a href="#4"></a></p>
+</div>
 
 <!-- #### 3.
 3. Neural translation method
@@ -317,7 +313,7 @@ TODO: comments about reproduction results -> which architecture is used for the 
 
 After creating a 3D-dose prediction model, various experiments regarding incorporating physics-based elements were done. These experiments can be divided into two categories: using a physics-based loss and using an autoregression approach.
 
-In Table 2, the results of using a physics-based loss are displayed. In total, three experiments were done. The baseline used is the model only using the MAE loss for training. Furthermore, a MAE+DVH loss was used, a MAE+Moment loss was used, and a MAE+DVH+Moment loss was used. The parameters used to weigh the different loss functions have been chosen such that the DVH loss and moment loss are roughly a factor ten smaller then the MAE loss. The $w_{DVH}$ that was used was $1 \times 10^{-5}$, $w_{Moment}$ was chosen to be $5 \times 10^{-6}$.
+In Table 2, the results of using a physics-based loss are displayed. In total, three experiments were done. The baseline used is the model only using the MAE loss for training. Furthermore, a MAE+DVH loss was used, a MAE+Moment loss was used, and a MAE+DVH+Moment loss was used. The hyperparameters used to weigh the different loss functions have been chosen such that the DVH loss and moment loss are roughly a factor ten smaller then the MAE loss. The $w_{DVH}$ that was used was $1 \times 10^{-5}$, $w_{Moment}$ was chosen to be $5 \times 10^{-6}$.
 #TODO analyse results
 
 | Loss | DVH score | Dose score |
@@ -336,15 +332,15 @@ Lastly, an autoregressive approach was tried. For this, two different techniques
 | Autoregression | DVH score | Dose score |
 | -------- | -------- | -------- |
 | No autoregression     | #TODO     | #TODO     |
-| Autoregression by applying ...    | #TODO     | #TODO     |
-| Autoregression by applying ...    | #TODO     | #TODO     |
+| Autoregression by applying input masking    | #TODO     | #TODO     |
+| Autoregression by applying RNN    | #TODO     | #TODO     |
 
-Table 2: results of the different autoregressive methods. Best results are denoted in bold.
+Table 3: results of the different autoregressive methods. Best results are denoted in bold.
 
-# TODO
+#TODO
 qualitative results for everything, at least some images of how the dose predictions look like, if possible some sort of animation over slices.
 
-# TODO
+#TODO
 Comparison with results from the original paper, and corresponding reflection
 
 <!-- ## Analysis of TrDosePred -->
@@ -357,7 +353,7 @@ Comparison with results from the original paper, and corresponding reflection
 <!-- In summary, the strengths of the overall approach include the innovative use of transformers, making TrDosePred the first to demonstrate the transformer architecture in dose prediction, achieving state-of-the-art performance in accurate dose predictions, and validating the model's effectiveness through ablation studies that identify key components contributing to its performance. -->
 
 # Conclusion
-
+#TODO
 ## Future work
 When continuing the research on incorporating physics-based elements in the field of 3D dose distribution using transformers, various topics might be interesting to research. In this research, a main limitation was the limited dataset. The dataset used only contained the final true 3D dose distribution. However, in practice, there is a 3D dose distribution per radiation beam, on which the final treatment plan is based. This data allows for more physics-based elements to be introduced into the transformer. Two key elements that could be added are using a Lambert-based loss function and doing autoregression along the beam axis. The Lambert law is based on the idea that every structure absorbs a different amount of radiation. This is something that is extremely relevant in the field of dose prediction and could make the final predicted distribution more accurate. Secondly, the dose distribution for different beams rely heavily on each other, since one beam may be able to radiate a specific structure while another beam cannot radiate this structure without damaging an organ. Therefore, applying autoregression per beam might make the final distribution more accurate.
 
@@ -412,6 +408,8 @@ This project can roughly be divided into three components: reproducing the origi
 
 <a id="22">[22]</a> Hatamizadeh, A., Tang, Y., Nath, V., Yang, D., Myronenko, A., Landman, B., Roth, H., & Xu, D. (2021). UNETR: Transformers for 3D Medical Image Segmentation. arXiv preprint arXiv:2103.10504
 
+<a id="23">[23]</a> Loshchilov, I., & Hutter, F. (2016). Sgdr: Stochastic gradient descent with warm restarts. arXiv preprint arXiv:1608.03983.
+
 # Appendix
 
 ## Swin Components
@@ -422,18 +420,18 @@ This section goes into detail on specific components of the SWIN model architect
 
 Traditionally in ViTs, the input image is split and mapped to non-overlapping patches before being fed into the transformer encoder. However, recent research suggests that using overlapping patches can improve optimization stability and performance [[19]](#19). Inspired by this, TrDosePred's patch embedding block extracts patches from the input volume using stacked overlapping convolutional layers.
 
-The patch embedding block comprises three submodules, each with a 3×3×3 convolution, an Instance Normalization, and a Gaussian Error Linear Units (GELU) activation function. A point-wise convolution with 96 filters projects these features into embedding tokens, reducing the feature dimensions by a factor of 2×4×4 (Figure 4a).
+The patch embedding block comprises three submodules, each with a 3×3×3 convolution, an Instance Normalization, and a Gaussian Error Linear Units (GELU) activation function. A point-wise convolution with 96 filters projects these features into embedding tokens, reducing the feature dimensions by a factor of 2×4×4 (Figure 8a).
 
-Symmetrically, a patch expanding block with a 2×4×4 transpose convolution and 3×3×3 convolutions is used to recover the resolution of feature maps after decoding. A point-wise convolution is then employed to generate the final dose prediction (Figure 4b).
+Symmetrically, a patch expanding block with a 2×4×4 transpose convolution and 3×3×3 convolutions is used to recover the resolution of feature maps after decoding. A point-wise convolution is then employed to generate the final dose prediction (Figure 8b).
 
 <div style="display: flex; justify-content: center; align-items: center; gap: 20px;">
     <div style="text-align: left;">
         <img src="figs/patch-embedding.png" alt="patch-embedding" width="300"/>
-        <p>Figure 4a: Patch embedding block <a href="#4">[4]</a></p>
+        <p>Figure 8a: Patch embedding block <a href="#4">[4]</a></p>
     </div>
     <div style="text-align: center;">
         <img src="figs/patch-expanding.png" alt="patch-expanding" width="300"/>
-        <p>Figure 4b: Patch expanding block <a href="#4">[4]</a></p>
+        <p>Figure 8b: Patch expanding block <a href="#4">[4]</a></p>
     </div>
 </div>
 
@@ -441,7 +439,7 @@ Symmetrically, a patch expanding block with a 2×4×4 transpose convolution and 
 
 After patch embedding, the tokens are fed into a U-shaped encoder and decoder, featuring multiple 3D Swin Transformer blocks. Compared to the vanilla transformer, the Swin Transformer is more efficient for medical image analysis due to its linear complexity relative to image size.
 
-Each 3D Swin Transformer block consists of a window-based local multi-head self-attention (W-MSA) module and a Multi-layer Perceptron (MLP) module (Figure 5). Depth-wise convolution is added to the MLP to enhance locality, and Layer Normalization (LN) and residual connections are applied before and after each module.
+Each 3D Swin Transformer block consists of a window-based local multi-head self-attention (W-MSA) module and a Multi-layer Perceptron (MLP) module (Figure 9). Depth-wise convolution is added to the MLP to enhance locality, and Layer Normalization (LN) and residual connections are applied before and after each module.
 
 The windows are cyclically shifted between consecutive transformer blocks to establish cross-window connections. The computational steps for two consecutive 3D Swin Transformer blocks are as follows:
 
@@ -482,5 +480,5 @@ Between the encoder and decoder blocks, down-sampling and up-sampling layers are
 
 <div style="text-align: center;">
     <img src="figs/swin-transformers.png" alt="swin-transformers"/>
-    <p>Figure 5: Two consecutive Swin Transformer blocks <a href="#4">[4]</a></p>
+    <p>Figure 9: Two consecutive Swin Transformer blocks <a href="#4">[4]</a></p>
 </div>
