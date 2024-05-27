@@ -6,7 +6,6 @@
 #SBATCH --ntasks-per-node=1
 #SBATCH --gpus=2
 #SBATCH --cpus-per-task=18
-#SBATCH --array=0,1,2,3
 #SBATCH --output=slurm_output_%a_%A.out
 #SBATCH --error=slurm_error_%a_%A.err
 
