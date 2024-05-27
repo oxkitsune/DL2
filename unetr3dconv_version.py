@@ -3,6 +3,11 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import math
+import einops
+
+# NOTE: when running this model, its currently only possible to run with patch size 16. 
+# When decreasing patch size to 8, we will need an additional downsampling layer on the input before inputting to the RNN. 
+# This is possible, but not implemented yet.
 
 class DownSampler(nn.Module):
     def __init__(self, in_planes, out_planes):
@@ -236,6 +241,7 @@ class Transformer(nn.Module):
 
         return extract_layers
 
+# NOTE: added the conv3d rnn class
 class Conv3DRNNCell(nn.Module):
     def __init__(self, input_channels: int, hidden_channels: int, kernel_size: int):
         """
@@ -303,7 +309,6 @@ class Conv3DRNN(nn.Module):
         """
         batch_size, seq_len, channels, depth, height, width = x.size()
         
-        # Initialize hidden states if not provided
         if h_0 is None:
             h_0 = [torch.zeros(batch_size, self.hidden_channels, depth, height, width).to(x.device)
                    for _ in range(self.num_layers)]
@@ -321,16 +326,14 @@ class Conv3DRNN(nn.Module):
         outputs = torch.stack(outputs, dim=1)
         return outputs, hidden_states
 
-import einops
 
+# This is needed to project residual stream to depth dimension to a desired depth of a slice
 class ProjectionLayer(nn.Module):
     def __init__(self, d, d_new):
         super(ProjectionLayer, self).__init__()
         self.projection_matrix = nn.Parameter(torch.randn(d, d_new))
 
     def forward(self, x):
-        # x shape: (b, c, h, w, d)
-        # projection_matrix shape: (d, d_new)
         x_projected = einops.einsum(x, self.projection_matrix, 'b c h w d, d d_new -> b c h w d_new')
         return x_projected
     
@@ -341,12 +344,10 @@ class UNET3Dconv(nn.Module):
         img_shape=(128, 128, 128),
         input_dim=4,
         output_dim=3,
-        embed_dim=96,
+        embed_dim=96, # embedding dim is vastly reduced to adhere to memory constraints
         patch_size=16,
-        num_heads=6,
+        num_heads=8,
         dropout=0.1,
-        input_channel_size_rnn=3,
-        hidden_channel_size_rnn=1
     ):
         super().__init__()
         self.input_dim = input_dim
@@ -360,12 +361,6 @@ class UNET3Dconv(nn.Module):
         self.ext_layers = [3, 6, 9]
         
         self.patch_dim = [int(x / patch_size) for x in img_shape]
-
-
-        # RNN
-        self.input_channel_size_rnn = input_channel_size_rnn
-        self.hidden_channel_size_rnn = hidden_channel_size_rnn
-        
         
         # Transformer Encoder
         self.transformer = Transformer(
@@ -379,16 +374,16 @@ class UNET3Dconv(nn.Module):
             self.ext_layers,
         )
 
-        self.input_channels = 12
-        self.hidden_channels = embed_dim
+        # Input channels for RNN
+        self.input_channels = 12 # NOTE: we can greatly increase this (to like 64?) but i did not do this for testing purposes
+        self.hidden_channels = embed_dim # this is a design choice, if changed we need to play around with convolutional layers though, but its possible
         
-        start_dim = 16 # WE CAN FREELY INCREASE THIS
+        start_dim = 16 # this is also a design choice, we can change this depending on memory constraints
         
         # U-Net Decoder
         self.decoder0 = nn.Sequential(
             Conv3DBlock(input_dim, 32, 3), Conv3DBlock(32, start_dim//8, 3)
         )
-
 
         self.decoder_z = nn.Sequential(
             Deconv3DBlock(embed_dim, self.hidden_channels),
@@ -420,26 +415,28 @@ class UNET3Dconv(nn.Module):
         self.decoder6_upsampler = \
             nn.Sequential(
                 Conv3DBlock(start_dim, start_dim//2),
-                # Conv3DBlock(start_dim//2, start_dim//2),
+                # Conv3DBlock(start_dim//2, start_dim//2), #NOTE: removed due to memory constraints
                 SingleDeconv3DBlock(start_dim//2, start_dim//4)
             )
 
         self.decoder3_upsampler = \
             nn.Sequential(
                 Conv3DBlock(start_dim//2, start_dim//4),
-                # Conv3DBlock(start_dim//4, start_dim//4),
+                # Conv3DBlock(start_dim//4, start_dim//4), #NOTE: removed due to memory constraints
                 SingleDeconv3DBlock(start_dim//4, start_dim//8)
             )
         self.decoder0_header = nn.Sequential(
-            Conv3DBlock(start_dim//4, start_dim//8),
-            # Conv3DBlock(start_dim//8, start_dim//8),
+            Conv3DBlock(start_dim//4, start_dim//8), 
+            # Conv3DBlock(start_dim//8, start_dim//8), #NOTE: removed due to memory constraints
             SingleConv3DBlock(start_dim//8, output_dim, 1))
 
-        projection_dim = (img_shape[0] // patch_size)  # this is residual stream H, W, D of transformer deconved twice
-        self.projection_depth1 = ProjectionLayer(projection_dim, 1) 
-        self.projection_depth2 = ProjectionLayer(projection_dim, 1)
-        self.projection_depth3 = ProjectionLayer(projection_dim, 1)
+        projection_dim = (img_shape[0] // patch_size)  # we can calculate this dynamically
         
+        self.projection_depth1 = ProjectionLayer(projection_dim, 1) # NOTE: chosen to be 1, we can change depending on size of slice
+        self.projection_depth2 = ProjectionLayer(projection_dim, 1) # NOTE: chosen to be 1, we can change depending on size of slice
+        self.projection_depth3 = ProjectionLayer(projection_dim, 1) # NOTE: chosen to be 1, we can change depending on size of slice
+        
+        # define rnns
         self.rnn1 = Conv3DRNN(input_channels=self.input_channels,
                         hidden_channels=self.hidden_channels,
                         kernel_size=3,
@@ -455,14 +452,16 @@ class UNET3Dconv(nn.Module):
                         kernel_size=3,
                         num_layers=1)
         
-        print(img_shape[0] / projection_dim)
+        # calculate the number of downsamples needed (NOTE: this is done for testing purposes, 
+        # img shape will always be the same so this is not needed)
         times_to_downsample = int(math.log2(img_shape[0] / projection_dim))
-        print("times to downsample: ", times_to_downsample)
+        
         downsampler_layers = [
             DownSampler(input_dim if i == 0 else self.input_channels, self.input_channels)
             for i in range(times_to_downsample)
         ]
         
+        # used to downsample inpput, so it matches that of hidden states when inputting in rnn
         self.downsampler = nn.Sequential(*downsampler_layers)
         
     def forward(self, x):
@@ -470,9 +469,8 @@ class UNET3Dconv(nn.Module):
         
         feature_map = self.decoder0(x)
                 
-  
-        
         # print("feature map shape: ", feature_map.shape)
+        
         z3, z6, z9 = z
         z3 = z3.transpose(-1, -2).view(-1, self.embed_dim, *self.patch_dim)
         z6 = z6.transpose(-1, -2).view(-1, self.embed_dim, *self.patch_dim)
@@ -487,8 +485,7 @@ class UNET3Dconv(nn.Module):
         print("z6 shape: ", z6.shape)
         print("z9 shape: ", z9.shape)
         
-        
-        # MAKE THIS CONV INSTEAD TO INCREASE CHANNELS
+        # TODO: MAKE THIS CONV LAYERS INSTEAD TO INCREASE CHANNELS
         # z3 = self.decoder_z(z3)
         # z6 = self.decoder_z(z6)
         # z9 = self.decoder_z(z9)        
@@ -497,55 +494,38 @@ class UNET3Dconv(nn.Module):
         print("z6 shape: ", z6.shape)
         print("z9 shape: ", z9.shape)
         
-        # # # half the H, W, D dims and add seq dimension add dim 1
-        x = self.downsampler(x) # HERE WE CAN DO CONV LAYERS TO INCREASE CHANNELS
-
+        #  downsample inpput, so it matches that of hidden states when inputting in rnn
+        x = self.downsampler(x) # TODO: here we can do bigger channel dims, but this is smaller now for testing purposes
+        
         x = x.unsqueeze(1) # add seq dimension
-        x = x.permute(0, -1, 2, 3, 4, 1)
+        x = x.permute(0, -1, 2, 3, 4, 1) # TODO: change this so we can have bigger slices, now we simply swap the dimensions and take slices of 1
         
         print("x shape: ", x.shape)
 
-        # THIS WILL CREATE PRETTY BIG RNN
+        # run through rnns
         output3, _ = self.rnn1(x, h_0=[z3])
         output6, _ = self.rnn2(x, h_0=[z6])
         output9, _ = self.rnn3(x, h_0=[z9])
         
-        # # permute back
+        # permute back
         output3 = output3.permute(0, -1, 2, 3, 4, 1)
         output6 = output6.permute(0, -1, 2, 3, 4, 1)
         output9 = output9.permute(0, -1, 2, 3, 4, 1)
 
-        # # remove sequence dimension
+        # remove sequence dimension
         output3 = output3.squeeze(1)
         output6 = output6.squeeze(1)
         output9 = output9.squeeze(1)
         
-        # IN THESE DECODERS WE CAN INCREASE THE CHANNELS -> allows for increasing the start_dim, which increases everything 
+        # TODO: set a start dim which can be bigger, smaller now for testing -> allows for increasing the start_dim, which increases everything 
         output9 = self.decoder9(output9)
         output6 = self.decoder6(output6)
         output3 = self.decoder3(output3)
         
-        print("shape of output3: ", output3.shape)
-        print("shape of output6: ", output6.shape)
-        print("shape of output9: ", output9.shape)
-        
-        
+        # from here on we cannot change anything, its all dynamic based on previous choices
         output9 = self.decoder9_upsampler(output9)
         
-        print()
-        print("upsample z9 shape: ", output9.shape)
-        print()
         output6 = self.decoder6_upsampler(torch.cat([output9, output6], dim=1))
-        print()
-        print("upsample z6 shape: ", output6.shape)
-
         output3 = self.decoder3_upsampler(torch.cat([output6, output3], dim=1))
-        print()
-        print("upsample z3 shape: ", output3.shape)
-        
-        
-        print("feature map shape: ", feature_map.shape)
         output = self.decoder0_header(torch.cat([feature_map, output3], dim=1))
-        print()
-        print("output shape: ", output.shape)
         return output
