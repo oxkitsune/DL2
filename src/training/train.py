@@ -10,11 +10,14 @@ from src.training.loss import RadiotherapyLoss
 
 augment = Augment(42)
 
+
 def transform(samples):
     samples = default_collate(samples)
     samples["features"] = augment.fit(samples["features"])
     samples["dose"] = augment.augment_dose(samples["dose"])
-    samples["structure_masks"] = augment.augment_structure_masks(samples["structure_masks"])
+    samples["structure_masks"] = augment.augment_structure_masks(
+        samples["structure_masks"]
+    )
 
     return samples
 
@@ -31,6 +34,7 @@ def setup_loss(args):
 
     raise Exception(f"{args.loss} is ot a valid loss function")
 
+
 def train_model(model, dataset, args):
     device = (
         torch.device("cuda:0") if torch.cuda.is_available() else torch.device("cpu")
@@ -39,6 +43,7 @@ def train_model(model, dataset, args):
 
     criterion = setup_loss(args)
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, args.epochs)
 
     train_dataloader = DataLoader(
         dataset["train"],
@@ -55,6 +60,7 @@ def train_model(model, dataset, args):
         train_metrics = train_single_epoch(
             model, train_dataloader, optimizer, criterion
         )
+        scheduler.step()
         dev_metrics = evaluate(model, dev_data_loader, criterion)
 
         wandb.log(
@@ -66,6 +72,7 @@ def train_model(model, dataset, args):
                 "dev_dose_score": dev_metrics["dose_score"],
                 "dev_mean_dvh_error": dev_metrics["mean_dvh_error"],
                 "epoch": epoch,
+                "lr": optimizer.param_groups[0]["lr"],
             }
         )
         save_model_checkpoint_for_epoch(model)
@@ -149,7 +156,7 @@ def evaluate(model, data_loader, criterion):
 
             outputs = model(features)
             loss = criterion(outputs, target, structure_masks)
-            
+
             metrics["loss"] += loss.item()
             metrics["dose_score"] += dose_score(
                 outputs, target, batch["possible_dose_mask"]
