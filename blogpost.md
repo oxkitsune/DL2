@@ -284,7 +284,7 @@ $$D_{pred} = \text{DecoderConv} \left(\mathbf{f}, \mathbf{o}\right)$$
 
 This recurrent methodology can be applied to each latent dim $z$, by decoding, upsampling and concatenating every intermediate $\mathbf{o}$, and finally decoding it jointly with the CT feature map, as visualized below.
 <div style="text-align: center;">
-    <img src="https://hackmd.io/_uploads/B1VgpNzVR.png" alt="architecture"/>
+    <img src="figs/unetr_rnn_architecture.png" alt="architecture"/>
     <p>Figure 7: A schematic overview of the augmented UNETR architecture with integrated RNN blocks (in red). <a href="#4"></a></p>
 </div>
 
