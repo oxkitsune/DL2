@@ -3,6 +3,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import math
+from einops import rearrange
 
 class SingleConv3DBlock(nn.Module):
     def __init__(self, in_planes, out_planes, kernel_size):
@@ -200,31 +201,31 @@ class Transformer(nn.Module):
 
         return extract_layers
 
-class ConvRNNCell(nn.Module):
+class Conv3DRNNCell(nn.Module):
     def __init__(self, input_channels: int, hidden_channels: int, kernel_size: int):
         """
-        Initialize a ConvRNNCell.
+        Initialize a Conv3DRNNCell.
 
         Args:
             input_channels (int): Number of input channels.
             hidden_channels (int): Number of hidden channels.
             kernel_size (int): Size of the convolutional kernel.
         """
-        super(ConvRNNCell, self).__init__()
+        super(Conv3DRNNCell, self).__init__()
         self.hidden_channels = hidden_channels
         padding = kernel_size // 2  # same padding, assuming kernel_size is odd
-        self.conv = nn.Conv2d(in_channels=input_channels + hidden_channels,
+        self.conv = nn.Conv3d(in_channels=input_channels + hidden_channels,
                               out_channels=hidden_channels,
                               kernel_size=kernel_size,
                               padding=padding)
 
     def forward(self, x: torch.Tensor, hidden_state: torch.Tensor) -> torch.Tensor:
         """
-        Forward pass of the ConvRNNCell.
+        Forward pass of the Conv3DRNNCell.
 
         Args:
-            x (torch.Tensor): Input tensor of shape (batch_size, input_channels, height, width).
-            hidden_state (torch.Tensor): Previous hidden state of shape (batch_size, hidden_channels, height, width).
+            x (torch.Tensor): Input tensor of shape (batch_size, input_channels, depth, height, width).
+            hidden_state (torch.Tensor): Previous hidden state of shape (batch_size, hidden_channels, depth, height, width).
 
         Returns:
             torch.Tensor: Updated hidden state.
@@ -234,42 +235,42 @@ class ConvRNNCell(nn.Module):
         return hidden_state
 
 
-class ConvRNN(nn.Module):
+class Conv3DRNN(nn.Module):
     def __init__(self, input_channels: int, hidden_channels: int, kernel_size: int, num_layers: int):
         """
-        Initialize a ConvRNN.
+        Initialize a Conv3DRNN.
 
         Args:
             input_channels (int): Number of input channels.
             hidden_channels (int): Number of hidden channels.
             kernel_size (int): Size of the convolutional kernel.
-            num_layers (int): Number of ConvRNN layers.
+            num_layers (int): Number of Conv3DRNN layers.
         """
-        super(ConvRNN, self).__init__()
+        super(Conv3DRNN, self).__init__()
         self.num_layers = num_layers
         self.hidden_channels = hidden_channels
         self.cells = nn.ModuleList([
-            ConvRNNCell(input_channels if i == 0 else hidden_channels, hidden_channels, kernel_size)
+            Conv3DRNNCell(input_channels if i == 0 else hidden_channels, hidden_channels, kernel_size)
             for i in range(num_layers)
         ])
 
     def forward(self, x: torch.Tensor, h_0: list = None) -> (torch.Tensor, list):
         """
-        Forward pass of the ConvRNN.
+        Forward pass of the Conv3DRNN.
 
         Args:
-            x (torch.Tensor): Input tensor of shape (batch_size, seq_len, channels, height, width).
+            x (torch.Tensor): Input tensor of shape (batch_size, seq_len, channels, depth, height, width).
             h_0 (list, optional): Initial hidden states for each layer. Defaults to None.
 
         Returns:
             torch.Tensor: Outputs for all time steps.
             list: Final hidden states for each layer.
         """
-        batch_size, seq_len, channels, height, width = x.size()
+        batch_size, seq_len, channels, depth, height, width = x.size()
         
         # Initialize hidden states if not provided
         if h_0 is None:
-            h_0 = [torch.zeros(batch_size, self.hidden_channels, height, width).to(x.device)
+            h_0 = [torch.zeros(batch_size, self.hidden_channels, depth, height, width).to(x.device)
                    for _ in range(self.num_layers)]
         
         hidden_states = h_0
@@ -293,7 +294,8 @@ class FC(nn.Module):
     def forward(self, x):
         return self.fc(x)
     
-class TransformerRNN(nn.Module):
+
+class TransformerConv3DRNN(nn.Module):
     def __init__(
         self,
         img_shape=(128, 128, 128),
@@ -301,9 +303,10 @@ class TransformerRNN(nn.Module):
         output_dim=3,
         embed_dim=96, # reduce embedding
         patch_size=32, # incerese patch size
-        num_heads=6,
+        num_heads=6, # decrease num_heads
         dropout=0.1,
-        autoregress=False,
+        input_channel_size_rnn=3,
+        hidden_channel_size_rnn=1
     ):
         super().__init__()
         self.input_dim = input_dim
@@ -318,8 +321,8 @@ class TransformerRNN(nn.Module):
         self.patch_dim = [int(x / patch_size) for x in img_shape]
 
         # RNN
-        self.input_channel_size_rnn = 256
-        self.hidden_channel_size_rnn = embed_dim
+        self.input_channel_size_rnn = input_channel_size_rnn
+        self.hidden_channel_size_rnn = hidden_channel_size_rnn
         
         # Transformer Encoder
         self.transformer = Transformer(
@@ -333,17 +336,18 @@ class TransformerRNN(nn.Module):
             self.ext_layers,
         )
 
-        self.rnn = ConvRNN(self.input_channel_size_rnn, 
-                           self.hidden_channel_size_rnn, 
-                           kernel_size=3, 
+        self.rnn = Conv3DRNN(self.input_channel_size_rnn, 
+                           hidden_channels=embed_dim, 
+                           kernel_size=3,
                            num_layers=1)
         # Decoder
         self.decoder0 = nn.Sequential(
-            Conv3DBlock(input_dim, 5, 3)
+            Conv3DBlock(input_dim, self.input_channel_size_rnn, 3)
         )
 
-        self.final_projection = FC(48, 128)
-            
+        self.projection_height_h0 = FC(self.patch_dim[0], 128)
+        self.projection_width_h0 = FC(self.patch_dim[1], 128)
+        self.projection_depth_h0 = FC(self.patch_dim[2] * 3, 1)
     
     
     
@@ -357,36 +361,33 @@ class TransformerRNN(nn.Module):
         z9 = z9.transpose(-1, -2).view(-1, self.embed_dim, *self.patch_dim) # shape: (B, 96, 4, 4, 4)
         
         feature_map = self.decoder0(x) # shape: (B, 5, 128, 128, 128)
-        
         # we want to create a tensor of shape (B, seq_len, C, H, W) while x currently is
         # of shape (B, C, H, W, D), so we take a slice in the depth dimension and stack them in the sequence dimension
         
-        x = x.permute(0, 4, 1, 2, 3) # shape: (B, 128, 3, 128, 128) <- (B, seq_len, C, H, W)
-        # choose a height and width that works ( i dont use a formula to calculate this, just shapes have to match)
+        feature_map = feature_map.permute(0, 4, 1, 2, 3) # shape: (B, 128, 3, 128, 128) <- (B, seq_len, C, H, W)
+        # add depth dimension to x
+        feature_map = feature_map.unsqueeze(-1) # shape: (B, 128, 3, 128, 128, 1) <- (B, seq_len, C, H, W, D)
         
-        h_dim, w_dim = 12, 16
+        print("feature_map shape: ", feature_map.shape)
+        
+        h0_original = torch.cat((z3, z6, z9), dim=-1)
 
-        # reshape x to be of shape (B, seq_len, C, H, W)
-        x = x.view(1, 128, -1, h_dim, w_dim) # shape: (B, 128, 256, 12, 16)
-        print("x shape: ", x.shape)
+        h0_temp = self.projection_height_h0(rearrange(h0_original, 'b c h w d -> (b c w d) h'))
+        h0 = rearrange(h0_temp, '(b c w d) h -> b c h w d', b=h0_original.shape[0], c=h0_original.shape[1], d=h0_original.shape[-1], w=h0_original.shape[-2])
         
-        # stack the residual streams along the depth dimension
-        h0 = torch.cat((z3, z6, z9), dim=-1) # shape: (B, 96, 4, 4, 12)
-  
-        # flatten the depth dimension over some arbitrary chosen H and W dimensions
-        h0 = h0.view(1, -1, h_dim, w_dim) # shape: (B, 96, 12, 16)
-        print("h0 shape: ", h0.shape)
+        h0_temp = self.projection_width_h0(rearrange(h0, 'b c h w d -> (b c h d) w'))
+        h0 = rearrange(h0_temp, '(b c h d) w -> b c h w d', b=h0.shape[0], c=h0.shape[1], d=h0.shape[4], h=h0.shape[2])
+        
+        h0_temp = self.projection_depth_h0(rearrange(h0, 'b c h w d -> (b c h w) d'))
+        h0 = rearrange(h0_temp, '(b c h w) d -> b c h w d', b=h0.shape[0], c=h0.shape[1], h=h0.shape[2], w=h0.shape[3])
+        
+        print("h0: ", h0.shape)
         
         # hidden state should be a list, for each layer a hidden state
         h0_list = [h0]
 
-        output, hidden_states = self.rnn(x, h0_list) # shape: (B, 128, 96, 12, 16)
+        output, hidden_states = self.rnn(feature_map, h0_list) # shape: (B, 128, 96, 12, 16)
         print("output shape: ", output.shape)
         # reshape back to [B, 3, 128, 128, 128]
-        output = output.view(1, 3, 128, 128, -1) # shape: (B, 3, 128, 128, 48)
-        print("output shape: ", output.shape)
-        
-        # project depth dimension to 128
-        output = self.final_projection(output)
-        print("output shape: ", output.shape)
+        output = output.view(1, self.rnn.hidden_channels, 128, 128, -1) # shape: (B, 3, 128, 128, 48)
         return output        
