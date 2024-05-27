@@ -138,9 +138,9 @@ After all the features from all resolutions have been combined, the resulting fe
 Training has been setup using hugging face such that data preprocessing is fully parallelized. During training use was made of the PyTorch `DataParallel` module in order to train in parallel on multiple GPUs. Each model has been trained for 300 epochs using NVIDIA A1000 GPUs with a batch size of 4 and a learning rate of $4 \times 10^{-4}$.
 
 <!-- Introduction to contributions -->
-# TrDosePred - A physics-based approach
+# Physics-based extensions to UNETR
 <!-- Describe your novel contribution. -->
-This work introduces a physics-based approach of TrDosePred. Specifically, the TrDosePred framework is augmented with physics-based elements. The expectation is that these elements will make the model perform better, given the inherently physics-dependent nature of radiation.
+This work introduces a physics-based approach of UNETR. Specifically, the UNETR framework is augmented with physics-based elements. The expectation is that these elements will make the model perform better, given the inherently physics-dependent nature of radiation.
 
 Multiple methdologies exist for integrating physics into neural networks [[18]](#18). In this research, two specific approaches are explored. Firstly, the loss function is augmented with a physics-based component. Secondly, an autoregressive strategy is employed to capture dependencies between different segments of the prediction. The subsequent sections provide a detailed explanation of these two methodologies.
 
