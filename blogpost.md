@@ -98,7 +98,7 @@ Both metrics are expressed in the Gray (Gy) unit, which is the International Sys
 
 <!-- Explanation of 2 main limitation: no code and no physics -->
 ## Limitations
-TrDosePred achieves promising results using a machine learning-based approach. However, a critical limitation of TrDosePred is the absence of inherent physics knowledge. The architecture lacks explicit information about the physics of radiation and dose prediction, despite the fact that the predicted dose is highly dependent on how radiation particles move and interact with matter. Incorporating more physics information into the model and training it in a way that aligns with physical principles might lead to dose predictions that are more accurate in relation to the actual treatment plan.
+TrDosePred achieves promising results using a deep learning-based approach. However, a critical limitation of TrDosePred is the absence of inherent physics knowledge. The architecture lacks explicit information about the physics of radiation and dose prediction, despite the fact that the predicted dose is highly dependent on how radiation particles move and interact with matter. Incorporating more physics information into the model and training it in a way that aligns with physical principles might lead to dose predictions that are more accurate in relation to the actual treatment plan.
 
 The radiation that is applied during radiotherapy is administered through beams. This means that the dosage of voxels that these beams pass through are very strongly related. For each beam, it should be the case that the amount of dosage reduces as the beam passes through tissue and is absorbed. However, this information is not something that is currently incorporated in the model architecture or loss function.
 
@@ -138,9 +138,9 @@ After all the features from all resolutions have been combined, the resulting fe
 Training has been setup using hugging face such that data preprocessing is fully parallelized. During training use was made of the PyTorch `DataParallel` module in order to train in parallel on multiple GPUs. Each model has been trained for 300 epochs using NVIDIA A1000 GPUs with a batch size of 4 and a learning rate of $4 \times 10^{-4}$.
 
 <!-- Introduction to contributions -->
-# TrDosePred - A physics-based approach
+# Physics-based extensions to UNETR
 <!-- Describe your novel contribution. -->
-This work introduces a physics-based approach of TrDosePred. Specifically, the TrDosePred framework is augmented with physics-based elements. The expectation is that these elements will make the model perform better, given the inherently physics-dependent nature of radiation.
+This work introduces a physics-based approach of UNETR. Specifically, the UNETR framework is augmented with physics-based elements. The expectation is that these elements will make the model perform better, given the inherently physics-dependent nature of radiation.
 
 Multiple methdologies exist for integrating physics into neural networks [[18]](#18). In this research, two specific approaches are explored. Firstly, the loss function is augmented with a physics-based component. Secondly, an autoregressive strategy is employed to capture dependencies between different segments of the prediction. The subsequent sections provide a detailed explanation of these two methodologies.
 
@@ -157,7 +157,7 @@ A frequently used technique involves modifying the loss function of a model by i
 
 $`Loss = L_{MAE}(D_{pred}, D_{true}) + w_{phy} Loss_{phy}(D_{pred}).`$
 
-Here,$`Loss_{phy}`$ is the physics-based loss and $w_{phy}$ is the weight given to the physics-based loss.
+Here, $`Loss_{phy}`$ is the physics-based loss and $w_{phy}$ is the weight given to the physics-based loss.
 
 Typically, the weight $w_{phy}$ is selected such that the contribution of the physics-based loss is smaller than that of the primary loss function, which, in our case, is the MAE loss. This ensures that while the physics-based constraints influence the model, they do not overshadow the main predictive objective.
 
@@ -272,7 +272,7 @@ The UNETR architecture is modified to use a ConvRNN in the output decoding. The 
 
 To make computation more feasible, the size of the residual stream is reduced from $768$ to $128$ and the patch size is increased from $16$ to $32$. The latent representation $\textbf{z}$ obtained from the encoder, includes features from CT, PTV, and OAR:
 
-$` \textbf{z} = [z_3, z_6, z_9] = \text{UNETR_Encoder}\left([CT, PTV, OAR]\right). `$
+$` \textbf{z} = [z_3, z_6, z_9] = \text{UNETREncoder}\left([CT, PTV, OAR]\right). `$
 
 The ConvRNN processes the latent features and maintains hidden states $h_t$ that capture information about previous predictions. The initial hidden state $h_0$ is initialized as $\textbf{z}$. This allows the model to perform a single forward pass to predict the entire dose volume, decoding it slice by slice.
 
