@@ -157,7 +157,7 @@ A frequently used technique involves modifying the loss function of a model by i
 
 $`Loss = L_{MAE}(D_{pred}, D_{true}) + w_{phy} Loss_{phy}(D_{pred}).`$
 
-Here,$`Loss_{phy}`$ is the physics-based loss and $w_{phy}$ is the weight given to the physics-based loss.
+Here, $`Loss_{phy}`$ is the physics-based loss and $w_{phy}$ is the weight given to the physics-based loss.
 
 Typically, the weight $w_{phy}$ is selected such that the contribution of the physics-based loss is smaller than that of the primary loss function, which, in our case, is the MAE loss. This ensures that while the physics-based constraints influence the model, they do not overshadow the main predictive objective.
 
