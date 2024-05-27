@@ -6,6 +6,7 @@
 #SBATCH --ntasks-per-node=1
 #SBATCH --gpus=2
 #SBATCH --cpus-per-task=18
+#SBATCH --array=0,1,2,3
 #SBATCH --output=slurm_output_%A.out
 #SBATCH --error=slurm_error_%A.err
 
@@ -22,10 +23,15 @@ rsync -r "$HOME/DL2" "$TMPDIR/work" --exclude .venv --exclude .git --exclude .ch
 
 export HF_DATASETS_CACHE="$TMPDIR/data_cache"
 
+losses=("all" "mae" "dvh" "moment")
+LOSS=${losses[$SLURM_ARRAY_TASK_ID]}
+echo "Using loss: $LOSS"
+
+
 cd "$TMPDIR/work/DL2"
 
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 
-srun python -u -m src.main --epochs 200 --batch-size 4 --loss all --parallel
+srun python -u -m src.main --epochs 200 --batch-size 4 --parallel --loss "$LOSS"
