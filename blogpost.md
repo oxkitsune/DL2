@@ -170,7 +170,7 @@ Figure 6: An example of a dose-volume histogram. Here, the x-axis displays the a
     <p>Figure 6: An exemplary dose-volume histogram. Here, the x-axis displays the absorbed dose and the y-axis explains the volume of the organ that absorbed that dose. Every line represents a different structure.</p>
 </div> -->
 
-DVHs are essential for ensuring that the prescribed radiation dose effectively targets the tumor while minimizing exposure to healthy tissues and the critical organs. Therefore, incorporating DVH information into the model training process can be beneficial. To this end, a DVH loss function has been proposed[[5]](#5), which is a differential approximation of the DVH.
+DVHs are essential for ensuring that the prescribed radiation dose effectively targets the tumor while minimizing exposure to healthy tissues and the critical organs. Therefore, incorporating DVH information into the model training process can be beneficial. To this end, a DVH loss function has been proposed [[5]](#5), which is a differential approximation of the DVH.
 
 Given a binary segmentation mask, $B_s$ for the $s$-th structure, along with the predicted and ground truth doses, the mean squared loss of the DVH can be defined as follows:
 
