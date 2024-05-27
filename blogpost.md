@@ -325,7 +325,7 @@ In Table 2, the results of using a physics-based loss are displayed. In total, t
 
 Table 2: results of the different physics-based loss functions. Best results are denoted in bold.
 
-<Note: while the final experiments are not done, from preliminary results was observed that the usage of both a DVH and a moment loss resulted in better scores).
+<Note: while the final experiments are not done, from preliminary results was observed that the usage of both a DVH and a moment loss resulted in better scores.>
 
 Lastly, an autoregressive approach was tried. For this, two different techniques that incorporate autoregression in the model were used. These results are shown in Table 3 #TODO
 
