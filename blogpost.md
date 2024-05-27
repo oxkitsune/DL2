@@ -112,7 +112,7 @@ UNTER, which stands for UNEt TRansformers, is a hybrid model combining the stren
 
 The UNETR architecture first embeds non overlapping patches with a dimensionality of 16 from the image. These patches are then projected into a K dimensional embedding space using a linear layer. A learnable one dimensional embedding is then added to preserve positional information. The final embeddings then have a size of 768. These embeddings are then passed through a stack of 12 transformer blocks, each constisting of a layer of multi-head self-attention (MSA) and multilayer perceptrons (MLPs). Following:
 
-$`\textbf{z}'_i = \text{MSA}(\text{Norm}(\textbf{z}_i-1)) + \textbf{z}_i-1`$
+$$\textbf{z}'_i = \text{MSA}(\text{Norm}(\textbf{z}_i-1)) + \textbf{z}_i-1$$
 
 $$\textbf{z}'_i = \text{MLP}(\text{Norm}(\textbf{z}_i)) + \textbf{z}'_i$$
 
@@ -126,7 +126,9 @@ $$ \text{SA}(\textbf{v}) = A\textbf{v}$$
 
 The output of the entire MSA block can then be formulated as follows:
 
-$`\text{MSA}(\textbf{z}) = [\text{SA}_1(\textbf{z}), \text{SA}_2(\textbf{z}), ...,\text{SA}_n(\textbf{z}) ]W_{\text{msa}}`$
+<!--$$\text{MSA}(\textbf{z}) = ( \text{SA}_1(\textbf{z}), \text{SA}_2(\textbf{z}), ..., \text{SA}_n (\textbf{z})) W_{\text{msa}} $$ -->
+
+$$\text{MSA}(\textbf{z}) = ( SA_{1}(\textbf{z}), SA_{2}(\textbf{z}), ..., SA_n (\textbf{z})) W_{\text{msa}} $$
 
 where $W_{\text{msa}}$ are trainable parameter weights for the MSA block.
 
@@ -155,7 +157,7 @@ $$L_{MAE}(D_{pred}, D_{true}) = \frac{1}{N}\sum_{i}|D^i_{pred} - D^i_{true}|$$
 
 A frequently used technique involves modifying the loss function of a model by incorporating physics-based regularization terms. Specifically, this approach utilizes the MAE loss as a foundation, upon which a weighted physics-based loss component is added. This additional loss term can be domain-specific and encodes relationships that are particularly relevant to the domain of the model's application.
 
-$`Loss = L_{MAE}(D_{pred}, D_{true}) + w_{phy} Loss_{phy}(D_{pred}).`$
+$$Loss = L_{MAE}(D_{pred}, D_{true}) + w_{phy} Loss_{phy}(D_{pred}).$$
 
 Here, $`Loss_{phy}`$ is the physics-based loss and $w_{phy}$ is the weight given to the physics-based loss.
 
@@ -176,13 +178,12 @@ DVHs are essential for ensuring that the prescribed radiation dose effectively t
 
 Given a binary segmentation mask, $B_s$ for the $s$-th structure, along with the predicted and ground truth doses, the mean squared loss of the DVH can be defined as follows:
 
-$`L_{DVH}(D_{true}, D_{pred}, B_{s}) = \frac{1}{n_s}\frac{1}{n_t}\sum_s \lVert DVH(D_{true}, B_s) - DVH(D_{pred}, B_s) \rVert_2^2.`$
+$$L_{DVH}(D_{true}, D_{pred}, B_{s}) = \frac{1}{n_s}\frac{1}{n_t}\sum_s \lVert DVH(D_{true}, B_s) - DVH(D_{pred}, B_s) \rVert_2^2.$$
 
 where $n_s$ represents the number of structures and $n_t$ denotes the number of different bins in the histogram.
 This loss function can be integrated into the total loss function as follows:
-\begin{equation}
-    Loss = L_{MAE} + w_{DVH}\cdot L_{DVH},
-\end{equation} where $w_{DVH}$ is the weight given to the DVH loss.
+$$Loss = L_{MAE} + w_{DVH}\cdot L_{DVH}, $$
+where $w_{DVH}$ is the weight given to the DVH loss.
 
 The DVH of a dose and a structure mask for the $s$-th structure can be expressed as:
 
@@ -199,7 +200,7 @@ DVH loss can be regarded as a physics-based loss function because it directly in
 ### Moment loss
 Moment loss is a variant of the DVH loss. It is based on the concept that a DVH can be approximated using several moments of a structure, which are different quantative measures to represent a function, such as the mean or the maximum [[5]](#5). A DVH can be approximated using several moments as follows:
 
-$` DVH \sim (M_1, M_2, ..., M_p). `$
+$$ DVH \sim (M_1, M_2, ..., M_p). $$
 
 Here, $M_p$ represents the moment of order p, which is defined as:
 $$M_p = \left(\frac{1}{|V_s|}\sum_{j\in V_s}d^p_j\right) ^\frac{1}{p}$$
@@ -219,7 +220,7 @@ $$Loss = L_{MAE} + w_{Moment}\cdot L_{Moment},$$
 
 where $w_{Moment}$ denotes the weight assigned to the moment loss function. Lastly, following the research of [[5]](#5), the MAE, DVH loss and Moment loss can be combined into a unified loss function:
 
-$`Loss = L_{MAE} + w_{DVH}\cdot L_{DVH} + w_{Moment}\cdot L_{Moment}`$
+$$Loss = L_{MAE} + w_{DVH}\cdot L_{DVH} + w_{Moment}\cdot L_{Moment}$$
 
 <!-- Explanation of Autoregression -->
 ## Autoregression
@@ -272,7 +273,7 @@ The UNETR architecture is modified to use a ConvRNN in the output decoding. The 
 
 To make computation more feasible, the size of the residual stream is reduced from $768$ to $128$ and the patch size is increased from $16$ to $32$. The latent representation $\textbf{z}$ obtained from the encoder, includes features from CT, PTV, and OAR:
 
-$` \textbf{z} = [z_3, z_6, z_9] = \text{UNETREncoder}\left([CT, PTV, OAR]\right). `$
+$$ \textbf{z} = [z_3, z_6, z_9] = \text{UNETREncoder}\left([CT, PTV, OAR]\right). $$
 
 The ConvRNN processes the latent features and maintains hidden states $h_t$ that capture information about previous predictions. The initial hidden state $h_0$ is initialized as $\textbf{z}$. This allows the model to perform a single forward pass to predict the entire dose volume, decoding it slice by slice.
 
