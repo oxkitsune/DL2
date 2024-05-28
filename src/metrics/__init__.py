@@ -32,16 +32,17 @@ def mean_dvh_error(prediction, target, voxel_dim, structure_masks):
 
 def _dvh_error(prediction, target, voxel_dim, structure_masks):
     batch_size = prediction.shape[0]
+
+    # due to a bug in CUDA it seems, the indexing we do sometimes breaks on the GPU, throwing a runtime CUDA error in the process.
+    # note: using batch_size 4 across two GPUs seems to work.
+
+    # If it ends up breaking again, moving the structure mask tensors to the CPU should fix it. This does sacrifice A LOT of speed though.
     reference_dvh_metrics = [
-        dvh_score_for_single_prediction(
-            target[i], voxel_dim[i], structure_masks[i].cpu()
-        )
+        dvh_score_for_single_prediction(target[i], voxel_dim[i], structure_masks[i])
         for i in range(batch_size)
     ]
     pred_dvh_metrics = [
-        dvh_score_for_single_prediction(
-            prediction[i], voxel_dim[i], structure_masks[i].cpu()
-        )
+        dvh_score_for_single_prediction(prediction[i], voxel_dim[i], structure_masks[i])
         for i in range(batch_size)
     ]
 

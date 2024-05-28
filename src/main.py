@@ -125,7 +125,7 @@ def setup_model(args, device):
         model = ConvNet(num_input_channels=3).to(device)
     elif args.model == "arunetr":
         from src.models.ar_unetr import AR_UNETR
-        
+
         model = AR_UNETR(input_dim=4, output_dim=1).to(device)
     else:
         raise ValueError(f"Unknown model {args.model}")
@@ -136,12 +136,8 @@ def setup_model(args, device):
     if args.resume_run:
         print(f"Resuming run {args.resume_run}")
         run = wandb.Api().run(args.resume_run)
-        print(f"Loading model checkpoint {args.restore_checkpoint}")
+        print(f"Downloading model checkpoint {args.restore_checkpoint}...")
         run.file(args.restore_checkpoint).download(replace=True)
-        checkpoint = torch.load(
-            args.restore_checkpoint, weights_only=True, map_location=device
-        )
-        model.load_state_dict(checkpoint)
 
     return model
 
@@ -151,7 +147,7 @@ def run():
     setup_wandb(args)
 
     num_proc = torch.multiprocessing.cpu_count() - 2
-    
+
     dataset = load_dataset("oxkitsune/open-kbp", num_proc=num_proc)
 
     # ensure the feature format is set for the new features column, this speeds up the dataset loading by 100x
@@ -189,6 +185,7 @@ def run():
         ar_train_model(model, dataset, args)
     else:
         train_model(model, dataset, args)
+
 
 if __name__ == "__main__":
     run()
