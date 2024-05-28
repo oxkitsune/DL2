@@ -208,6 +208,13 @@ def load_model_checkpoint(
 
     checkpoint = torch.load(checkpoint_path, map_location=device)
     model.load_state_dict(checkpoint["model_state_dict"])
+
+    if "epoch" not in checkpoint:
+        print(
+            "Warning: Old checkpoint format, optimizer, lr scheduler and epoch won't be restored"
+        )
+        return 0
+
     optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
     lr_schedule.load_state_dict(checkpoint["lr_schedule_state_dict"])
     return checkpoint["epoch"]
