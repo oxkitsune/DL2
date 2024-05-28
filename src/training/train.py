@@ -97,9 +97,9 @@ def compute_metrics(prediction, batch):
         ),
         "mean_dvh_error": mean_dvh_error(
             prediction,
-            batch["dose"].clone().detach(),
-            batch["voxel_dimensions"].clone().detach(),
-            batch["structure_masks"].clone().detach(),
+            batch["dose"],
+            batch["voxel_dimensions"],
+            batch["structure_masks"],
         ),
     }
 
@@ -126,15 +126,10 @@ def train_single_epoch(model, data_loader, optimizer, criterion):
 
         optimizer.step()
         metrics["loss"] += loss.item()
-        metrics["dose_score"] += dose_score(
-            outputs, target, batch["possible_dose_mask"]
-        ).item()
-        metrics["mean_dvh_error"] += mean_dvh_error(
-            outputs,
-            batch["dose"].clone().detach(),
-            batch["voxel_dimensions"].clone().detach(),
-            batch["structure_masks"].clone().detach(),
-        ).item()
+
+        batch_metrics = compute_metrics(outputs, batch)
+        metrics["dose_score"] += batch_metrics["dose_score"].item()
+        metrics["mean_dvh_error"] += batch_metrics["mean_dvh_error"].item()
 
     n_batches = len(data_loader)
     return {
@@ -158,15 +153,10 @@ def evaluate(model, data_loader, criterion):
             loss = criterion(outputs, target, structure_masks)
 
             metrics["loss"] += loss.item()
-            metrics["dose_score"] += dose_score(
-                outputs, target, batch["possible_dose_mask"]
-            ).item()
-            metrics["mean_dvh_error"] += mean_dvh_error(
-                outputs,
-                batch["dose"].clone().detach(),
-                batch["voxel_dimensions"].clone().detach(),
-                batch["structure_masks"].clone().detach(),
-            ).item()
+
+            batch_metrics = compute_metrics(outputs, batch)
+            metrics["dose_score"] += batch_metrics["dose_score"].item()
+            metrics["mean_dvh_error"] += batch_metrics["mean_dvh_error"].item()
 
     return {
         "loss": metrics["loss"] / len(data_loader),

@@ -9,8 +9,6 @@ class Augment(torch.nn.Module):
         torch.manual_seed(seed)
 
     def fit(self, feat):
-        feat = feat.clone()
-
         # Flip
         flips = torch.arange(2, 4)[torch.rand((2,)) > 0.5]
         feat = torch.flip(feat, dims=flips.tolist())
@@ -34,22 +32,22 @@ class Augment(torch.nn.Module):
         return feat
 
     def augment_structure_masks(self, structure_masks):
-        structure_masks = structure_masks.clone()
-
         structure_masks = torch.flip(structure_masks, dims=self.flips.tolist())
 
         # Translations
-        structure_masks = torch.roll(structure_masks, shifts=self.shifts.tolist(), dims=(1, 2))
+        structure_masks = torch.roll(
+            structure_masks, shifts=self.shifts.tolist(), dims=(1, 2)
+        )
 
         # Rotations
         for structure in range(structure_masks.shape[-1]):
-            structure_masks[:, :, :, :, structure] = self.r(structure_masks[:, :, :, :, structure])
+            structure_masks[:, :, :, :, structure] = self.r(
+                structure_masks[:, :, :, :, structure]
+            )
 
         return structure_masks
 
     def augment_dose(self, dose):
-        dose = dose.clone()
-
         # Flip
         dose = torch.flip(dose, dims=self.flips.tolist())
 
