@@ -85,7 +85,7 @@ def train_model(model, dataset, args):
                 "lr": optimizer.param_groups[0]["lr"],
             }
         )
-        save_model_checkpoint_for_epoch(model)
+        save_model_checkpoint_for_epoch(epoch, model, optimizer, scheduler)
 
         pbar.write(f"============ Epoch {epoch}/{args.epochs} =============")
         pbar.write("Training metrics:")
