@@ -136,7 +136,7 @@ def setup_model(args, device):
     if args.resume_run:
         print(f"Resuming run {args.resume_run}")
         run = wandb.Api().run(args.resume_run)
-        print(f"Loading model checkpoint {args.restore_checkpoint}")
+        print(f"Downloading model checkpoint {args.restore_checkpoint}...")
         run.file(args.restore_checkpoint).download(replace=True)
 
     return model

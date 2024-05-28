@@ -52,7 +52,7 @@ def train_model(model, dataset, args):
         print(f"Loading model checkpoint {args.restore_checkpoint}")
         checkpoint_path = Path(args.restore_checkpoint)
         start_epoch = load_model_checkpoint(
-            model, optimizer, scheduler, checkpoint_path
+            model, optimizer, scheduler, device, checkpoint_path
         )
 
     train_dataloader = DataLoader(
@@ -206,7 +206,7 @@ def load_model_checkpoint(
     if not checkpoint_path.exists():
         raise FileNotFoundError(f"Checkpoint file {checkpoint_path} not found")
 
-    checkpoint = torch.load(checkpoint_path, map_location=device)
+    checkpoint = torch.load(checkpoint_path.resolve(), map_location=device)
     model.load_state_dict(checkpoint["model_state_dict"])
 
     if "epoch" not in checkpoint:
