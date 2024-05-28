@@ -10,11 +10,14 @@ from src.training.loss import RadiotherapyLoss
 
 augment = Augment(42)
 
+
 def transform(samples):
     samples = default_collate(samples)
     samples["features"] = augment.fit(samples["features"])
     samples["dose"] = augment.augment_dose(samples["dose"])
-    samples["structure_masks"] = augment.augment_structure_masks(samples["structure_masks"])
+    samples["structure_masks"] = augment.augment_structure_masks(
+        samples["structure_masks"]
+    )
 
     return samples
 
@@ -30,6 +33,7 @@ def setup_loss(args):
         return RadiotherapyLoss(use_dvh=False)
 
     raise Exception(f"{args.loss} is ot a valid loss function")
+
 
 # also i renamed the this function for clarity, but its the same as the train_model function apart from the teacher_forcing parameter
 def ar_train_model(model, dataset, args, teacher_forcing=False):
@@ -97,7 +101,8 @@ def compute_metrics(prediction, batch):
         ),
     }
 
-# basically only this function is different from the train_model function, but kept it seperate so @Gijs you can see 
+
+# basically only this function is different from the train_model function, but kept it seperate so @Gijs you can see
 # for yourself how to handle this
 def train_single_epoch(model, data_loader, optimizer, criterion, teacher_forcing):
     device = (
@@ -106,47 +111,47 @@ def train_single_epoch(model, data_loader, optimizer, criterion, teacher_forcing
     model.train()
     metrics = {"loss": 0, "loss_slice": 0, "dose_score": 0, "mean_dvh_error": 0}
     pbar = tqdm(data_loader, desc="Train", leave=False)
-    
+
     for batch in pbar:
         # ensure features/dose are in the correct shape
         # (batch_size, channels, height, width, depth)
         features = batch["features"].permute((0, 4, 1, 2, 3))
         target = batch["dose"].unsqueeze(1)
-        
+
         # this will be the 4th channel starting out as zeros
         input_target_dose = torch.zeros_like(target, device=device)
-        
+
         # combine the input
         combined_input = torch.cat([features, input_target_dose], dim=1)
         structure_masks = batch["structure_masks"]
 
         # we loop through every slice
-        for x in range(0, 128, 8):
+        for x in tqdm(range(0, 128, 8), desc="Slice", leave=False):
             optimizer.zero_grad()
             outputs = model(combined_input)
-            
+
             # calculate loss wrt relevant slice
-            loss = criterion(outputs, target[:, :, :, :, x:x+8], structure_masks)
+            loss = criterion(outputs, target[:, :, :, :, x : x + 8], structure_masks)
             loss.backward()
-            
+
             # when using teacher forcing, you train inputting the correct slices for next prediction
             if teacher_forcing:
-                combined_input[:, 3, :, :, x:x+8] = target[:, :, :, :, x:x+8]
+                combined_input[:, 3, :, :, x : x + 8] = target[:, :, :, :, x : x + 8]
             else:
-                combined_input[:, 3, :, :, x:x+8] = outputs.detach()
-                
+                combined_input[:, 3, :, :, x : x + 8] = outputs.squeeze(1).detach()
+
             optimizer.step()
             metrics["loss_slice"] += loss.item()
-            
+
         # after predicting a full slice, just for reference calculate the loss
         # NOTE: keep in mind that when using teacher forcing, this will cause the loss should be near 0, as all the correct slices are in the 4th channel
-        
+
         # the outputs is now the fully filled in 4th channel
         outputs = combined_input[:, 3, ...]
         loss = criterion(outputs, target, structure_masks)
         metrics["loss"] += loss.item()
         metrics["dose_score"] += dose_score(
-        outputs, target, batch["possible_dose_mask"]
+            outputs, target, batch["possible_dose_mask"]
         ).item()
         # metrics["mean_dvh_error"] += mean_dvh_error(
         # outputs,
@@ -154,7 +159,7 @@ def train_single_epoch(model, data_loader, optimizer, criterion, teacher_forcing
         # batch["voxel_dimensions"].clone().detach(),
         # batch["structure_masks"].clone().detach(),
         # ).item()
-        
+
     n_batches = len(data_loader)
     return {
         "loss": metrics["loss"] / n_batches,
@@ -175,7 +180,7 @@ def evaluate(model, data_loader, criterion):
 
             outputs = model(features)
             loss = criterion(outputs, target, structure_masks)
-            
+
             metrics["loss"] += loss.item()
             metrics["dose_score"] += dose_score(
                 outputs, target, batch["possible_dose_mask"]

@@ -181,7 +181,7 @@ def run():
     model = setup_model(args, device)
 
     # run the training loop
-    if args.ar == True:
+    if args.ar:
         ar_train_model(model, dataset, args)
     else:
         train_model(model, dataset, args)
