@@ -312,7 +312,7 @@ Table 1 shows that the TrDosePred model outperformed the 9-block UNETR model in 
 
 <div style="text-align: center;">
     <img src="figs/prediction_target.png" alt="visualisation of the prediction and the true dose distribution"/>
-    <p>Figure 9: Visualisation of the prediction and the true dose distribution. <a href="#4"></a></p>
+    <p>Figure 9: Visualisation of the prediction of the 9-block UNETR model and the true dose distribution. <a href="#4"></a></p>
 </div>
 
 In Figure 9, a visualization of a prediction by the 9-block UNETR model is shown and compared to the true dose distribution. The model is able to capture the general shape of the true dose distribution. The main difference between the prediction and the target is that target has more structure that originates from the radiation beams.
