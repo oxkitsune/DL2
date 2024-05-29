@@ -23,9 +23,6 @@ Figure 1: Example of a planned target volume (PTV) [[8]](#8) -->
     <p>Figure 1: Example of a planned target volume (PTV) <a href="#8">[8]</a></p>
 </div>
 
-
-<!-- Generating treatment plans is hard, explanation of treatment plans -->
-<!-- Treatment planning often requires manual adjustments by medical physicists or dosimetrists, introducing variability in plan quality that can affect treatment outcomes, and is very time consuming. Efforts to reduce this manual intervention is called automated treatment planning and can be divided into two categories, objective-based planning (OBP) and knowledge-based planning (KBP). OBP relies on optimization algorithms that adjust preset objectives to achieve the established clinical goals. KBP  uses a library of plans from previous patients to predict dose–volume objectives for the new patient. KBP methods are generally formulated as two-stage pipelines (see Figure 2). In the knowledge-based planning approach to treatment planning (see Figure 2), the first step is to create an initial dose distribution, which is typically predicted first using contoured CT images of the patient. The dose distribution contains the amount of radiation that should be given to every individual voxel. After this,, an optimization model develops a treatment plan based on this predicted dose distribution. The accuracy of the initial dose distribution can significantly reduce the time required in the overall optimization process [[7]](#7). This research focuses on predicting the initial 3D dose distribution, the first step of the KBP pipeline. -->
 Treatment planning often requires manual adjustments by medical physicists or dosimetrists, introducing variability in plan quality that can affect treatment outcomes, and is very time consuming. To reduce the amount of manual intervention, knowledge-based planning (KBP) can be used. KBP methods are generally formulated as two-stage pipelines (see Figure 2). In the knowledge-based planning approach to treatment planning (see Figure 2), the first step is to create an initial dose distribution, which is typically predicted first using contoured CT images of the patient. The dose distribution contains the amount of radiation that should be given to every individual voxel. After this, an optimization model develops a treatment plan based on this predicted dose distribution. The accuracy of the initial dose distribution can significantly reduce the time required in the overall optimization process [[7]](#7). This research focuses on predicting the initial 3D dose distribution, the first step of the KBP pipeline.
 
 <!-- ![OpenKBP_fig1](https://hackmd.io/_uploads/B1FrEGSmR.jpg)
@@ -112,8 +109,6 @@ Another limitation of TrDosePred is the unavailability of the code [[4]](#4). Th
 # Reproduction
 Initially, we implemented the architecture proposed by TrDosePred [[4]](#4) to assess its reproducibility. However, due to insufficient information about the hyperparameters of this architecture, such as the number of multi-head attention blocks and the number of layers in the MLP, and potential bugs that could not be identified due to time constraints, the implemented model failed to achieve proper learning. With limited computational resources, conducting an extensive hyperparameter search was also not feasible. This made us opt for an alternative architecture that incorporates transformers, specifically the UNETR architecture, for which code was available [[22]](#22). Despite being originally proposed for multi-organ segmentation tasks, the UNETR architecture demonstrated superior performance compared to the TrDosePred architecture in our initial experiments. As a result, we decided to evaluate its suitability for dose prediction and further extend on this architecture.
 
-<!-- Initially, we impolemented the SWIN-based architecture to assess its reproducability. However, due to insufficient information regarding the hyperparameters of this architecture, such as the number of multi-head attention blocks and the number of layers in the MLP, the implemented model failed to achieve proper learning. Due to limited computational resources, it was not possible to conduct an extensive hyperparameter search. Therefore, an alternative architecture incorporating transformers, namely the UNETR architecture, was also used [[22]](#22). This architecure was originally proposed for multi-organ segmentation tasks and achieved better performance in our intial experiments. So we decided to apply our extensions on this architecture and see how well this architecture can be adopted for dose prediction. -->
-
 ## UNETR
 UNETR, which stands for UNet TRansformers, is a hybrid model combining the strengths of CNNs, specifically the U-Net architecture, with transformer-based attention mechanisms.
 
@@ -161,7 +156,6 @@ This work introduces a physics-based approach of UNETR. Specifically, the UNETR 
 Multiple methdologies exist for integrating physics into neural networks [[18]](#18). In this research, two specific approaches are explored. Firstly, the loss function is augmented with a physics-based component. Secondly, an autoregressive strategy is employed to capture dependencies between different segments of the prediction. The subsequent sections provide a detailed explanation of these two methodologies.
 
 <!-- Explanation of loss variants-->
-<!-- First of all, training the model with a physics-inspired loss function might lead to increased physics-awareness of the model. In other fields, using these type of loss functions lead to increased performance and stability of the network [[2]](#2) [[3]](#3). This technique is part of Physics-Informed Neural Networks (PINNs). -->
 ## Physics-based loss
 In fields where physics plays a critical role, such as turbulence modelling, the use of physics-inspired loss functions has demonstrated promising results [[2]](#2) [[3]](#3). These loss functions have been shown to enhance both the performance and stability of the neural networks to which they are applied.
 
@@ -178,15 +172,6 @@ Here, $`Loss_{phy}`$ is the physics-based loss and $w_{phy}$ is the weight given
 Typically, the weight $w_{phy}$ is selected such that the contribution of the physics-based loss is smaller than that of the primary loss function, which, in our case, is the MAE loss. This ensures that while the physics-based constraints influence the model, they do not overshadow the main predictive objective.
 
 ### DVH loss
-<!-- In dose prediction, dose-volume histograms (DVHs) are commonly used to evaluate treatment plans [[6]](#6). DVHs are used to quantify the dose distribution around a target. They display the absorbed dose of an organ, over the relative volume of the organ that reached this dose. An example is shown in Figure 6.
-
-<!-- ![Example-of-dose-volume-histogram-DVH-computed-with-MiM-Sureplan-701-software-research](https://hackmd.io/_uploads/H1RgWJSXA.png)
-Figure 6: An example of a dose-volume histogram. Here, the x-axis displays the absorbed dose, while the y-axis explains the volume of the organ that absorbed that dose. -->
-
-<!-- <div style="text-align: center;">
-    <img src="https://hackmd.io/_uploads/H1RgWJSXA.png" alt="DVH example"/>
-    <p>Figure 6: An exemplary dose-volume histogram. Here, the x-axis displays the absorbed dose and the y-axis explains the volume of the organ that absorbed that dose. Every line represents a different structure.</p>
-</div> -->
 
 DVHs are essential for ensuring that the prescribed radiation dose effectively targets the tumor while minimizing exposure to healthy tissues and the critical organs. Therefore, incorporating DVH information into the model training process can be beneficial. To this end, a DVH loss function has been proposed [[5]](#5), which is a differential approximation of the DVH.
 
@@ -306,17 +291,6 @@ This recurrent methodology can be applied to each latent dim $z$, by decoding, u
     <p>Figure 8: A schematic overview of the augmented UNETR architecture with integrated RNN blocks (in red). <a href="#4"></a></p>
 </div>
 
-<!-- #### 3.
-3. Neural translation method
-* Based on translation task
-* Uses any type of encoder, and transformer based decoder
-* Encoder can use full input
-* Decoder has for each prediction acess to the encoded state which has global information
-* Decoder predicts slices autoregressively using masked self-attention, thus only allowing the model to use information of previoulsy predicted slices for its predictions.
- -->
-
-<!-- Explanation of KANs?-->
-
 # Results
 We conducted both reproduction and extension experiments. Since we could not reproduce the original research of TrDosePred [[4]](#4), we opted to use the UNETR architecture [[22]](#22) for our experiments instead. 
 
@@ -380,15 +354,6 @@ From Table 3, we can observe that the MAE + RNN approach shows significant impro
 
 #TODO
 qualitative results for everything, at least some images of how the dose predictions look like, if possible some sort of animation over slices.
-
-<!-- ## Analysis of TrDosePred -->
-<!-- An analysis of the paper and its key components. Think about it as a nicely formatted review as you would see on OpenReview.net. It should contain one paragraph of related work as well. -->
-<!-- TrDosePred achieves impressive performance on the OpenKBP dataset, with a dose score of 2.426 Gy and a DVH score of 1.592 Gy, ranking 1st and 3rd, respectively. The model demonstrates this performance with limited data and holds potential for further improvement with larger datasets. Additional ablation studies highlighted the effectiveness of key architectural components in enhancing performance, such as the convolutional sampling strategy and the depth-wise convolution in the multi-layer perceptron (MLP). -->
-
-<!-- Exposition of its weaknesses/strengths/potential which triggered your group to come up with a response. -->
-
-<!-- Explanation of strenghts -->
-<!-- In summary, the strengths of the overall approach include the innovative use of transformers, making TrDosePred the first to demonstrate the transformer architecture in dose prediction, achieving state-of-the-art performance in accurate dose predictions, and validating the model's effectiveness through ablation studies that identify key components contributing to its performance. -->
 
 # Conclusion
 In this study, we aimed to reproduce and extend the research presented in the paper "TrDosePred: A deep learning dose prediction algorithm based on transformers for head and neck cancer radiotherapy". The original research used a transformer-based approach, specifically ViTs, to predict 3D dose distributions in radiotherapy treatment planning. Our goal was to both validate these findings and enhance the model by incorporating physics-based elements.
