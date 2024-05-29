@@ -301,9 +301,6 @@ class UNETR(nn.Module):
             SingleDeconv3DBlock(256, 256),
         )
 
-        # self.decoder9 = DecoderBlock(
-        #     num_decoder_blocks=1, upsample_dim=512, embed_dim=embed_dim
-        # )
         self.decoder6 = DecoderBlock(
             num_decoder_blocks=2, upsample_dim=512, embed_dim=embed_dim
         )
@@ -335,6 +332,7 @@ class UNETR(nn.Module):
         z0 = self.decoder0(z0)
         output = self.decoder0_header(torch.cat([z0, z3], dim=1))
         return output
+
 
 class UNETRBig(nn.Module):
     def __init__(
@@ -376,13 +374,13 @@ class UNETRBig(nn.Module):
         self.decoder12_upsampler = SingleDeconv3DBlock(embed_dim, 512)
 
         self.decoder9 = DecoderBlock(
-            num_decoder_blocks=1, upsample_dim=512, embed_dim=embed_dim
+            num_decoder_blocks=1, upsample_dim=1024, embed_dim=embed_dim
         )
         self.decoder6 = DecoderBlock(
-            num_decoder_blocks=2, upsample_dim=256, embed_dim=embed_dim
+            num_decoder_blocks=2, upsample_dim=512, embed_dim=embed_dim
         )
         self.decoder3 = DecoderBlock(
-            num_decoder_blocks=3, upsample_dim=128, embed_dim=embed_dim
+            num_decoder_blocks=3, upsample_dim=256, embed_dim=embed_dim
         )
         self.decoder0 = nn.Sequential(
             Conv3DBlock(input_dim, 32, 3), Conv3DBlock(32, 64, 3)
