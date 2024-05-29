@@ -9,6 +9,7 @@ from src.training import train_model, ar_train_model
 from datasets import load_dataset, Array4D
 
 import torch
+import datetime
 
 PREDICTION_DIR = Path("results")
 # Original paper
@@ -89,8 +90,13 @@ def get_args():
 
 def setup_wandb(args):
     resume_id = None
+    name = None
     if args.resume_run:
         resume_id = args.resume_run.split("/")[-1]
+    else:
+        timestamp = datetime.datetime.now().isoformat()
+        timestamp = timestamp.replace(":", "").replace("-", "").replace(".", "")
+        name = f"{args.model}_{args.loss}_{args.lr}lr_{timestamp}"
 
     # start a new wandb run to track this script
     wandb.init(
@@ -108,6 +114,7 @@ def setup_wandb(args):
         # this repo contains the entire dataset and code, so let's not upload it
         save_code=False,
         id=resume_id,
+        name=name,
         # if this is a dry run, don't actually log anything
         mode="disabled" if args.dry_run else "online",
         resume=args.resume_run is not None,
