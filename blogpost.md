@@ -359,6 +359,7 @@ From Table 3, we can observe that the MAE + RNN approach shows significant impro
 </div>
 
 
+#TODO: write a bit about the visualizations of RNN
 
 #TODO add GIF of animation over slices :D
 
