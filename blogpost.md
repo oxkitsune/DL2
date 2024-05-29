@@ -4,11 +4,11 @@
 
 
 ---
-In this blogpost, the paper ["TrDosePred: A deep learning dose prediction algorithm based on transformers for head and neck cancer radiotherapy"](#4) is discussed, reproduced and extended upon. This paper shows the application of 3D Vision Transformers on the field of radiation dose treatment planning. The goal of this blogpost is to explain the research done in the field of radiation dose prediction, reproduce the work done in the original paper, and extend the TrDosePred architecture by incorporating physics-based elements in the training process. 
 
-#TODO rewrite this such that UNETR is also mentioned
+In this blog post, we discuss, reproduce, and extend upon the paper ["TrDosePred: A deep learning dose prediction algorithm based on transformers for head and neck cancer radiotherapy"](#4). This paper illustrates the application of 3D Vision Transformers in the field of radiation dose treatment planning. Due to challenges in reproducing the TrDosePred model stemming from insufficient implementation details, we also explore the UNETR architecture as an alternative. The goal of this blogpost is to explain the research done in the field of radiation dose prediction, reproduce the work done in the original paper, and extend the UNETR architecture by incorporating physics-based elements in the training process. 
 
 ---
+
 # Introduction
 <!-- Start with what radiation therapy is, how it is commonly used -->
 Radiation therapy is a crucial method in cancer treatment, where about 50% of all patients receive this kind of treatment [[1]](#1). It is used to either shrink a tumor, before using surgery to remove the tumor, or to target cancer cells that are possibly left after the surgery.
