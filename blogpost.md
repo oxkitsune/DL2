@@ -114,7 +114,7 @@ UNETR, which stands for UNet TRansformers, is a hybrid model combining the stren
 
 The UNETR architecture first embeds non-overlapping patches with a dimension of 16 from the image. These patches are then projected into a K-dimensional embedding space using a linear layer. A learnable one-dimensional embedding is then added to preserve positional information. The final embeddings have a size of 768. These embeddings are passed through a stack of 12 transformer blocks, each consisting of a layer of multi-head self-attention (MSA) and MLPs. The equations are as follows:
 
-$$\textbf{z}'_i = \text{MSA}(\text{Norm}(\textbf{z}_{i-1})) + \textbf{z}_{i-1}$$
+$$\textbf{z}'_i = \text{MSA}(\text{Norm}(\textbf{z} _{i-1})) + \textbf{z} _{i-1}$$
 
 $$\textbf{z}'_i = \text{MLP}(\text{Norm}(\textbf{z}_i)) + \textbf{z}'_i$$
 
