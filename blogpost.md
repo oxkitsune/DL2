@@ -62,26 +62,38 @@ The three-channel input volume is a concatenation of the planning CT, OARs, and 
 - **PTV Channel:** Each voxel inside PTVs is assigned the corresponding prescription dose and then for each voxel the maximum value over all PTVs is taken. The resulting channel is normalized by 70 Gy.
 - **OAR Channel:** Seven critical OAR masks are labeled with distinct integers and merged into a single channel by summing them: 1 for the brain stem, 2 for the spinal cord, 3 for the right parotid, 4 for the left parotid, 5 for the esophagus, 6 for the larynx, and 7 for the mandible.
 
-To enhance the robustness of TrDosePred, data augmentations were applied during training. These included random flipping along the inferior-superior and right-left axes, as well as random translation (up to 5 voxels along each axis). Additionally, random rotations around the inferior-superior axis were performed, with rotation degrees chosen randomly from a list of 0°, 40°, 80°, 120°, 160°, 200°, 240°, 280°, and 320°.
+An example of the CT scan and the corresponding dose distribution can be found in Figure 3.
+
+To enhance the robustness of TrDosePred, data augmentations were applied during training. These included random flipping along the axial and saggital axes, as well as random translation (up to 5 voxels along each axis). Additionally, random rotations around the axial axis were performed, with rotation degrees chosen randomly from a list of 0°, 40°, 80°, 120°, 160°, 200°, 240°, 280°, and 320°.
 
 The dataset was divided as is done in the OpenKBP challenge [[7]](#7): patients 1-200 for training, patients 201-240 for validation, and patients 241-340 for testing.
+
+<div style="text-align: center;">
+    <img src="figs/CT Scan.png" alt="ct example"/>
+    <p>Figure 3a: Example of a CT scan in the dataset </a></p>
+</div>
+
+<div style="text-align: center;">
+    <img src="figs/Dose.png" alt="dose example"/>
+    <p>Figure 3b: Example of a true dose distribution in the dataset </p>
+</div>
 
 <!-- Explanation of architecture -->
 ## Model architecture
 
-Figure 3 shows the overall SWIN-based architecture of the proposed TrDosePred. With a three-channel feature of contoured CT as input, a patch embedding block first projects it into a sequence of patch tokens. A transformer-based encoder and decoder then build the relationship between embedded input features and dose maps. Finally, a patch expanding block generates the 3D dose distribution. The individual components are further elaborated on in the [appendix](##Swin-Components).
+Figure 4 shows the overall SWIN-based architecture of the proposed TrDosePred. With a three-channel feature of contoured CT as input, a patch embedding block first projects it into a sequence of patch tokens. A transformer-based encoder and decoder then build the relationship between embedded input features and dose maps. Finally, a patch expanding block generates the 3D dose distribution. The individual components are further elaborated on in the [appendix](##Swin-Components).
 
 <div style="text-align: center;">
     <img src="figs/architecture.png" alt="architecture"/>
-    <p>Figure 3: Overview of architecture of TrDosePred <a href="#4">[4]</a></p>
+    <p>Figure 4: Overview of architecture of TrDosePred <a href="#4">[4]</a></p>
 </div>
 
 ## Metrics
-Dose-volume histograms (DVHs) are commonly used to evaluate treatment plans [[6]](#6). DVHs are used to quantify the dose distribution around a target. They display the absorbed dose of an organ, over the relative volume of the organ that reached this dose. An example is shown in Figure 4.
+Dose-volume histograms (DVHs) are commonly used to evaluate treatment plans [[6]](#6). DVHs are used to quantify the dose distribution around a target. They display the absorbed dose of an organ, over the relative volume of the organ that reached this dose. An example is shown in Figure 5.
 
 <div style="text-align: center;">
     <img src="figs/DVH.jpg" alt="DVH example" style="width: 50%"/>
-    <p>Figure 4: An example of a dose-volume histogram. Here, the x-axis displays the absorbed dose, while the y-axis explains the volume of the organ that absorbed that dose. Every line represents a different structure.</p>
+    <p>Figure 5: An example of a dose-volume histogram. Here, the x-axis displays the absorbed dose, while the y-axis explains the volume of the organ that absorbed that dose. Every line represents a different structure.</p>
 </div>
 
 The DVH score is computed as the MAE of a set of specific criterea. These criterea are the $D_{mean}$ and $D_{0.1cc}$ for the seven OARs and the dose received by 1%, 95% and 99% ($D_1$, $D_{95}$, $D_{99}$) of the voxels within the target volumes for the three PTVs, where $D_{0.1cc}$ is the maximum dose received by the most exposed 0.1 cubic centimeters (cc) of a specified volume.
@@ -254,7 +266,7 @@ Another technique to incorporate autoregressiveness into the model is by modifyi
 
 <div style="text-align: center;">
     <img src="figs/simple_rnn.jpg" alt="architecture"/>
-    <p>Figure 5: Simple version of an RNN. <a href="#4"></a></p>
+    <p>Figure 6: Simple version of an RNN. <a href="#4"></a></p>
 </div>
 
 A typical RNN works by the following formula:
@@ -262,7 +274,7 @@ $$h_t = \tanh(x_t W_{ih}^T + b_{ih} + h_{t-1} W_{hh}^T + b_{hh}),$$ where $h_t$ 
 
 <div style="text-align: center;">
     <img src="figs/unet_rnn.png" alt="architecture"/>
-    <p>Figure 6: A UNETR inspired Convolutional RNN. <a href="#4"></a></p>
+    <p>Figure 7: A UNETR inspired Convolutional RNN. <a href="#4"></a></p>
 </div>
 
 The UNETR architecture is modified to use a ConvRNN in the output decoding. The ConvRNN process starts from the latent dimension produced by the UNETR encoder, which is a combination of three residual streams.
@@ -285,7 +297,7 @@ $$D_{pred} = \text{DecoderConv} \left(\mathbf{f}, \mathbf{o}\right)$$
 This recurrent methodology can be applied to each latent dim $z$, by decoding, upsampling and concatenating every intermediate $\mathbf{o}$, and finally decoding it jointly with the CT feature map, as visualized below.
 <div style="text-align: center;">
     <img src="figs/unetr_rnn_architecture.png" alt="architecture"/>
-    <p>Figure 7: A schematic overview of the augmented UNETR architecture with integrated RNN blocks (in red). <a href="#4"></a></p>
+    <p>Figure 8: A schematic overview of the augmented UNETR architecture with integrated RNN blocks (in red). <a href="#4"></a></p>
 </div>
 
 <!-- #### 3.
@@ -420,18 +432,18 @@ This section goes into detail on specific components of the SWIN model architect
 
 Traditionally in ViTs, the input image is split and mapped to non-overlapping patches before being fed into the transformer encoder. However, recent research suggests that using overlapping patches can improve optimization stability and performance [[19]](#19). Inspired by this, TrDosePred's patch embedding block extracts patches from the input volume using stacked overlapping convolutional layers.
 
-The patch embedding block comprises three submodules, each with a 3×3×3 convolution, an Instance Normalization, and a Gaussian Error Linear Units (GELU) activation function. A point-wise convolution with 96 filters projects these features into embedding tokens, reducing the feature dimensions by a factor of 2×4×4 (Figure 8a).
+The patch embedding block comprises three submodules, each with a 3×3×3 convolution, an Instance Normalization, and a Gaussian Error Linear Units (GELU) activation function. A point-wise convolution with 96 filters projects these features into embedding tokens, reducing the feature dimensions by a factor of 2×4×4 (Figure 9a).
 
-Symmetrically, a patch expanding block with a 2×4×4 transpose convolution and 3×3×3 convolutions is used to recover the resolution of feature maps after decoding. A point-wise convolution is then employed to generate the final dose prediction (Figure 8b).
+Symmetrically, a patch expanding block with a 2×4×4 transpose convolution and 3×3×3 convolutions is used to recover the resolution of feature maps after decoding. A point-wise convolution is then employed to generate the final dose prediction (Figure 9b).
 
 <div style="display: flex; justify-content: center; align-items: center; gap: 20px;">
     <div style="text-align: left;">
         <img src="figs/patch-embedding.png" alt="patch-embedding" width="300"/>
-        <p>Figure 8a: Patch embedding block <a href="#4">[4]</a></p>
+        <p>Figure 9a: Patch embedding block <a href="#4">[4]</a></p>
     </div>
     <div style="text-align: center;">
         <img src="figs/patch-expanding.png" alt="patch-expanding" width="300"/>
-        <p>Figure 8b: Patch expanding block <a href="#4">[4]</a></p>
+        <p>Figure 9b: Patch expanding block <a href="#4">[4]</a></p>
     </div>
 </div>
 
@@ -439,7 +451,7 @@ Symmetrically, a patch expanding block with a 2×4×4 transpose convolution and 
 
 After patch embedding, the tokens are fed into a U-shaped encoder and decoder, featuring multiple 3D Swin Transformer blocks. Compared to the vanilla transformer, the Swin Transformer is more efficient for medical image analysis due to its linear complexity relative to image size.
 
-Each 3D Swin Transformer block consists of a window-based local multi-head self-attention (W-MSA) module and a Multi-layer Perceptron (MLP) module (Figure 9). Depth-wise convolution is added to the MLP to enhance locality, and Layer Normalization (LN) and residual connections are applied before and after each module.
+Each 3D Swin Transformer block consists of a window-based local multi-head self-attention (W-MSA) module and a Multi-layer Perceptron (MLP) module (Figure 10). Depth-wise convolution is added to the MLP to enhance locality, and Layer Normalization (LN) and residual connections are applied before and after each module.
 
 The windows are cyclically shifted between consecutive transformer blocks to establish cross-window connections. The computational steps for two consecutive 3D Swin Transformer blocks are as follows:
 
@@ -480,5 +492,5 @@ Between the encoder and decoder blocks, down-sampling and up-sampling layers are
 
 <div style="text-align: center;">
     <img src="figs/swin-transformers.png" alt="swin-transformers"/>
-    <p>Figure 9: Two consecutive Swin Transformer blocks <a href="#4">[4]</a></p>
+    <p>Figure 10: Two consecutive Swin Transformer blocks <a href="#4">[4]</a></p>
 </div>
