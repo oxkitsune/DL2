@@ -352,6 +352,14 @@ Table 3: Results of RNN-based method versus base model using MAE loss. Best resu
 
 From Table 3, we can observe that the MAE + RNN approach shows significant improvements over the simple MAE baseline in both DVH score and Dose score. This suggests that incorporating autoregressive techniques, specifically using RNNs, can enhance model performance.
 
+<div style="text-align: center;">
+    <img src="figs/qualitative_result_rnn1" alt="Visualization of the RNN prediction and the true dose distribution (a)"/>
+    <img src="figs/qualitative_result_rnn1" alt="Visualization of the RNN prediction and the true dose distribution (b)"/>
+    <p>Figure 10: Visualization of the prediction of the base model, RNN-based model, and the true dose distribution. <a href="#4"></a></p>
+</div>
+
+
+
 #TODO add GIF of animation over slices :D
 
 # Conclusion
