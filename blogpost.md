@@ -352,8 +352,9 @@ Table 3: Results of RNN-based method versus base model using MAE loss. Best resu
 
 From Table 3, we can observe that the MAE + RNN approach shows significant improvements over the simple MAE baseline in both DVH score and Dose score. This suggests that incorporating autoregressive techniques, specifically using RNNs, can enhance model performance.
 
-#TODO
-qualitative results for everything, at least some images of how the dose predictions look like, if possible some sort of animation over slices.
+#TODO add quanititave results 
+
+#TODO add GIF of animation over slices :D
 
 # Conclusion
 In this study, we aimed to reproduce and extend the research presented in the paper "TrDosePred: A deep learning dose prediction algorithm based on transformers for head and neck cancer radiotherapy". The original research used a transformer-based approach, specifically ViTs, to predict 3D dose distributions in radiotherapy treatment planning. Our goal was to both validate these findings and enhance the model by incorporating physics-based elements.
