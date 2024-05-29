@@ -341,7 +341,7 @@ In Table 2, the results of various loss experiments are shown. Generally, the mo
 #TODO shortly explain why hyperparam search could improve, which hyperparams?
 
 ### Autoregression
-Lastly, an autoregressive approach was explored. For this, two different techniques that incorporate autoregression in the model were implemented, namely a input masking approach and an RNN based approach. Generating results for the input masking autoregressor was not feasible, as due to computational limitations the duration of each iteration increased exponentially. The RNN approach, on the other hand, did not have these limitations. Thus, these results are shown in Table 3
+Lastly, an autoregressive approach was explored. For this, two different techniques that incorporate autoregression in the model were implemented, namely a input masking approach and an RNN based approach. Due to computational constraints, training the input masking autoregressor was not feasible as one iteration took approximately 10 to 20 times longer than the base model. In contrast, the RNN-based approach did not introduce any computational overhead. The results of this approach are shown in Table 3.
 
 | Autoregression | DVH score | Dose score |
 | -------- | -------- | -------- |
@@ -351,8 +351,6 @@ Lastly, an autoregressive approach was explored. For this, two different techniq
 Table 3: Results of RNN-based method versus base model using MAE loss. Best results are denoted in bold.
 
 From Table 3, we can observe that the MAE + RNN approach shows significant improvements over the simple MAE baseline in both DVH score and Dose score. This suggests that incorporating autoregressive techniques, specifically using RNNs, can enhance model performance.
-
-#TODO add quanititave results 
 
 #TODO add GIF of animation over slices :D
 
