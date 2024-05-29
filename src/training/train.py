@@ -218,7 +218,10 @@ def load_model_weights(
         raise FileNotFoundError(f"Checkpoint file {checkpoint_path} not found")
 
     checkpoint = torch.load(checkpoint_path.resolve(), map_location=device)
-    model.load_state_dict(checkpoint["model_state_dict"])
+    if "model_state_dict" in checkpoint:
+        model.load_state_dict(checkpoint["model_state_dict"])
+    else:
+        model.load_state_dict(checkpoint)
 
 def evaluate_model(model, dataset, args):
     # Load model weights
