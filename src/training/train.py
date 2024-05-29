@@ -1,10 +1,11 @@
+import json
 import torch
 from pathlib import Path
 from tqdm import tqdm
 import wandb
 import os
 
-from src.metrics import dose_score, mean_dvh_error
+from src.metrics import dose_score, mean_dvh_error, compute_metrics
 from src.data import Augment
 from torch.utils.data import DataLoader, default_collate
 from src.training.loss import RadiotherapyLoss
@@ -98,18 +99,6 @@ def train_model(model, dataset, args):
         pbar.write(f"Dose score {dev_metrics['dose_score']:.3f}")
         pbar.write(f"Mean DVH error {dev_metrics['mean_dvh_error']:.3f}")
         pbar.write("=======================================")
-
-
-def compute_metrics(prediction, target, batch):
-    return {
-        "dose_score": dose_score(prediction, target, batch["possible_dose_mask"]),
-        "mean_dvh_error": mean_dvh_error(
-            prediction,
-            batch["dose"],
-            batch["voxel_dimensions"],
-            batch["structure_masks"],
-        ),
-    }
 
 
 def train_single_epoch(model, data_loader, optimizer, criterion):
@@ -218,3 +207,56 @@ def load_model_checkpoint(
     optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
     lr_schedule.load_state_dict(checkpoint["lr_schedule_state_dict"])
     return checkpoint["epoch"]
+
+
+def load_model_weights(
+    model,
+    device,
+    checkpoint_path: Path = Path(".checkpoints/model_checkpoint.pt"),
+):
+    if not checkpoint_path.exists():
+        raise FileNotFoundError(f"Checkpoint file {checkpoint_path} not found")
+
+    checkpoint = torch.load(checkpoint_path.resolve(), map_location=device)
+    model.load_state_dict(checkpoint["model_state_dict"])
+
+def evaluate_model(model, dataset, args):
+    # Load model weights
+    device = (
+        torch.device("cuda:0") if torch.cuda.is_available() else torch.device("cpu")
+    )
+    print(f"Using device {device}")
+
+    checkpoint_path = Path(".checkpoints/model_checkpoint.pt")
+    load_model_weights(
+        model, device, checkpoint_path
+    )
+
+    test_dataloader = DataLoader(
+        dataset["test"],
+        batch_size=args.batch_size,
+        drop_last=True,
+    )
+
+    model.eval()
+    metrics = {"dose_score": 0, "mean_dvh_error": 0}
+    pbar = tqdm(test_dataloader, desc="Test", leave=False)
+    with torch.no_grad():
+        for batch in pbar:
+            features = batch["features"].permute((0, 4, 1, 2, 3))
+            target = batch["dose"].unsqueeze(1)
+            structure_masks = batch["structure_masks"]
+
+            outputs = model(features)
+
+            batch_metrics = compute_metrics(outputs, target, batch)
+            metrics["dose_score"] += batch_metrics["dose_score"].item()
+            metrics["mean_dvh_error"] += batch_metrics["mean_dvh_error"].item()
+
+    final_metrics = {
+        "dose_score": metrics["dose_score"] / len(test_dataloader),
+        "mean_dvh_error": metrics["mean_dvh_error"] / len(test_dataloader),
+    }
+
+    print(f"Results for: {args.test}")
+    print(final_metrics)
