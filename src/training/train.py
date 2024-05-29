@@ -196,14 +196,15 @@ def load_model_checkpoint(
         raise FileNotFoundError(f"Checkpoint file {checkpoint_path} not found")
 
     checkpoint = torch.load(checkpoint_path.resolve(), map_location=device)
-    model.load_state_dict(checkpoint["model_state_dict"])
 
     if "epoch" not in checkpoint:
         print(
             "Warning: Old checkpoint format, optimizer, lr scheduler and epoch won't be restored"
         )
+        model.load_state_dict(checkpoint)
         return 0
 
+    model.load_state_dict(checkpoint["model_state_dict"])
     optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
     lr_schedule.load_state_dict(checkpoint["lr_schedule_state_dict"])
     return checkpoint["epoch"]
