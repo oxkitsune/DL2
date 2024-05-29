@@ -354,7 +354,7 @@ From Table 3, we can observe that the MAE + RNN approach shows significant impro
 
 <div style="text-align: center;">
     <img src="figs/qualitative_result_rnn1.jpg" alt="Visualization of the RNN prediction and the true dose distribution (a)"/>
-    <img src="figs/qualitative_result_rnn1.jpg" alt="Visualization of the RNN prediction and the true dose distribution (b)"/>
+    <img src="figs/qualitative_result_rnn2.jpg" alt="Visualization of the RNN prediction and the true dose distribution (b)"/>
     <p>Figure 10: Visualization of the prediction of the base model, RNN-based model, and the true dose distribution. <a href="#4"></a></p>
 </div>
 
