@@ -6,6 +6,7 @@ import wandb
 from src.data import transform_data
 
 from src.training import train_model, ar_train_model
+from src.training.train import evaluate_model
 from datasets import load_dataset, Array4D
 
 import torch
@@ -82,6 +83,11 @@ def get_args():
         action="store_true",
         help="Use AR_UNETR model",
     )
+    parser.add_argument(
+        "--test",
+        type=str,
+        help="Evaluate on test set pass the wandb id as argument",
+    )
 
     parser.add_argument("--parallel", action="store_true", help="Use multiple GPUs")
 
@@ -148,7 +154,11 @@ def setup_model(args, device):
     if args.parallel:
         model = torch.nn.DataParallel(model, output_device=device)
 
-    if args.resume_run:
+    if args.test:
+        print(f"Downloading checkpoint")
+        run = wandb.Api().run(args.test)
+        run.file(".checkpoints/model_checkpoint.pt").download(replace=True)
+    elif args.resume_run:
         print(f"Resuming run {args.resume_run}")
         run = wandb.Api().run(args.resume_run)
         print(f"Downloading model checkpoint {args.restore_checkpoint}...")
@@ -159,7 +169,9 @@ def setup_model(args, device):
 
 def run():
     args = get_args()
-    setup_wandb(args)
+
+    if not args.test:
+        setup_wandb(args)
 
     num_proc = torch.multiprocessing.cpu_count() - 2
 
@@ -196,7 +208,9 @@ def run():
     model = setup_model(args, device)
 
     # run the training loop
-    if args.ar:
+    if args.test:
+        evaluate_model(model, dataset, args)
+    elif args.ar:
         ar_train_model(model, dataset, args)
     else:
         train_model(model, dataset, args)

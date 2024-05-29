@@ -103,3 +103,14 @@ def dvh_score_for_single_prediction(prediction, voxel_dims, structure_masks):
                 raise ValueError(f"Metric {metric} is not supported.")
             metrics[roi][metric] = metric_value
     return metrics
+
+def compute_metrics(prediction, target, batch):
+    return {
+        "dose_score": dose_score(prediction, target, batch["possible_dose_mask"]),
+        "mean_dvh_error": mean_dvh_error(
+            prediction,
+            batch["dose"],
+            batch["voxel_dimensions"],
+            batch["structure_masks"],
+        ),
+    }
