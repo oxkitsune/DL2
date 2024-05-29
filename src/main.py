@@ -116,17 +116,21 @@ def setup_wandb(args):
 
 def setup_model(args, device):
     if args.model == "unetr":
-        from src.models.unetr import UNETR
+        from src.models import UNETR
 
         model = UNETR(input_dim=3, output_dim=1).to(device)
     elif args.model == "conv":
-        from src.models.conv_net import ConvNet
+        from src.models import ConvNet
 
         model = ConvNet(num_input_channels=3).to(device)
     elif args.model == "arunetr":
-        from src.models.ar_unetr import AR_UNETR
+        from src.models import AR_UNETR
 
         model = AR_UNETR(input_dim=4, output_dim=1).to(device)
+    elif args.model == "rnnunetr":
+        from src.models import UNETR_RNN
+
+        model = UNETR_RNN(input_dim=3, output_dim=1).to(device)
     else:
         raise ValueError(f"Unknown model {args.model}")
 
