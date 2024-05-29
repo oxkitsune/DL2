@@ -119,6 +119,10 @@ def setup_model(args, device):
         from src.models import UNETR
 
         model = UNETR(input_dim=3, output_dim=1).to(device)
+    elif args.model == "bigunetr":
+        from src.models import UNETRBig
+
+        model = UNETRBig(input_dim=3, output_dim=1).to(device)
     elif args.model == "conv":
         from src.models import ConvNet
 
