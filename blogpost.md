@@ -301,14 +301,11 @@ To assess the effect of model complexity on this unexplored architecture for the
 | ------------ | --------- | ---------- |
 | TrDosePred   | **2.512** | **1.658**  |
 | 9-block UNETR | 4.252     | 5.587      |
-| 12-block UNETR | #TODO    | #TODO      |
+| 12-block UNETR | 4.081    | 6.405      |
 
 Table 1: Results of the UNETR architecture with various model sizes, compared against the results reported in the original work introducing TrDosePred. Lower scores are better, and the best results are denoted in bold.
 
-Table 1 shows that the TrDosePred model outperformed the 9-block UNETR model in both DVH score and Dose score, as indicated by the lower scores. This suggests that the original TrDosePred model is more effective than the reproduced 9-block UNETR model based on these metrics.
-
-#TODO: add comparison with 12-block model
-#TODO: which architecture is used for the following experiments? + add 12-block
+Table 1 shows that the TrDosePred model outperformed both the 9-block and 12-block UNETR model in both DVH score and Dose score, as indicated by the lower scores. This suggests that the original TrDosePred model is more effective than the reproduced 9-block UNETR model based on these metrics. This is as expected, since the original UNETR architecture was designed for medical image segmentation and not finetuned for dose prediction. Table 1 also shows the difference between the 9-block UNETR and the 12-block UNETR. One can see that the 12-block UNETR performs a bit better in terms of DVh score, but scores almost a point hinger on the dose score. The most likely cause of this is overfitting, since the 12-block UNETR architecture is designed for image segmentation which in general needs more weights. Because of these results, all following experiments are performed on the 9-block UNETR.
 
 <div style="text-align: center;">
     <img src="figs/prediction_target.png" alt="visualisation of the prediction and the true dose distribution"/>
