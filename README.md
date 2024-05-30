@@ -31,7 +31,7 @@ Experiments for the three-layer UNETR architecture:
 python -m src.main --batch-size 4 --loss mae --parallel --model unetr --lr 0.0004
 python -m src.main --batch-size 4 --loss dvh --parallel --model unetr --lr 0.0004
 python -m src.main --batch-size 4 --loss moment --parallel --model unetr --lr 0.0004
-python -m src.main --batch-size 4 --loss moment --parallel --model unetr --lr 0.0004
+python -m src.main --batch-size 4 --loss all --parallel --model unetr --lr 0.0004
 ```
 
 Experiments for the four-layer UNETR architecture:
