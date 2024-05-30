@@ -146,7 +146,7 @@ Features from different levels of resolution from the encoder are then merged wi
 After all the features from all resolutions have been combined, the resulting features are fed into a 1x1x1 convolutional layer followed by a softmax activation function to generate the final dose prediction.
 
 <div style="text-align: center;">
-    <img src="figs/unetr.png" alt="Overview of the UNETR architecture"/>
+    <img src="figs/unetr.png" alt="Overview of the UNETR architecture" style="width: 80%"/>
     <p>Figure 7: An overview of the original UNETR architecture.</p>
 </div>
 
@@ -214,7 +214,7 @@ $$ DVH \sim (M_1, M_2, ..., M_p). $$
 Here, $M_p$ represents the moment of order p, which is defined as:
 $$M_p = \left(\frac{1}{|V_s|}\sum_{j\in V_s}d^p_j\right) ^\frac{1}{p}$$
 
-where $V_s$ denotes the voxels belonging to the $s$th structure and $d$ represents the dose.
+where $V_s$ denotes the voxels belonging to the $s$-th structure and $d$ represents the dose.
 
 Different moments of a structure capture various characteristics of the structure. For instance, $M_1$ corresponds to the mean dose, while $M_\inf$ corresponds to the maximum dose. In practice, the 10th moment ($M_{10}$) can be used to approximate the maximum dose. In our experiments, the moments 1, 2 and 10 are used to compute the loss, following the work of [[5]](#5).
 
