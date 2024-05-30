@@ -224,6 +224,7 @@ def load_model_weights(
     else:
         model.load_state_dict(checkpoint)
 
+
 def evaluate_model(model, dataset, args):
     # Load model weights
     device = (
@@ -232,9 +233,7 @@ def evaluate_model(model, dataset, args):
     print(f"Using device {device}")
 
     checkpoint_path = Path(".checkpoints/model_checkpoint.pt")
-    load_model_weights(
-        model, device, checkpoint_path
-    )
+    load_model_weights(model, device, checkpoint_path)
 
     test_dataloader = DataLoader(
         dataset["test"],
